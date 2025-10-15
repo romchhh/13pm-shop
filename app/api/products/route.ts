@@ -72,7 +72,7 @@ export async function POST(req: Request) {
         top_sale = false,
         limited_ition, // backward compat typo handling (ignored)
         limited_edition = false,
-        season,
+        season = [],
         color,
         category_id = null,
         subcategory_id = null,
@@ -131,7 +131,10 @@ export async function POST(req: Request) {
     const topSale = formData.get("top_sale") === "true";
     const limitedEdition = formData.get("limited_edition") === "true";
     const color = formData.get("color")?.toString();
-    const season = formData.get("season") as string;
+    const seasonsRaw = formData.get("seasons") as string | null;
+    const season = seasonsRaw
+      ? seasonsRaw.split(",").map((s) => s.trim())
+      : [];
     const categoryId = formData.get("category_id")
       ? Number(formData.get("category_id"))
       : null;

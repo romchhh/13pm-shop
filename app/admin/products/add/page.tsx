@@ -11,7 +11,7 @@ import TextArea from "@/components/admin/form/input/TextArea";
 import ToggleSwitch from "@/components/admin/form/ToggleSwitch";
 import Image from "next/image";
 
-const seasonOptions = ["Весна", "Літо", "Осінь", "Зима", "Всі сезони"];
+const seasonOptions = ["Весна", "Літо", "Осінь", "Зима"];
 
 const multiOptions = [
   { value: "ONESIZE", text: "ONESIZE", selected: false },
@@ -50,7 +50,7 @@ export default function FormElements() {
 
   const [categoryId, setCategoryId] = useState<number | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [season, setSeason] = useState("");
+  const [season, setSeason] = useState<string[]>([]);
   const [subcategoryId, setSubcategoryId] = useState<number | null>(null);
   const [subcategories, setSubcategories] = useState<Category[]>([]);
 
@@ -163,7 +163,7 @@ export default function FormElements() {
           sizes,
           top_sale: topSale,
           limited_edition: limitedEdition,
-          season: season === "Всі сезони" ? null : season,
+          season: season.length === 0 ? null : season,
           category_id: categoryId,
           subcategory_id: subcategoryId,
           media: uploadedMedia,
@@ -190,7 +190,7 @@ export default function FormElements() {
       setImages([]);
       setTopSale(false);
       setLimitedEdition(false);
-      setSeason("");
+      setSeason([]);
       setCategoryId(null);
       setFabricComposition("");
       setHasLining(false);
@@ -308,20 +308,18 @@ export default function FormElements() {
                 )}
 
                 <div>
-                  <Label>Сезон</Label>
-                  <select
-                    value={season}
-                    onChange={(e) => setSeason(e.target.value)}
-                    className="w-full border rounded px-3 py-2 text-sm dark:bg-gray-800 dark:text-white"
-                  >
-                    <option value="">Виберіть сезон</option>
-                    {seasonOptions.map((s) => (
-                      <option key={s} value={s}>
-                        {s.charAt(0).toUpperCase() + s.slice(1)}
-                      </option>
-                    ))}
-                  </select>
+                  <MultiSelect
+                    label="Сезон"
+                    options={seasonOptions.map((s) => ({
+                      value: s,
+                      text: s,
+                      selected: season.includes(s),
+                    }))}
+                    defaultSelected={season}
+                    onChange={setSeason}
+                  />
                 </div>
+
                 <div className="space-y-2">
                   <Label>Кольори</Label>
                   <div className="flex gap-2 flex-wrap">

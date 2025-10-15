@@ -295,7 +295,11 @@ export default function ProductsTable() {
                       {product.category_name || "—"}
                     </TableCell>
                     <TableCell className="px-5 py-4 text-sm text-gray-600 dark:text-gray-400">
-                      {product.season || "—"}
+                        {Array.isArray(product.season)
+                        ? product.season.length > 0
+                          ? product.season.join(", ")
+                          : "—"
+                        : product.season || "—"}
                     </TableCell>
                     <TableCell className="px-5 py-4 text-sm text-gray-600 dark:text-gray-400">
                       {product.color || "—"}

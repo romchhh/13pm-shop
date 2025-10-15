@@ -21,7 +21,12 @@ const multiOptions = [
   { value: "XS", text: "XS", selected: false },
 ];
 
-const seasonOptions = ["Весна", "Літо", "Осінь", "Зима", "Всі сезони"];
+const seasonOptions = [
+  { value: "Літо", text: "Літо", selected: false },
+  { value: "Весна", text: "Весна", selected: false },
+  { value: "Зима", text: "Зима", selected: false },
+  { value: "Осінь", text: "Осінь", selected: false },
+];
 
 export default function EditProductPage() {
   const params = useParams();
@@ -39,7 +44,7 @@ export default function EditProductPage() {
     media: [] as { type: string; url: string }[],
     topSale: false,
     limitedEdition: false,
-    season: "",
+    season: [] as string[],
     color: "",
     categoryId: null as number | null,
     subcategoryId: null as number | null,
@@ -216,7 +221,7 @@ export default function EditProductPage() {
           media: updatedMedia,
           top_sale: formData.topSale,
           limited_edition: formData.limitedEdition,
-          season: formData.season === "Всі сезони" ? null : formData.season,
+          season: formData.season,
           color: formData.color,
           colors,
           category_id: formData.categoryId,
@@ -346,19 +351,13 @@ export default function EditProductPage() {
                   </>
                 )}
 
-                <Label>Сезон</Label>
-                <select
-                  value={formData.season}
-                  onChange={(e) => handleChange("season", e.target.value)}
-                  className="w-full border rounded px-3 py-2 text-sm dark:bg-gray-800 dark:text-white"
-                >
-                  <option value="">Виберіть сезон</option>
-                  {seasonOptions.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
+                <Label>Cезон</Label>
+                <MultiSelect
+                  label="Сезон"
+                  options={seasonOptions}
+                  defaultSelected={formData.season}
+                  onChange={(values) => handleChange("season", values)}
+                />
 
                 <div className="space-y-2">
                   <Label>Кольори</Label>

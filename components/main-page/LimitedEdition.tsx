@@ -6,13 +6,12 @@ import "swiper/css";
 import Link from "next/link";
 
 type Product = {
-  id: number,
-  name: string,
-  price: number,
-  media: {type: string, url: string}[]
-  limited_edition: boolean
-}
-
+  id: number;
+  name: string;
+  price: number;
+  media: { type: string; url: string }[];
+  limited_edition: boolean;
+};
 
 // Define a fallback (template) product
 const templateProduct = {
@@ -97,15 +96,18 @@ export default function LimitedEdition() {
                   <img
                     className="w-full h-[500px] object-cover group-hover:brightness-90 transition duration-300"
                     src={
-                      product.media?.find(m => m.type === "photo")?.url 
-                        ? `/api/images/${product.media.find(m => m.type === "photo")?.url}`
-                        : product.media?.[0]?.url 
+                      product.media?.find((m) => m.type === "photo")?.url
+                        ? `/api/images/${
+                            product.media.find((m) => m.type === "photo")?.url
+                          }`
+                        : product.media?.[0]?.url
                         ? `/api/images/${product.media[0].url}`
                         : "https://placehold.co/432x682"
                     }
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
-                      target.src = "https://placehold.co/432x682/cccccc/666666?text=No+Image";
+                      target.src =
+                        "https://placehold.co/432x682/cccccc/666666?text=No+Image";
                     }}
                     alt={product.name}
                   />
@@ -145,15 +147,18 @@ export default function LimitedEdition() {
                   <img
                     className="w-full h-[500px] object-cover group-hover:brightness-90 transition duration-300"
                     src={
-                      product.media?.find(m => m.type === "photo")?.url 
-                        ? `/api/images/${product.media.find(m => m.type === "photo")?.url}`
-                        : product.media?.[0]?.url 
+                      product.media?.find((m) => m.type === "photo")?.url
+                        ? `/api/images/${
+                            product.media.find((m) => m.type === "photo")?.url
+                          }`
+                        : product.media?.[0]?.url
                         ? `/api/images/${product.media[0].url}`
                         : "https://placehold.co/432x682"
                     }
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
-                      target.src = "https://placehold.co/432x682/cccccc/666666?text=No+Image";
+                      target.src =
+                        "https://placehold.co/432x682/cccccc/666666?text=No+Image";
                     }}
                     alt={product.name}
                   />
@@ -174,7 +179,8 @@ export default function LimitedEdition() {
         {/* Desktop layout: 4x2 Grid */}
         <div className="hidden sm:grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8 lg:gap-10">
           {products.map((product, i) => (
-            <div
+            <Link
+              href={`/product/${product.id}`}
               key={product.id !== -1 ? product.id : `template-${i}`}
               className="group space-y-4 sm:space-y-5 w-full"
             >
@@ -182,9 +188,13 @@ export default function LimitedEdition() {
                 <img
                   className="w-full h-full object-cover group-hover:brightness-90 transition duration-300"
                   src={(() => {
-                    const firstPhoto = product.media?.find((m) => m.type === "photo");
+                    const firstPhoto = product.media?.find(
+                      (m) => m.type === "photo"
+                    );
                     const imageUrl = firstPhoto?.url || product.media?.[0]?.url;
-                    return imageUrl ? `/api/images/${imageUrl}` : "https://placehold.co/432x682";
+                    return imageUrl
+                      ? `/api/images/${imageUrl}`
+                      : "https://placehold.co/432x682";
                   })()}
                   alt={product.name}
                 />
@@ -198,7 +208,7 @@ export default function LimitedEdition() {
                   {product.price.toLocaleString()} ₴
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
 
@@ -212,9 +222,12 @@ export default function LimitedEdition() {
             />
             <div className="absolute bottom-1/12 left-1/2 transform -translate-x-1/2">
               <div className="px-6 py-3 bg-white flex justify-center items-center">
-                <span className="whitespace-nowrap text-black text-base sm:text-lg md:text-xl lg:text-2xl font-normal font-['Inter'] uppercase tracking-tight">
+                <Link
+                  href="/catalog"
+                  className="whitespace-nowrap text-black text-base sm:text-lg md:text-xl lg:text-2xl font-normal font-['Inter'] uppercase tracking-tight"
+                >
                   більше товарів
-                </span>
+                </Link>
               </div>
             </div>
           </div>
@@ -227,9 +240,12 @@ export default function LimitedEdition() {
             />
             <div className="absolute bottom-1/12 left-1/2 transform -translate-x-1/2">
               <div className="px-6 py-3 bg-white flex justify-center items-center">
-                <span className="whitespace-nowrap text-black text-base sm:text-lg md:text-xl lg:text-2xl font-normal font-['Inter'] uppercase tracking-tight">
+                <Link
+                  href="/catalog"
+                  className="whitespace-nowrap text-black text-base sm:text-lg md:text-xl lg:text-2xl font-normal font-['Inter'] uppercase tracking-tight"
+                >
                   більше товарів
-                </span>
+                </Link>
               </div>
             </div>
           </div>

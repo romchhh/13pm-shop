@@ -250,7 +250,7 @@ export async function sqlGetProductsBySeason(season: string) {
     LEFT JOIN product_sizes s ON p.id = s.product_id
     LEFT JOIN product_media m ON p.id = m.product_id
     LEFT JOIN product_colors pc ON p.id = pc.product_id
-    WHERE p.season = ${season}
+    WHERE ${season} = ANY(p.season)
     GROUP BY p.id, c.name
     ORDER BY p.id DESC;
   `;
@@ -309,7 +309,7 @@ export async function sqlPostProduct(product: {
   priority?: number;
   top_sale?: boolean;
   limited_edition?: boolean;
-  season?: string;
+  season?: string[];
   color?: string;
   category_id?: number | null;
   subcategory_id?: number | null; // ✅ NEW

@@ -62,7 +62,11 @@ export async function PUT(
 
     const topSale = body.top_sale === true;
     const limitedEdition = body.limited_edition === true;
-    const season = typeof body.season === "string" ? body.season : null;
+    const season = Array.isArray(body.season)
+      ? body.season
+      : typeof body.season === "string"
+      ? [body.season]
+      : [];
     const categoryId = body.category_id ? Number(body.category_id) : null;
     const subcategoryId = body.subcategory_id
       ? Number(body.subcategory_id)
