@@ -21,11 +21,13 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
   onChange,
   disabled = false,
 }) => {
+  // Ensure `selectedOptions` is always an array, even if `defaultSelected` is null/undefined.
   const [selectedOptions, setSelectedOptions] =
     useState<string[]>(defaultSelected);
 
   useEffect(() => {
-    setSelectedOptions(defaultSelected);
+    // Safeguard against null/undefined `defaultSelected`
+    setSelectedOptions(defaultSelected ?? []);
   }, [defaultSelected]);
 
   const [isOpen, setIsOpen] = useState(false);
@@ -50,9 +52,11 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
     if (onChange) onChange(newSelectedOptions);
   };
 
-  const selectedValuesText = selectedOptions.map(
-    (value) => options.find((option) => option.value === value)?.text || ""
-  );
+  // Safeguard selectedValuesText by ensuring it maps safely even if options is empty
+  const selectedValuesText = (selectedOptions ?? []).map((value) => {
+    const option = options.find((option) => option.value === value);
+    return option ? option.text : ""; // Ensure we return a valid string
+  });
 
   return (
     <div className="w-full">

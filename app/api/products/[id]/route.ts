@@ -77,6 +77,8 @@ export async function PUT(
       ? Number(body.discount_percentage)
       : null;
     const priority = body.priority ? Number(body.priority) : 0;
+    const hasLining = body.has_lining === true;
+    const liningDescription = body.lining_description || ""; // Add this line to handle it
 
     await sqlPutProduct(id, {
       name: body.name,
@@ -104,6 +106,9 @@ export async function PUT(
             hex: c.hex || null,
           }))
         : [],
+      has_lining: hasLining,
+      fabric_composition: body.fabric_composition,
+      lining_description: liningDescription, // Pass the lining_description here
     });
 
     return NextResponse.json({ updated: true });

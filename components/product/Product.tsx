@@ -22,6 +22,9 @@ interface Product {
   description: string;
   sizes?: { size: string; stock: string }[];
   colors?: { label: string; hex?: string | null }[];
+  has_lining?: boolean;
+  lining_description?: string;
+  fabric_composition?: string;
 }
 
 export default function Product() {
@@ -36,7 +39,9 @@ export default function Product() {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [showToast, setShowToast] = useState(false);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
-  const [alertType, setAlertType] = useState<"success" | "error" | "warning" | "info">("info");
+  const [alertType, setAlertType] = useState<
+    "success" | "error" | "warning" | "info"
+  >("info");
   const [showSizeGuide, setShowSizeGuide] = useState(false);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
 
@@ -133,7 +138,8 @@ export default function Product() {
               <img
                 className="w-full h-auto max-h-[85vh] object-contain"
                 src={
-                  `/api/images/${media[activeImageIndex]?.url}` || "https://placehold.co/800x1160"
+                  `/api/images/${media[activeImageIndex]?.url}` ||
+                  "https://placehold.co/800x1160"
                 }
                 alt={product.name}
               />
@@ -230,30 +236,43 @@ export default function Product() {
           {product.colors && product.colors.length > 0 && (
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-3">
-                <div className="text-sm md:text-base font-['Inter'] uppercase tracking-tight">Колір</div>
+                <div className="text-sm md:text-base font-['Inter'] uppercase tracking-tight">
+                  Колір
+                </div>
               </div>
               <div className="flex items-end gap-4">
                 {product.colors.map((c, idx) => {
                   const isActive = selectedColor === c.label;
                   return (
-                    <div key={`${c.label}-${idx}`} className="flex flex-col items-center">
+                    <div
+                      key={`${c.label}-${idx}`}
+                      className="flex flex-col items-center"
+                    >
                       <button
                         type="button"
                         onClick={() => setSelectedColor(c.label)}
                         className={`relative flex items-center justify-center w-7 h-7 md:w-8 md:h-8 rounded-full border transition ${
-                          isActive ? "border-gray-700" : "border-gray-300 hover:border-gray-500"
+                          isActive
+                            ? "border-gray-700"
+                            : "border-gray-300 hover:border-gray-500"
                         }`}
                         aria-label={c.label}
                         title={c.label}
                         style={{ backgroundColor: c.hex || "#ffffff" }}
                       />
-                      <div className={`mt-1 h-[2px] rounded-full ${isActive ? "w-6 bg-black" : "w-0 bg-transparent"}`} />
+                      <div
+                        className={`mt-1 h-[2px] rounded-full ${
+                          isActive ? "w-6 bg-black" : "w-0 bg-transparent"
+                        }`}
+                      />
                     </div>
                   );
                 })}
               </div>
               {selectedColor && (
-                <div className="text-base md:text-lg font-['Inter'] text-gray-700">Колір: {selectedColor}</div>
+                <div className="text-base md:text-lg font-['Inter'] text-gray-700">
+                  Колір: {selectedColor}
+                </div>
               )}
             </div>
           )}
@@ -262,7 +281,9 @@ export default function Product() {
           <div
             onClick={handleAddToCart}
             className={`w-full text-center ${
-              isDark ? "bg-white text-black hover:bg-gray-100" : "bg-black text-white hover:bg-gray-800"
+              isDark
+                ? "bg-white text-black hover:bg-gray-100"
+                : "bg-black text-white hover:bg-gray-800"
             } p-3 text-lg md:text-xl font-medium font-['Inter'] uppercase tracking-tight cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]`}
           >
             в кошик
@@ -280,11 +301,11 @@ export default function Product() {
 
           {/* Size Guide Modal */}
           {showSizeGuide && (
-            <div 
+            <div
               className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
               onClick={() => setShowSizeGuide(false)}
             >
-              <div 
+              <div
                 className="relative max-w-2xl w-full bg-white rounded-2xl shadow-2xl overflow-auto max-h-[90vh]"
                 onClick={(e) => e.stopPropagation()}
               >
@@ -294,27 +315,49 @@ export default function Product() {
                 >
                   ×
                 </button>
-                
+
                 <div className="p-8 md:p-12">
                   <div className="text-center mb-10">
-                    <h2 className="text-3xl md:text-4xl font-bold text-black tracking-tight font-['Inter']">РОЗМІРНА СІТКА</h2>
-                    <div className="mt-2 text-sm text-gray-500 font-['Helvetica']">Всі вимірювання вказані в сантиметрах</div>
+                    <h2 className="text-3xl md:text-4xl font-bold text-black tracking-tight font-['Inter']">
+                      РОЗМІРНА СІТКА
+                    </h2>
+                    <div className="mt-2 text-sm text-gray-500 font-['Helvetica']">
+                      Всі вимірювання вказані в сантиметрах
+                    </div>
                   </div>
 
                   <div className="overflow-x-auto">
                     <table className="w-full text-black border-collapse">
                       <thead>
                         <tr className="border-b-2 border-black">
-                          <th className="py-4 px-3 text-center text-xs md:text-sm font-bold uppercase tracking-wider font-['Inter']">Розмір</th>
-                          <th className="py-4 px-3 text-center text-xs md:text-sm font-bold uppercase tracking-wider font-['Inter']">Обхват<br/>грудей</th>
-                          <th className="py-4 px-3 text-center text-xs md:text-sm font-bold uppercase tracking-wider font-['Inter']">Обхват<br/>талії</th>
-                          <th className="py-4 px-3 text-center text-xs md:text-sm font-bold uppercase tracking-wider font-['Inter']">Обхват<br/>бедер</th>
-                          <th className="py-4 px-3 text-center text-xs md:text-sm font-bold uppercase tracking-wider font-['Inter']">Зріст</th>
+                          <th className="py-4 px-3 text-center text-xs md:text-sm font-bold uppercase tracking-wider font-['Inter']">
+                            Розмір
+                          </th>
+                          <th className="py-4 px-3 text-center text-xs md:text-sm font-bold uppercase tracking-wider font-['Inter']">
+                            Обхват
+                            <br />
+                            грудей
+                          </th>
+                          <th className="py-4 px-3 text-center text-xs md:text-sm font-bold uppercase tracking-wider font-['Inter']">
+                            Обхват
+                            <br />
+                            талії
+                          </th>
+                          <th className="py-4 px-3 text-center text-xs md:text-sm font-bold uppercase tracking-wider font-['Inter']">
+                            Обхват
+                            <br />
+                            бедер
+                          </th>
+                          <th className="py-4 px-3 text-center text-xs md:text-sm font-bold uppercase tracking-wider font-['Inter']">
+                            Зріст
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
                         <tr className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
-                          <td className="py-5 px-3 text-center font-bold text-lg font-['Inter']">S</td>
+                          <td className="py-5 px-3 text-center font-bold text-lg font-['Inter']">
+                            S
+                          </td>
                           <td className="py-5 px-3 text-center font-['Helvetica']">
                             <div className="text-base">88-92</div>
                           </td>
@@ -329,7 +372,9 @@ export default function Product() {
                           </td>
                         </tr>
                         <tr className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
-                          <td className="py-5 px-3 text-center font-bold text-lg font-['Inter']">M</td>
+                          <td className="py-5 px-3 text-center font-bold text-lg font-['Inter']">
+                            M
+                          </td>
                           <td className="py-5 px-3 text-center font-['Helvetica']">
                             <div className="text-base">96-100</div>
                           </td>
@@ -344,7 +389,9 @@ export default function Product() {
                           </td>
                         </tr>
                         <tr className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
-                          <td className="py-5 px-3 text-center font-bold text-lg font-['Inter']">L</td>
+                          <td className="py-5 px-3 text-center font-bold text-lg font-['Inter']">
+                            L
+                          </td>
                           <td className="py-5 px-3 text-center font-['Helvetica']">
                             <div className="text-base">104-108</div>
                           </td>
@@ -359,7 +406,9 @@ export default function Product() {
                           </td>
                         </tr>
                         <tr className="hover:bg-gray-50 transition-colors">
-                          <td className="py-5 px-3 text-center font-bold text-lg font-['Inter']">XL</td>
+                          <td className="py-5 px-3 text-center font-bold text-lg font-['Inter']">
+                            XL
+                          </td>
                           <td className="py-5 px-3 text-center font-['Helvetica']">
                             <div className="text-base">112-116</div>
                           </td>
@@ -378,19 +427,22 @@ export default function Product() {
                   </div>
 
                   <div className="text-center mt-10 pt-6 border-t border-gray-200">
-                    <img 
-                      src="/images/light-theme/chars-logo-header-light.png" 
-                      alt="CHARS Logo" 
+                    <img
+                      src="/images/light-theme/chars-logo-header-light.png"
+                      alt="CHARS Logo"
                       className="mx-auto h-10 opacity-80"
                       onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                        const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
+                        e.currentTarget.style.display = "none";
+                        const nextElement = e.currentTarget
+                          .nextElementSibling as HTMLElement;
                         if (nextElement) {
-                          nextElement.style.display = 'block';
+                          nextElement.style.display = "block";
                         }
                       }}
                     />
-                    <div className="text-2xl font-bold hidden font-['Inter']">CHARS</div>
+                    <div className="text-2xl font-bold hidden font-['Inter']">
+                      CHARS
+                    </div>
                   </div>
                 </div>
               </div>
@@ -421,6 +473,20 @@ export default function Product() {
               {product.description}
             </div>
           </div>
+
+          {product.fabric_composition && (
+            <div className="opacity-90">
+              <h3>Cклад тканини: </h3>
+              <span>{product.fabric_composition}</span>
+            </div>
+          )}
+
+          {product.has_lining && (
+            <div className="opacity-90">
+              <h3>Підкладка: </h3>
+              <span>{product.lining_description}</span>
+            </div>
+          )}
         </div>
       </div>
     </section>

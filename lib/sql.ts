@@ -55,6 +55,7 @@ export async function sqlGetAllProducts() {
       p.color,
       p.fabric_composition,
       p.has_lining,
+      p.lining_description,
       c.name AS category_name,
       sc.name AS subcategory_name,
       p.created_at,
@@ -100,6 +101,7 @@ export async function sqlGetProduct(id: number) {
       p.subcategory_id,
       p.fabric_composition,
       p.has_lining,
+      p.lining_description,
       c.name AS category_name,
       sc.name AS subcategory_name,
       COALESCE(s.sizes, '[]') AS sizes,
@@ -315,6 +317,7 @@ export async function sqlPostProduct(product: {
   subcategory_id?: number | null; // ✅ NEW
   fabric_composition?: string;
   has_lining?: boolean;
+  lining_description?: string;
   sizes?: { size: string; stock: number }[];
   media?: { type: string; url: string }[];
   colors?: { label: string; hex?: string | null }[];
@@ -323,7 +326,7 @@ export async function sqlPostProduct(product: {
     INSERT INTO products (
       name, description, price, old_price, discount_percentage, priority,
       top_sale, limited_edition, season, color,
-      category_id, subcategory_id, fabric_composition, has_lining
+      category_id, subcategory_id, fabric_composition, has_lining, lining_description
     )
     VALUES (
       ${product.name},
@@ -339,7 +342,8 @@ export async function sqlPostProduct(product: {
       ${product.category_id || null},
       ${product.subcategory_id || null},
       ${product.fabric_composition || null},
-      ${product.has_lining || false}
+      ${product.has_lining || false},
+      ${product.lining_description || null}
     )
     RETURNING id;
   `;
@@ -394,6 +398,7 @@ export async function sqlPutProduct(
     subcategory_id?: number | null; // ✅ NEW
     fabric_composition?: string;
     has_lining?: boolean;
+    lining_description?: string;
     sizes?: { size: string; stock: number }[];
     media?: { type: string; url: string }[];
     colors?: { label: string; hex?: string | null }[];
@@ -416,7 +421,8 @@ export async function sqlPutProduct(
       category_id = ${update.category_id || null},
       subcategory_id = ${update.subcategory_id || null}, -- ✅ NEW
       fabric_composition = ${update.fabric_composition || null},
-      has_lining = ${update.has_lining || false}
+      has_lining = ${update.has_lining || false},
+      lining_description = ${update.lining_description || null}
     WHERE id = ${id};
   `;
 

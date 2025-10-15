@@ -50,6 +50,7 @@ export default function EditProductPage() {
     subcategoryId: null as number | null,
     fabricComposition: "",
     hasLining: false,
+    liningDescription: "",
   });
 
   const [images, setImages] = useState<File[]>([]);
@@ -100,6 +101,7 @@ export default function EditProductPage() {
           subcategoryId: productData.subcategory_id || null,
           fabricComposition: productData.fabric_composition || "",
           hasLining: productData.has_lining || false,
+          liningDescription: productData.lining_description || "",
         });
 
         setCategoryOptions(categoryData);
@@ -228,6 +230,7 @@ export default function EditProductPage() {
           subcategory_id: formData.subcategoryId,
           fabric_composition: formData.fabricComposition,
           has_lining: formData.hasLining,
+          lining_description: formData.liningDescription,
         }),
       });
 
@@ -462,6 +465,19 @@ export default function EditProductPage() {
                       label="Has Lining"
                     />
                   </div>
+                  {formData.hasLining && (
+                  <div>
+                    <Label>Опис підкладки</Label>
+                    <TextArea
+                      value={formData.liningDescription}
+                      onChange={(value) =>
+                        handleChange("liningDescription", value)
+                      }
+                      rows={2}
+                      placeholder="Опис підкладки товару"
+                    />
+                  </div>
+                )}
                 </div>
 
                 <div className="flex items-center justify-between mt-4">

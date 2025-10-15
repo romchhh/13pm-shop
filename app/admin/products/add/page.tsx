@@ -56,6 +56,7 @@ export default function FormElements() {
 
   const [fabricComposition, setFabricComposition] = useState("");
   const [hasLining, setHasLining] = useState(false);
+  const [liningDescription, setLiningDescription] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
@@ -169,6 +170,7 @@ export default function FormElements() {
           media: uploadedMedia,
           fabric_composition: fabricComposition,
           has_lining: hasLining,
+          lining_description: liningDescription,
         }),
       });
 
@@ -194,6 +196,7 @@ export default function FormElements() {
       setCategoryId(null);
       setFabricComposition("");
       setHasLining(false);
+      setLiningDescription("")
       setSubcategoryId(null);
       setSubcategories([]);
     } catch (err) {
@@ -417,6 +420,18 @@ export default function FormElements() {
                     />
                   </div>
                 </div>
+                {/* Lining description input */}
+                {hasLining && (
+                  <div>
+                    <Label>Опис підкладки</Label>
+                    <TextArea
+                      value={liningDescription}
+                      onChange={setLiningDescription}
+                      rows={2}
+                      placeholder="Опис підкладки товару"
+                    />
+                  </div>
+                )}
 
                 <div className="flex items-center justify-between pt-2">
                   <Label className="mb-0">Топ продаж?</Label>

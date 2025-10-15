@@ -78,6 +78,7 @@ export async function POST(req: Request) {
         subcategory_id = null,
         fabric_composition = "",
         has_lining = false,
+        lining_description = "",
       } = body || {};
 
       if (!name || typeof price !== "number") {
@@ -105,6 +106,7 @@ export async function POST(req: Request) {
         subcategory_id,
         fabric_composition,
         has_lining,
+        lining_description,
         colors,
       });
 
@@ -132,9 +134,7 @@ export async function POST(req: Request) {
     const limitedEdition = formData.get("limited_edition") === "true";
     const color = formData.get("color")?.toString();
     const seasonsRaw = formData.get("seasons") as string | null;
-    const season = seasonsRaw
-      ? seasonsRaw.split(",").map((s) => s.trim())
-      : [];
+    const season = seasonsRaw ? seasonsRaw.split(",").map((s) => s.trim()) : [];
     const categoryId = formData.get("category_id")
       ? Number(formData.get("category_id"))
       : null;
@@ -144,6 +144,8 @@ export async function POST(req: Request) {
     const fabricComposition =
       formData.get("fabric_composition")?.toString() || "";
     const hasLining = formData.get("has_lining") === "true";
+    const liningDescription =
+      formData.get("lining_description")?.toString() || "";
 
     if (!name || !price) {
       return NextResponse.json(
@@ -194,6 +196,7 @@ export async function POST(req: Request) {
       subcategory_id: subcategoryId,
       fabric_composition: fabricComposition,
       has_lining: hasLining,
+      lining_description: liningDescription,
       sizes: parsedSizes.map((size: string) => ({
         size,
         stock: 5,

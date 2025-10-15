@@ -161,10 +161,14 @@ export default function Catalog() {
               {/* Image */}
               <div className="relative w-full aspect-[2/3] bg-gray-200 group-hover:filter group-hover:brightness-90 transition duration-300">
                 {(() => {
-                  const firstPhoto = product.media.find(
-                    (m) => m.type === "photo"
-                  );
-                  const imageUrl = firstPhoto?.url || product.media[0]?.url;
+                  const sortedMedia = [...product.media].sort((a, b) => {
+                    // Prioritize photos first, then use original index order as fallback
+                    if (a.type === "photo" && b.type !== "photo") return -1;
+                    if (a.type !== "photo" && b.type === "photo") return 1;
+                    return 0;
+                  });
+                  const imageUrl = sortedMedia[0]?.url;
+                  
                   return imageUrl ? (
                     <img
                       src={`/api/images/${imageUrl}`}
