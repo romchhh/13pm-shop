@@ -36,23 +36,23 @@ const migrations: Migration[] = [
 
       -- Додавання нового поля subcategory_id в таблицю products
       ALTER TABLE products
-      ADD COLUMN IF NOT EXISTS subcategory_id INT;
+      ADD COLUMN subcategory_id INT;
 
       -- Додавання зовнішнього ключа до поля subcategory_id
       ALTER TABLE products
-      ADD CONSTRAINT IF NOT EXISTS fk_subcategory
+      ADD CONSTRAINT fk_subcategory
       FOREIGN KEY (subcategory_id) REFERENCES subcategories(id);
 
       -- Видалення старого поля season
       ALTER TABLE products
-      DROP COLUMN IF EXISTS season;
+      DROP COLUMN season;
 
       -- Додавання нового поля season типу TEXT[]
       ALTER TABLE products
-      ADD COLUMN IF NOT EXISTS season TEXT[];
+      ADD COLUMN season TEXT[];
 
       -- Додавання нового поля lining_description
-      ALTER TABLE products ADD COLUMN IF NOT EXISTS lining_description TEXT;
+      ALTER TABLE products ADD COLUMN lining_description TEXT;
     `,
   },
 ];
