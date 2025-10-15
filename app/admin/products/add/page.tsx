@@ -44,14 +44,16 @@ export default function FormElements() {
   const [colors, setColors] = useState<{ label: string; hex?: string }[]>([]);
   const [customColorLabel, setCustomColorLabel] = useState("");
   const [customColorHex, setCustomColorHex] = useState("#000000");
-  const [availableColors, setAvailableColors] = useState<{ color: string; hex?: string }[]>(
-    []
-  );
+  const [availableColors, setAvailableColors] = useState<
+    { color: string; hex?: string }[]
+  >([]);
 
   const [categoryId, setCategoryId] = useState<number | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [season, setSeason] = useState("");
-  
+  const [subcategoryId, setSubcategoryId] = useState<number | null>(null);
+  const [subcategories, setSubcategories] = useState<Category[]>([]);
+
   const [fabricComposition, setFabricComposition] = useState("");
   const [hasLining, setHasLining] = useState(false);
 
@@ -88,6 +90,29 @@ export default function FormElements() {
     fetchColors();
   }, []);
 
+  useEffect(() => {
+    if (!categoryId) {
+      setSubcategories([]);
+      setSubcategoryId(null);
+      return;
+    }
+
+    async function fetchSubcategories() {
+      try {
+        const res = await fetch(
+          `/api/subcategories?parent_category_id=${categoryId}`
+        );
+        if (!res.ok) throw new Error("Failed to fetch subcategories");
+        const data: Category[] = await res.json();
+        setSubcategories(data);
+      } catch (err) {
+        console.error("Error fetching subcategories:", err);
+      }
+    }
+
+    fetchSubcategories();
+  }, [categoryId]);
+
   const handleDrop = (files: File[]) => {
     setImages((prev) => [...prev, ...files]);
   };
@@ -108,7 +133,10 @@ export default function FormElements() {
       if (images.length > 0) {
         const uploadForm = new FormData();
         images.forEach((img) => uploadForm.append("images", img));
-        const uploadRes = await fetch("/api/images", { method: "POST", body: uploadForm });
+        const uploadRes = await fetch("/api/images", {
+          method: "POST",
+          body: uploadForm,
+        });
         if (!uploadRes.ok) {
           const t = await uploadRes.text();
           throw new Error(t || "Не вдалося завантажити файли");
@@ -126,7 +154,9 @@ export default function FormElements() {
           description,
           price: Number(price),
           old_price: oldPrice ? Number(oldPrice) : null,
-          discount_percentage: discountPercentage ? Number(discountPercentage) : null,
+          discount_percentage: discountPercentage
+            ? Number(discountPercentage)
+            : null,
           priority: Number(priority || 0),
           color,
           colors,
@@ -135,6 +165,7 @@ export default function FormElements() {
           limited_edition: limitedEdition,
           season: season === "Всі сезони" ? null : season,
           category_id: categoryId,
+          subcategory_id: subcategoryId,
           media: uploadedMedia,
           fabric_composition: fabricComposition,
           has_lining: hasLining,
@@ -163,6 +194,8 @@ export default function FormElements() {
       setCategoryId(null);
       setFabricComposition("");
       setHasLining(false);
+      setSubcategoryId(null);
+      setSubcategories([]);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Помилка при створенні товару"
@@ -256,6 +289,24 @@ export default function FormElements() {
                     ))}
                   </select>
                 </div>
+                {subcategories.length > 0 && (
+                  <div>
+                    <Label>Підкатегорія</Label>
+                    <select
+                      value={subcategoryId ?? ""}
+                      onChange={(e) => setSubcategoryId(Number(e.target.value))}
+                      className="w-full border rounded px-3 py-2 text-sm dark:bg-gray-800 dark:text-white"
+                    >
+                      <option value="">Виберіть підкатегорію</option>
+                      {subcategories.map((sub) => (
+                        <option key={sub.id} value={sub.id}>
+                          {sub.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
                 <div>
                   <Label>Сезон</Label>
                   <select
@@ -285,7 +336,9 @@ export default function FormElements() {
                           setColors(colors.filter((_, i) => i !== idx))
                         }
                       >
-                        <span className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-4 h-4 text-[10px] flex items-center justify-center">×</span>
+                        <span className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-4 h-4 text-[10px] flex items-center justify-center">
+                          ×
+                        </span>
                       </button>
                     ))}
                   </div>
@@ -296,10 +349,18 @@ export default function FormElements() {
                         type="button"
                         key={`pal-${c.color}`}
                         className="flex items-center gap-2 border rounded-full px-2 py-1 text-xs hover:shadow transition"
-                        onClick={() => setColors((prev) => [...prev, { label: c.color, hex: c.hex }])}
+                        onClick={() =>
+                          setColors((prev) => [
+                            ...prev,
+                            { label: c.color, hex: c.hex },
+                          ])
+                        }
                         title={c.color}
                       >
-                        <span className="w-4 h-4 rounded-full border" style={{ backgroundColor: c.hex || "#fff" }} />
+                        <span
+                          className="w-4 h-4 rounded-full border"
+                          style={{ backgroundColor: c.hex || "#fff" }}
+                        />
                         <span>{c.color}</span>
                       </button>
                     ))}
@@ -323,7 +384,10 @@ export default function FormElements() {
                         if (!customColorLabel.trim()) return;
                         setColors([
                           ...colors,
-                          { label: customColorLabel.trim(), hex: customColorHex },
+                          {
+                            label: customColorLabel.trim(),
+                            hex: customColorHex,
+                          },
                         ]);
                         setCustomColorLabel("");
                         setCustomColorHex("#000000");
@@ -334,7 +398,7 @@ export default function FormElements() {
                     </button>
                   </div>
                 </div>
-                
+
                 {/* Блок: Склад тканини і Підкладка */}
                 <div className="border rounded-lg p-4 space-y-4 bg-gray-50 dark:bg-gray-800/50">
                   <div>

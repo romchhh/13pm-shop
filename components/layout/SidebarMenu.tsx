@@ -154,7 +154,7 @@ export default function SidebarMenu({
                   key={i}
                   href={`/catalog?season=${item.name}`}
                   onClick={() => setIsOpen(false)}
-                  className="block h-[120px] rounded overflow-hidden relative text-white text-xl sm:text-2xl font-bold text-center flex items-center justify-center"
+                  className="h-[120px] rounded overflow-hidden relative text-white text-xl sm:text-2xl font-bold text-center flex items-center justify-center"
                   style={{
                     backgroundImage: `url(${item.image})`,
                     backgroundSize: "cover",

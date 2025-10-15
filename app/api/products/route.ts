@@ -12,15 +12,24 @@ function getFileType(mimeType: string, filename: string): "photo" | "video" {
   if (mimeType.startsWith("video/")) {
     return "video";
   }
-  
+
   // Fallback: check file extension if MIME type is generic or unknown
   const ext = filename.split(".").pop()?.toLowerCase();
-  const videoExtensions = ["mp4", "webm", "ogg", "mov", "avi", "mkv", "flv", "wmv"];
-  
+  const videoExtensions = [
+    "mp4",
+    "webm",
+    "ogg",
+    "mov",
+    "avi",
+    "mkv",
+    "flv",
+    "wmv",
+  ];
+
   if (ext && videoExtensions.includes(ext)) {
     return "video";
   }
-  
+
   return "photo";
 }
 
@@ -66,6 +75,7 @@ export async function POST(req: Request) {
         season,
         color,
         category_id = null,
+        subcategory_id = null,
         fabric_composition = "",
         has_lining = false,
       } = body || {};
@@ -87,10 +97,12 @@ export async function POST(req: Request) {
         sizes: (sizes as string[]).map((size) => ({ size, stock: 5 })),
         media,
         top_sale,
-        limited_edition: typeof limited_ition === "boolean" ? limited_ition : limited_edition,
+        limited_edition:
+          typeof limited_ition === "boolean" ? limited_ition : limited_edition,
         season,
         color,
         category_id,
+        subcategory_id,
         fabric_composition,
         has_lining,
         colors,
@@ -104,9 +116,15 @@ export async function POST(req: Request) {
 
     const name = formData.get("name") as string;
     const price = Number(formData.get("price"));
-    const oldPrice = formData.get("old_price") ? Number(formData.get("old_price")) : null;
-    const discountPercentage = formData.get("discount_percentage") ? Number(formData.get("discount_percentage")) : null;
-    const priority = formData.get("priority") ? Number(formData.get("priority")) : 0;
+    const oldPrice = formData.get("old_price")
+      ? Number(formData.get("old_price"))
+      : null;
+    const discountPercentage = formData.get("discount_percentage")
+      ? Number(formData.get("discount_percentage"))
+      : null;
+    const priority = formData.get("priority")
+      ? Number(formData.get("priority"))
+      : 0;
     const description = formData.get("description") as string;
     const sizesRaw = formData.get("sizes") as string;
     const images = formData.getAll("images") as File[];
@@ -117,7 +135,11 @@ export async function POST(req: Request) {
     const categoryId = formData.get("category_id")
       ? Number(formData.get("category_id"))
       : null;
-    const fabricComposition = formData.get("fabric_composition")?.toString() || "";
+    const subcategoryId = formData.get("subcategory_id")
+      ? Number(formData.get("subcategory_id"))
+      : null;
+    const fabricComposition =
+      formData.get("fabric_composition")?.toString() || "";
     const hasLining = formData.get("has_lining") === "true";
 
     if (!name || !price) {
@@ -143,11 +165,13 @@ export async function POST(req: Request) {
       await writeFile(filePath, buffer);
 
       const fileType = getFileType(image.type, image.name);
-      console.log(`📁 Product file: ${image.name}, MIME: ${image.type}, Type: ${fileType}, URL: ${uniqueName}`);
-      
+      console.log(
+        `📁 Product file: ${image.name}, MIME: ${image.type}, Type: ${fileType}, URL: ${uniqueName}`
+      );
+
       savedMedia.push({ type: fileType, url: uniqueName });
     }
-    
+
     console.log("📦 Product media to save:", savedMedia);
 
     const parsedSizes = JSON.parse(sizesRaw); // ["S", "M", "L"]
@@ -164,6 +188,7 @@ export async function POST(req: Request) {
       season,
       color,
       category_id: categoryId,
+      subcategory_id: subcategoryId,
       fabric_composition: fabricComposition,
       has_lining: hasLining,
       sizes: parsedSizes.map((size: string) => ({

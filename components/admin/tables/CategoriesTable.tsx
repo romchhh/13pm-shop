@@ -8,6 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/table";
+import Link from "next/link";
 
 interface Category {
   id: number;
@@ -270,12 +271,13 @@ export default function CategoriesTable() {
                         </>
                       ) : (
                         <>
-                          <button
-                            onClick={() => startEditing(category)}
+                          <Link
+                            // onClick={() => startEditing(category)}
+                            href={`/admin/categories/${category.id}`}
                             className="inline-block rounded-md bg-blue-400 px-3 py-1 text-white text-sm hover:bg-blue-600 transition"
                           >
                             Редагувати
-                          </button>
+                          </Link>
                           <button
                             onClick={() => handleDeleteCategory(category.id)}
                             className="inline-block rounded-md bg-red-400 px-3 py-1 text-white text-sm hover:bg-red-600 transition"

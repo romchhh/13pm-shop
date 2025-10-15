@@ -51,10 +51,12 @@ export async function sqlGetAllProducts() {
       p.limited_edition,
       p.season,
       p.category_id,
+      p.subcategory_id,
       p.color,
       p.fabric_composition,
       p.has_lining,
       c.name AS category_name,
+      sc.name AS subcategory_name,
       p.created_at,
       COALESCE(
         JSON_AGG(DISTINCT JSONB_BUILD_OBJECT('size', s.size, 'stock', s.stock))
@@ -73,10 +75,11 @@ export async function sqlGetAllProducts() {
       ) AS colors
     FROM products p
     LEFT JOIN categories c ON p.category_id = c.id
+    LEFT JOIN subcategories sc ON p.subcategory_id = sc.id
     LEFT JOIN product_sizes s ON p.id = s.product_id
     LEFT JOIN product_media m ON p.id = m.product_id
     LEFT JOIN product_colors pc ON p.id = pc.product_id
-    GROUP BY p.id, c.name
+    GROUP BY p.id, c.name, sc.name
     ORDER BY p.id DESC;
   `;
 }
@@ -94,14 +97,17 @@ export async function sqlGetProduct(id: number) {
       p.season,
       p.color,
       p.category_id,
+      p.subcategory_id,
       p.fabric_composition,
       p.has_lining,
       c.name AS category_name,
+      sc.name AS subcategory_name,
       COALESCE(s.sizes, '[]') AS sizes,
       COALESCE(m.media, '[]') AS media,
       COALESCE(pc.colors, '[]') AS colors
     FROM products p
     LEFT JOIN categories c ON p.category_id = c.id
+    LEFT JOIN subcategories sc ON p.subcategory_id = sc.id
     LEFT JOIN LATERAL (
       SELECT JSON_AGG(
         JSONB_BUILD_OBJECT('size', s.size, 'stock', s.stock)
@@ -167,6 +173,49 @@ export async function sqlGetProductsByCategory(categoryName: string) {
   `;
 }
 
+export async function sqlGetProductsBySubcategoryName(name: string) {
+  return await sql`
+    SELECT
+      p.id,
+      p.name,
+      p.description,
+      p.price,
+      p.top_sale,
+      p.limited_edition,
+      p.season,
+      p.color,
+      p.category_id,
+      p.subcategory_id,
+      c.name AS category_name,
+      sc.name AS subcategory_name,
+      p.created_at,
+      COALESCE(
+        JSON_AGG(DISTINCT JSONB_BUILD_OBJECT('size', s.size, 'stock', s.stock))
+        FILTER (WHERE s.id IS NOT NULL),
+        '[]'
+      ) AS sizes,
+      COALESCE(
+        JSON_AGG(DISTINCT JSONB_BUILD_OBJECT('type', m.type, 'url', m.url))
+        FILTER (WHERE m.id IS NOT NULL),
+        '[]'
+      ) AS media,
+      COALESCE(
+        JSON_AGG(DISTINCT JSONB_BUILD_OBJECT('label', pc.label, 'hex', pc.hex))
+        FILTER (WHERE pc.id IS NOT NULL),
+        '[]'
+      ) AS colors
+    FROM products p
+    LEFT JOIN categories c ON p.category_id = c.id
+    LEFT JOIN subcategories sc ON p.subcategory_id = sc.id
+    LEFT JOIN product_sizes s ON p.id = s.product_id
+    LEFT JOIN product_media m ON p.id = m.product_id
+    LEFT JOIN product_colors pc ON p.id = pc.product_id
+    WHERE LOWER(sc.name) = LOWER(${name})
+    GROUP BY p.id, c.name, sc.name
+    ORDER BY p.id DESC;
+  `;
+}
+
 export async function sqlGetProductsBySeason(season: string) {
   return await sql`
     SELECT
@@ -218,26 +267,26 @@ export async function sqlGetAllColors() {
 
   // Standard palette with hex suggestions
   const standardPalette: Record<string, string> = {
-    "Чорний": "#000000",
-    "Білий": "#FFFFFF",
-    "Сірий": "#808080",
+    Чорний: "#000000",
+    Білий: "#FFFFFF",
+    Сірий: "#808080",
     "Світло-сірий": "#C0C0C0",
     "Темно-сірий": "#4B4B4B",
-    "Бежевий": "#F5F5DC",
-    "Кремовий": "#FFFDD0",
-    "Коричневий": "#8B4513",
-    "Червоний": "#FF0000",
-    "Малиновий": "#DC143C",
-    "Кораловий": "#FF7F50",
-    "Рожевий": "#FFC0CB",
-    "Помаранчевий": "#FFA500",
-    "Жовтий": "#FFD700",
-    "Зелений": "#008000",
-    "Хаки": "#78866B",
-    "Блакитний": "#87CEEB",
-    "Синій": "#0000FF",
+    Бежевий: "#F5F5DC",
+    Кремовий: "#FFFDD0",
+    Коричневий: "#8B4513",
+    Червоний: "#FF0000",
+    Малиновий: "#DC143C",
+    Кораловий: "#FF7F50",
+    Рожевий: "#FFC0CB",
+    Помаранчевий: "#FFA500",
+    Жовтий: "#FFD700",
+    Зелений: "#008000",
+    Хаки: "#78866B",
+    Блакитний: "#87CEEB",
+    Синій: "#0000FF",
     "Темно-синій": "#00008B",
-    "Фіолетовий": "#800080",
+    Фіолетовий: "#800080",
   };
 
   const names = new Set<string>([...Object.keys(standardPalette)]);
@@ -263,6 +312,7 @@ export async function sqlPostProduct(product: {
   season?: string;
   color?: string;
   category_id?: number | null;
+  subcategory_id?: number | null; // ✅ NEW
   fabric_composition?: string;
   has_lining?: boolean;
   sizes?: { size: string; stock: number }[];
@@ -270,7 +320,11 @@ export async function sqlPostProduct(product: {
   colors?: { label: string; hex?: string | null }[];
 }) {
   const inserted = await sql`
-    INSERT INTO products (name, description, price, old_price, discount_percentage, priority, top_sale, limited_edition, season, color, category_id, fabric_composition, has_lining)
+    INSERT INTO products (
+      name, description, price, old_price, discount_percentage, priority,
+      top_sale, limited_edition, season, color,
+      category_id, subcategory_id, fabric_composition, has_lining
+    )
     VALUES (
       ${product.name},
       ${product.description || null},
@@ -283,6 +337,7 @@ export async function sqlPostProduct(product: {
       ${product.season || null},
       ${product.color || null},
       ${product.category_id || null},
+      ${product.subcategory_id || null},
       ${product.fabric_composition || null},
       ${product.has_lining || false}
     )
@@ -321,6 +376,7 @@ export async function sqlPostProduct(product: {
   return { id: productId };
 }
 
+// Update existing product
 export async function sqlPutProduct(
   id: number,
   update: {
@@ -335,6 +391,7 @@ export async function sqlPutProduct(
     season?: string;
     color?: string;
     category_id?: number | null;
+    subcategory_id?: number | null; // ✅ NEW
     fabric_composition?: string;
     has_lining?: boolean;
     sizes?: { size: string; stock: number }[];
@@ -357,6 +414,7 @@ export async function sqlPutProduct(
       season = ${update.season || null},
       color = ${update.color || null},
       category_id = ${update.category_id || null},
+      subcategory_id = ${update.subcategory_id || null}, -- ✅ NEW
       fabric_composition = ${update.fabric_composition || null},
       has_lining = ${update.has_lining || false}
     WHERE id = ${id};
@@ -367,7 +425,7 @@ export async function sqlPutProduct(
     SELECT url FROM product_media WHERE product_id = ${id};
   `;
 
-  // Step 3: Clear old sizes and media
+  // Step 3: Clear old sizes, media, colors
   await sql`DELETE FROM product_sizes WHERE product_id = ${id};`;
   await sql`DELETE FROM product_media WHERE product_id = ${id};`;
   await sql`DELETE FROM product_colors WHERE product_id = ${id};`;
@@ -402,6 +460,7 @@ export async function sqlPutProduct(
     }
   }
 
+  // Step 7: Re-insert new colors
   if (update.colors?.length) {
     for (const color of update.colors) {
       await sql`
@@ -514,7 +573,9 @@ export async function sqlPostOrder(order: OrderInput) {
       INSERT INTO order_items (
         order_id, product_id, size, quantity, price, color
       ) VALUES (
-        ${orderId}, ${item.product_id}, ${item.size}, ${item.quantity}, ${item.price}, ${item.color || null}
+        ${orderId}, ${item.product_id}, ${item.size}, ${item.quantity}, ${
+      item.price
+    }, ${item.color || null}
       );
     `;
   }
@@ -685,6 +746,69 @@ export async function sqlPutCategory(id: number, name: string) {
 export async function sqlDeleteCategory(id: number) {
   await sql`
     DELETE FROM categories
+    WHERE id = ${id};
+  `;
+  return { deleted: true };
+}
+
+// =====================
+// 📦 SUBCATEGORIES
+// =====================
+
+// Get all subcategories
+export async function sqlGetAllSubcategories() {
+  return await sql`
+    SELECT * FROM subcategories
+    ORDER BY id;
+  `;
+}
+
+// Get all subcategories for a specific category
+export async function sqlGetSubcategoriesByCategory(categoryId: number) {
+  return await sql`
+    SELECT * FROM subcategories
+    WHERE category_id = ${categoryId}
+    ORDER BY id;
+  `;
+}
+
+// Get a single subcategory by ID
+export async function sqlGetSubcategory(id: number) {
+  return await sql`
+    SELECT * FROM subcategories
+    WHERE id = ${id};
+  `;
+}
+
+// Create a new subcategory
+export async function sqlPostSubcategory(name: string, categoryId: number) {
+  const result = await sql`
+    INSERT INTO subcategories (name, category_id)
+    VALUES (${name}, ${categoryId})
+    RETURNING *;
+  `;
+  return result[0];
+}
+
+// Update a subcategory by ID
+export async function sqlPutSubcategory(
+  id: number,
+  name: string,
+  categoryId: number
+) {
+  const result = await sql`
+    UPDATE subcategories
+    SET name = ${name}, category_id = ${categoryId}
+    WHERE id = ${id}
+    RETURNING *;
+  `;
+  return result[0];
+}
+
+// Delete a subcategory by ID
+export async function sqlDeleteSubcategory(id: number) {
+  await sql`
+    DELETE FROM subcategories
     WHERE id = ${id};
   `;
   return { deleted: true };

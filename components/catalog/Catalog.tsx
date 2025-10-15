@@ -59,6 +59,7 @@ export default function Catalog() {
   // Read filters from URL params
   const category = searchParams.get("category");
   const season = searchParams.get("season");
+  const subcategory = searchParams.get("subcategory");
 
   useEffect(() => {
     async function fetchProducts() {
@@ -68,7 +69,11 @@ export default function Catalog() {
 
         let url = "/api/products";
 
-        if (category) {
+        if (subcategory) {
+          url = `/api/products/subcategory?subcategory=${encodeURIComponent(
+            subcategory
+          )}`;
+        } else if (category) {
           url = `/api/products/category?category=${encodeURIComponent(
             category
           )}`;
@@ -125,8 +130,15 @@ export default function Catalog() {
               {"<"}
             </button>
             <span>
-              Категорія{" "}
-              {category ? category : season ? `Сезон ${season}` : "Усі"}
+              {subcategory
+                ? `Підкатегорія ${subcategory}${
+                    category ? ` (Категорія ${category})` : ""
+                  }`
+                : category
+                ? `Категорія ${category}`
+                : season
+                ? `Сезон ${season}`
+                : "Усі товари"}
             </span>
           </div>
 
@@ -149,7 +161,9 @@ export default function Catalog() {
               {/* Image */}
               <div className="relative w-full aspect-[2/3] bg-gray-200 group-hover:filter group-hover:brightness-90 transition duration-300">
                 {(() => {
-                  const firstPhoto = product.media.find((m) => m.type === "photo");
+                  const firstPhoto = product.media.find(
+                    (m) => m.type === "photo"
+                  );
                   const imageUrl = firstPhoto?.url || product.media[0]?.url;
                   return imageUrl ? (
                     <img
@@ -158,13 +172,14 @@ export default function Catalog() {
                       className="w-full h-full object-cover transition-all duration-300 group-hover:brightness-90"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        target.src = "https://placehold.co/400x600/cccccc/666666?text=No+Image";
+                        target.src =
+                          "https://placehold.co/400x600/cccccc/666666?text=No+Image";
                       }}
                     />
                   ) : (
                     <div className="w-full h-full bg-gray-300 flex items-center justify-center">
-                      <img 
-                        src="https://placehold.co/400x600/cccccc/666666?text=No+Image" 
+                      <img
+                        src="https://placehold.co/400x600/cccccc/666666?text=No+Image"
                         alt="No Image"
                         className="w-full h-full object-cover"
                       />

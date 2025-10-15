@@ -42,6 +42,7 @@ export default function EditProductPage() {
     season: "",
     color: "",
     categoryId: null as number | null,
+    subcategoryId: null as number | null,
     fabricComposition: "",
     hasLining: false,
   });
@@ -54,9 +55,13 @@ export default function EditProductPage() {
   const [categoryOptions, setCategoryOptions] = useState<
     { id: number; name: string }[]
   >([]);
-  const [availableColors, setAvailableColors] = useState<{ color: string; hex?: string }[]>(
-    []
-  );
+  const [subcategoryOptions, setSubcategoryOptions] = useState<
+    { id: number; name: string; category_id: number }[]
+  >([]);
+
+  const [availableColors, setAvailableColors] = useState<
+    { color: string; hex?: string }[]
+  >([]);
   const [customColorLabel, setCustomColorLabel] = useState("");
   const [customColorHex, setCustomColorHex] = useState("#000000");
   const [colors, setColors] = useState<{ label: string; hex?: string }[]>([]);
@@ -87,6 +92,7 @@ export default function EditProductPage() {
           season: productData.season,
           color: productData.color,
           categoryId: productData.category_id,
+          subcategoryId: productData.subcategory_id || null,
           fabricComposition: productData.fabric_composition || "",
           hasLining: productData.has_lining || false,
         });
@@ -119,6 +125,29 @@ export default function EditProductPage() {
 
     fetchColors();
   }, []);
+
+  useEffect(() => {
+    async function fetchSubcategories() {
+      if (!formData.categoryId) {
+        setSubcategoryOptions([]); // Clear if no category selected
+        return;
+      }
+
+      try {
+        const res = await fetch(
+          `/api/subcategories?parent_category_id=${formData.categoryId}`
+        );
+        if (!res.ok) throw new Error("Failed to fetch subcategories");
+
+        const data = await res.json();
+        setSubcategoryOptions(data);
+      } catch (error) {
+        console.error("Error fetching subcategories", error);
+      }
+    }
+
+    fetchSubcategories();
+  }, [formData.categoryId]);
 
   // useEffect(() => {
   //   console.log("formData", formData);
@@ -179,7 +208,9 @@ export default function EditProductPage() {
           description: formData.description,
           price: Number(formData.price),
           old_price: formData.oldPrice ? Number(formData.oldPrice) : null,
-          discount_percentage: formData.discountPercentage ? Number(formData.discountPercentage) : null,
+          discount_percentage: formData.discountPercentage
+            ? Number(formData.discountPercentage)
+            : null,
           priority: Number(formData.priority),
           sizes: formData.sizes,
           media: updatedMedia,
@@ -189,6 +220,7 @@ export default function EditProductPage() {
           color: formData.color,
           colors,
           category_id: formData.categoryId,
+          subcategory_id: formData.subcategoryId,
           fabric_composition: formData.fabricComposition,
           has_lining: formData.hasLining,
         }),
@@ -250,7 +282,9 @@ export default function EditProductPage() {
                 <Input
                   type="number"
                   value={formData.discountPercentage}
-                  onChange={(e) => handleChange("discountPercentage", e.target.value)}
+                  onChange={(e) =>
+                    handleChange("discountPercentage", e.target.value)
+                  }
                   placeholder="Наприклад: 20"
                 />
 
@@ -273,9 +307,11 @@ export default function EditProductPage() {
                 <Label>Категорія</Label>
                 <select
                   value={formData.categoryId ?? ""}
-                  onChange={(e) =>
-                    handleChange("categoryId", Number(e.target.value))
-                  }
+                  onChange={(e) => {
+                    const selectedCategoryId = Number(e.target.value);
+                    handleChange("categoryId", selectedCategoryId);
+                    handleChange("subcategoryId", null); // ✅ Reset subcategory
+                  }}
                   className="w-full border rounded px-3 py-2 text-sm dark:bg-gray-800 dark:text-white"
                 >
                   <option value="">Виберіть категорію</option>
@@ -285,6 +321,30 @@ export default function EditProductPage() {
                     </option>
                   ))}
                 </select>
+
+                {formData.categoryId && (
+                  <>
+                    <Label>Підкатегорія</Label>
+                    <select
+                      value={formData.subcategoryId ?? ""}
+                      onChange={(e) =>
+                        handleChange("subcategoryId", Number(e.target.value))
+                      }
+                      className="w-full border rounded px-3 py-2 text-sm dark:bg-gray-800 dark:text-white"
+                    >
+                      <option value="">Виберіть підкатегорію</option>
+                      {subcategoryOptions
+                        .filter(
+                          (sub) => sub.category_id === formData.categoryId
+                        )
+                        .map((sub) => (
+                          <option key={sub.id} value={sub.id}>
+                            {sub.name}
+                          </option>
+                        ))}
+                    </select>
+                  </>
+                )}
 
                 <Label>Сезон</Label>
                 <select
@@ -304,10 +364,24 @@ export default function EditProductPage() {
                   <Label>Кольори</Label>
                   <div className="flex gap-2 flex-wrap">
                     {colors.map((c, idx) => (
-                      <span key={idx} className="inline-flex items-center gap-2 border rounded-full px-3 py-1 text-xs">
-                        <span className="w-4 h-4 rounded-full border" style={{ backgroundColor: c.hex || "#fff" }} />
+                      <span
+                        key={idx}
+                        className="inline-flex items-center gap-2 border rounded-full px-3 py-1 text-xs"
+                      >
+                        <span
+                          className="w-4 h-4 rounded-full border"
+                          style={{ backgroundColor: c.hex || "#fff" }}
+                        />
                         {c.label}
-                        <button type="button" className="ml-1 text-red-600" onClick={() => setColors(colors.filter((_, i) => i !== idx))}>×</button>
+                        <button
+                          type="button"
+                          className="ml-1 text-red-600"
+                          onClick={() =>
+                            setColors(colors.filter((_, i) => i !== idx))
+                          }
+                        >
+                          ×
+                        </button>
                       </span>
                     ))}
                   </div>
@@ -318,10 +392,18 @@ export default function EditProductPage() {
                         type="button"
                         key={`pal-${c.color}`}
                         className="flex items-center gap-2 border rounded-full px-2 py-1 text-xs hover:shadow transition"
-                        onClick={() => setColors((prev) => [...prev, { label: c.color, hex: c.hex }])}
+                        onClick={() =>
+                          setColors((prev) => [
+                            ...prev,
+                            { label: c.color, hex: c.hex },
+                          ])
+                        }
                         title={c.color}
                       >
-                        <span className="w-4 h-4 rounded-full border" style={{ backgroundColor: c.hex || "#fff" }} />
+                        <span
+                          className="w-4 h-4 rounded-full border"
+                          style={{ backgroundColor: c.hex || "#fff" }}
+                        />
                         <span>{c.color}</span>
                       </button>
                     ))}
@@ -343,7 +425,13 @@ export default function EditProductPage() {
                       type="button"
                       onClick={() => {
                         if (!customColorLabel.trim()) return;
-                        setColors([...colors, { label: customColorLabel.trim(), hex: customColorHex }]);
+                        setColors([
+                          ...colors,
+                          {
+                            label: customColorLabel.trim(),
+                            hex: customColorHex,
+                          },
+                        ]);
                         setCustomColorLabel("");
                         setCustomColorHex("#000000");
                       }}
@@ -360,7 +448,9 @@ export default function EditProductPage() {
                     <Label>Склад тканини</Label>
                     <TextArea
                       value={formData.fabricComposition}
-                      onChange={(value) => handleChange("fabricComposition", value)}
+                      onChange={(value) =>
+                        handleChange("fabricComposition", value)
+                      }
                       rows={3}
                       placeholder="Наприклад: 80% бавовна, 20% поліестер"
                     />

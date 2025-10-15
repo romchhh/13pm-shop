@@ -64,9 +64,14 @@ export async function PUT(
     const limitedEdition = body.limited_edition === true;
     const season = typeof body.season === "string" ? body.season : null;
     const categoryId = body.category_id ? Number(body.category_id) : null;
+    const subcategoryId = body.subcategory_id
+      ? Number(body.subcategory_id)
+      : null;
     const color = typeof body.color === "string" ? body.color : null;
     const oldPrice = body.old_price ? Number(body.old_price) : null;
-    const discountPercentage = body.discount_percentage ? Number(body.discount_percentage) : null;
+    const discountPercentage = body.discount_percentage
+      ? Number(body.discount_percentage)
+      : null;
     const priority = body.priority ? Number(body.priority) : 0;
 
     await sqlPutProduct(id, {
@@ -81,6 +86,7 @@ export async function PUT(
       season,
       color,
       category_id: categoryId,
+      subcategory_id: subcategoryId,
       sizes: Array.isArray(body.sizes)
         ? body.sizes.map((size: string) => ({
             size,
@@ -89,7 +95,10 @@ export async function PUT(
         : [],
       media: Array.isArray(body.media) ? body.media : [],
       colors: Array.isArray(body.colors)
-        ? body.colors.map((c: { label: string; hex?: string | null }) => ({ label: c.label, hex: c.hex || null }))
+        ? body.colors.map((c: { label: string; hex?: string | null }) => ({
+            label: c.label,
+            hex: c.hex || null,
+          }))
         : [],
     });
 
