@@ -23,68 +23,36 @@ function loadEnvUrl(): string {
 // Define all migrations here (idempotent!)
 const migrations: Migration[] = [
   {
-    id: "2025-10-14_add_fabric_and_lining_fields",
-    description: "Add fabric_composition and has_lining to products",
+    id: "2025-10-14_create_subcategories_and_modify_products",
+    description: "Create subcategories table, modify products table (subcategory_id, season[], lining_description)",
     sql: `
-      ALTER TABLE products 
-      ADD COLUMN IF NOT EXISTS fabric_composition TEXT;
-      ALTER TABLE products 
-      ADD COLUMN IF NOT EXISTS has_lining BOOLEAN DEFAULT FALSE;
-      COMMENT ON COLUMN products.fabric_composition IS 'Склад тканини продукту (наприклад: 80% бавовна, 20% поліестер)';
-      COMMENT ON COLUMN products.has_lining IS 'Чи має продукт підкладку';
-    `,
-  },
-  {
-    id: "2025-10-14_add_product_colors_table",
-    description: "Create product_colors table and backfill from products.color",
-    sql: `
-      CREATE TABLE IF NOT EXISTS product_colors (
+      -- Створення нової таблиці subcategories
+      CREATE TABLE IF NOT EXISTS subcategories (
         id SERIAL PRIMARY KEY,
-        product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-        label TEXT NOT NULL,
-        hex TEXT
+        name VARCHAR(255) NOT NULL,
+        category_id INT,
+        FOREIGN KEY (category_id) REFERENCES categories(id)
       );
-      INSERT INTO product_colors (product_id, label)
-      SELECT id, color FROM products p
-      WHERE p.color IS NOT NULL
-        AND NOT EXISTS (
-          SELECT 1 FROM product_colors pc WHERE pc.product_id = p.id
-        );
-    `,
-  },
-  {
-    id: "2025-10-14_add_color_to_order_items",
-    description: "Add color column to order_items",
-    sql: `
-      ALTER TABLE order_items ADD COLUMN IF NOT EXISTS color TEXT;
-    `,
-  },
-  {
-    id: "2025-10-14_update_orders_delivery_method_check",
-    description: "Expand allowed delivery_method values",
-    sql: `
-      DO $$
-      BEGIN
-        IF EXISTS (
-          SELECT 1
-          FROM information_schema.table_constraints
-          WHERE table_name = 'orders' AND constraint_name = 'orders_delivery_method_check'
-        ) THEN
-          ALTER TABLE orders DROP CONSTRAINT orders_delivery_method_check;
-        END IF;
-      END$$;
 
-      ALTER TABLE orders
-      ADD CONSTRAINT orders_delivery_method_check
-      CHECK (delivery_method IN (
-        'nova_poshta', -- legacy
-        'nova_poshta_branch',
-        'nova_poshta_locker',
-        'nova_poshta_courier',
-        'ukrposhta',
-        'pickup', -- legacy
-        'showroom_pickup'
-      ));
+      -- Додавання нового поля subcategory_id в таблицю products
+      ALTER TABLE products
+      ADD COLUMN IF NOT EXISTS subcategory_id INT;
+
+      -- Додавання зовнішнього ключа до поля subcategory_id
+      ALTER TABLE products
+      ADD CONSTRAINT IF NOT EXISTS fk_subcategory
+      FOREIGN KEY (subcategory_id) REFERENCES subcategories(id);
+
+      -- Видалення старого поля season
+      ALTER TABLE products
+      DROP COLUMN IF EXISTS season;
+
+      -- Додавання нового поля season типу TEXT[]
+      ALTER TABLE products
+      ADD COLUMN IF NOT EXISTS season TEXT[];
+
+      -- Додавання нового поля lining_description
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS lining_description TEXT;
     `,
   },
 ];
