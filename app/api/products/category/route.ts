@@ -13,7 +13,11 @@ export async function GET(request: Request) {
       products = await sqlGetAllProducts();
     }
 
-    return NextResponse.json(products);
+    return NextResponse.json(products, {
+      headers: {
+        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+      },
+    });
   } catch {
     return NextResponse.json(
       { error: "Failed to fetch products" },
@@ -21,3 +25,6 @@ export async function GET(request: Request) {
     );
   }
 }
+
+// Enable revalidation every 5 minutes
+export const revalidate = 300;

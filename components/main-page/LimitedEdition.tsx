@@ -1,17 +1,11 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useMemo } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import Link from "next/link";
-
-type Product = {
-  id: number;
-  name: string;
-  price: number;
-  media: { type: string; url: string }[];
-  limited_edition: boolean;
-};
+import { getProductImageSrc } from "@/lib/getFirstProductImage";
+import { useProducts } from "@/lib/useProducts";
 
 // Define a fallback (template) product
 const templateProduct = {
@@ -19,41 +13,25 @@ const templateProduct = {
   name: "Шовкова сорочка без рукавів",
   price: 1780,
   media: [{ type: "image", url: "https://placehold.co/432x682" }],
+  limited_edition: false,
 };
 
 export default function LimitedEdition() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { products: allProducts, loading } = useProducts();
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const res = await fetch("/api/products");
-        const data = await res.json();
-        // Filter for limited edition products
-        const limitedEditionProducts = data.filter(
-          (p: Product) => p.limited_edition
-        );
+  // Filter and fill limited edition products
+  const products = useMemo(() => {
+    const limitedEditionProducts = allProducts.filter((p) => p.limited_edition);
 
-        // If there are not enough products, fill with template products
-        if (limitedEditionProducts.length < 8) {
-          const filledProducts = [
-            ...limitedEditionProducts,
-            ...Array(8 - limitedEditionProducts.length).fill(templateProduct),
-          ];
-          setProducts(filledProducts);
-        } else {
-          setProducts(limitedEditionProducts);
-        }
-      } catch (error) {
-        console.error("Failed to fetch products:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProducts();
-  }, []);
+    // If there are not enough products, fill with template products
+    if (limitedEditionProducts.length < 8) {
+      return [
+        ...limitedEditionProducts,
+        ...Array(8 - limitedEditionProducts.length).fill(templateProduct),
+      ];
+    }
+    return limitedEditionProducts;
+  }, [allProducts]);
 
   if (loading) {
     return <div className="text-center py-10">Завантаження...</div>;
@@ -95,15 +73,7 @@ export default function LimitedEdition() {
                 >
                   <img
                     className="w-full h-[500px] object-cover group-hover:brightness-90 transition duration-300"
-                    src={
-                      product.media?.find((m) => m.type === "photo")?.url
-                        ? `/api/images/${
-                            product.media.find((m) => m.type === "photo")?.url
-                          }`
-                        : product.media?.[0]?.url
-                        ? `/api/images/${product.media[0].url}`
-                        : "https://placehold.co/432x682"
-                    }
+                    src={getProductImageSrc(product.media, "https://placehold.co/432x682")}
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       target.src =
@@ -146,15 +116,7 @@ export default function LimitedEdition() {
                 >
                   <img
                     className="w-full h-[500px] object-cover group-hover:brightness-90 transition duration-300"
-                    src={
-                      product.media?.find((m) => m.type === "photo")?.url
-                        ? `/api/images/${
-                            product.media.find((m) => m.type === "photo")?.url
-                          }`
-                        : product.media?.[0]?.url
-                        ? `/api/images/${product.media[0].url}`
-                        : "https://placehold.co/432x682"
-                    }
+                    src={getProductImageSrc(product.media, "https://placehold.co/432x682")}
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       target.src =
@@ -187,15 +149,7 @@ export default function LimitedEdition() {
               <div className="aspect-[2/3] w-full overflow-hidden">
                 <img
                   className="w-full h-full object-cover group-hover:brightness-90 transition duration-300"
-                  src={(() => {
-                    const firstPhoto = product.media?.find(
-                      (m) => m.type === "photo"
-                    );
-                    const imageUrl = firstPhoto?.url || product.media?.[0]?.url;
-                    return imageUrl
-                      ? `/api/images/${imageUrl}`
-                      : "https://placehold.co/432x682";
-                  })()}
+                  src={getProductImageSrc(product.media, "https://placehold.co/432x682")}
                   alt={product.name}
                 />
               </div>

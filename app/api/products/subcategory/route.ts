@@ -14,7 +14,11 @@ export async function GET(request: Request) {
     }
 
     const products = await sqlGetProductsBySubcategoryName(subcategory);
-    return NextResponse.json(products);
+    return NextResponse.json(products, {
+      headers: {
+        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+      },
+    });
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to fetch products by subcategory" },
@@ -22,3 +26,6 @@ export async function GET(request: Request) {
     );
   }
 }
+
+// Enable revalidation every 5 minutes
+export const revalidate = 300;

@@ -10,6 +10,7 @@ import {
 } from "../ui/table";
 import Link from "next/link";
 import Pagination from "./Pagination";
+import { getProductImageSrc } from "@/lib/getFirstProductImage";
 
 const SIZE_MAP: Record<string, string> = {
   "1": "XL",
@@ -260,15 +261,19 @@ export default function ProductsTable() {
                   >
                     <TableCell className="px-5 py-4">
                       {product.media && product.media.length > 0 ? (
-                        product.media.find((m) => m.type === "photo") ? (
-                          <img
-                            src={`/api/images/${product.media.find((m) => m.type === "photo")?.url}`}
-                            alt={product.name}
-                            className="w-12 h-12 object-cover rounded"
-                          />
-                        ) : (
-                          <span className="text-xs text-gray-400">—</span>
-                        )
+                        <img
+                          src={getProductImageSrc(product.media)}
+                          alt={product.name}
+                          className="w-12 h-12 object-cover rounded"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = "none";
+                            const parent = target.parentElement;
+                            if (parent) {
+                              parent.innerHTML = '<span class="text-xs text-gray-400">—</span>';
+                            }
+                          }}
+                        />
                       ) : (
                         <span className="text-xs text-gray-400">—</span>
                       )}
