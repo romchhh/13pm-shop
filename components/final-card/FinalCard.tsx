@@ -10,6 +10,7 @@ import "swiper/css";
 import "swiper/css/navigation";
 import { Mousewheel } from "swiper/modules";
 import "swiper/css/scrollbar";
+import { getFirstProductImage } from "@/lib/getFirstProductImage";
 
 // interface Product {
 //   id: number;

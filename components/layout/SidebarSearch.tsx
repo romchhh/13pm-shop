@@ -1,14 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-
-interface Product {
-  id: number;
-  name: string;
-  price: number;
-  media: { url: string; type: string }[];
-}
+import { useState, useMemo } from "react";
+import { getProductImageSrc } from "@/lib/getFirstProductImage";
+import { useProducts } from "@/lib/useProducts";
 
 interface SearchSidebarProps {
   isOpen: boolean;
@@ -22,31 +17,14 @@ export default function SearchSidebar({
   isDark,
 }: SearchSidebarProps) {
   const [query, setQuery] = useState("");
-  const [allProducts, setAllProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(false);
+  const { products: allProducts, loading } = useProducts();
 
-  useEffect(() => {
-    if (!isOpen) return;
-
-    async function fetchProducts() {
-      try {
-        setLoading(true);
-        const res = await fetch("/api/products");
-        if (!res.ok) throw new Error("Failed to fetch products");
-        const data = await res.json();
-        setAllProducts(data);
-      } catch (err) {
-        console.error("Error fetching products", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchProducts();
-  }, [isOpen]);
-
-  const filteredProducts = allProducts.filter((product) =>
-    product.name.toLowerCase().includes(query.toLowerCase())
+  const filteredProducts = useMemo(
+    () =>
+      allProducts.filter((product) =>
+        product.name.toLowerCase().includes(query.toLowerCase())
+      ),
+    [allProducts, query]
   );
 
   return (
@@ -112,13 +90,7 @@ export default function SearchSidebar({
                       }`}
                     >
                       <img
-                        src={
-                          product.media.find((m) => m.type === "photo")?.url 
-                            ? `/api/images/${product.media.find((m) => m.type === "photo")?.url}`
-                            : product.media?.[0]?.url 
-                            ? `/api/images/${product.media[0].url}`
-                            : "https://placehold.co/64x64"
-                        }
+                        src={getProductImageSrc(product.media, "https://placehold.co/64x64")}
                         alt={product.name}
                         className="w-16 h-16 object-cover rounded border"
                         onError={(e) => {

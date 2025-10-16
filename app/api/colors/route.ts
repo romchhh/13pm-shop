@@ -5,7 +5,12 @@ import { NextResponse } from "next/server";
 export async function GET() {
   try {
     const colors = await sqlGetAllColors();
-    return NextResponse.json(colors, { status: 200 });
+    return NextResponse.json(colors, {
+      status: 200,
+      headers: {
+        "Cache-Control": "public, s-maxage=600, stale-while-revalidate=1200",
+      },
+    });
   } catch (error) {
     console.error("[GET /colors]", error);
     return NextResponse.json(
@@ -14,3 +19,6 @@ export async function GET() {
     );
   }
 }
+
+// Enable revalidation every 10 minutes (colors change rarely)
+export const revalidate = 600;

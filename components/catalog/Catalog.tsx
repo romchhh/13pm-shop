@@ -6,6 +6,8 @@ import SidebarFilter from "../layout/SidebarFilter";
 import { useAppContext } from "@/lib/GeneralProvider";
 import SidebarMenu from "../layout/SidebarMenu";
 import Link from "next/link";
+import { getProductImageSrc } from "@/lib/getFirstProductImage";
+import { cachedFetch, CACHE_KEYS } from "@/lib/cache";
 
 interface Product {
   id: number;
@@ -68,23 +70,24 @@ export default function Catalog() {
         setError(null);
 
         let url = "/api/products";
+        let cacheKey = CACHE_KEYS.PRODUCTS;
 
         if (subcategory) {
           url = `/api/products/subcategory?subcategory=${encodeURIComponent(
             subcategory
           )}`;
+          cacheKey = CACHE_KEYS.PRODUCTS_SUBCATEGORY(subcategory);
         } else if (category) {
           url = `/api/products/category?category=${encodeURIComponent(
             category
           )}`;
+          cacheKey = CACHE_KEYS.PRODUCTS_CATEGORY(category);
         } else if (season) {
           url = `/api/products/season?season=${encodeURIComponent(season)}`;
+          cacheKey = CACHE_KEYS.PRODUCTS_SEASON(season);
         }
 
-        const res = await fetch(url);
-        if (!res.ok) throw new Error("Failed to fetch products");
-        const data = await res.json();
-
+        const data = await cachedFetch<Product[]>(url, cacheKey);
         setProducts(data);
       } catch (err: unknown) {
         if (err instanceof Error) {
@@ -99,10 +102,11 @@ export default function Catalog() {
     // Fetch colors
     async function fetchColors() {
       try {
-        const res = await fetch("/api/colors");
-        if (!res.ok) throw new Error("Failed to fetch colors");
-        const data = await res.json();
-        const colorNames = data.map((item: { color: string }) => item.color);
+        const data = await cachedFetch<{ color: string }[]>(
+          "/api/colors",
+          CACHE_KEYS.COLORS
+        );
+        const colorNames = data.map((item) => item.color);
         setColors(colorNames);
       } catch (err: unknown) {
         console.error("Error fetching colors:", err);
@@ -112,7 +116,7 @@ export default function Catalog() {
 
     fetchProducts();
     fetchColors();
-  }, [category, season]); // refetch if URL params change
+  }, [category, season, subcategory]); // refetch if URL params change
 
   if (loading) return <div>Loading products...</div>;
   if (error) return <div>Error: {error}</div>;
@@ -160,36 +164,16 @@ export default function Catalog() {
             >
               {/* Image */}
               <div className="relative w-full aspect-[2/3] bg-gray-200 group-hover:filter group-hover:brightness-90 transition duration-300">
-                {(() => {
-                  const sortedMedia = [...product.media].sort((a, b) => {
-                    // Prioritize photos first, then use original index order as fallback
-                    if (a.type === "photo" && b.type !== "photo") return -1;
-                    if (a.type !== "photo" && b.type === "photo") return 1;
-                    return 0;
-                  });
-                  const imageUrl = sortedMedia[0]?.url;
-                  
-                  return imageUrl ? (
-                    <img
-                      src={`/api/images/${imageUrl}`}
-                      alt={product.name}
-                      className="w-full h-full object-cover transition-all duration-300 group-hover:brightness-90"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src =
-                          "https://placehold.co/400x600/cccccc/666666?text=No+Image";
-                      }}
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gray-300 flex items-center justify-center">
-                      <img
-                        src="https://placehold.co/400x600/cccccc/666666?text=No+Image"
-                        alt="No Image"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  );
-                })()}
+                <img
+                  src={getProductImageSrc(product.media)}
+                  alt={product.name}
+                  className="w-full h-full object-cover transition-all duration-300 group-hover:brightness-90"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src =
+                      "https://placehold.co/400x600/cccccc/666666?text=No+Image";
+                  }}
+                />
               </div>
 
               {/* Product Title + Price */}

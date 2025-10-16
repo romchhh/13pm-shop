@@ -39,7 +39,12 @@ function getFileType(mimeType: string, filename: string): "photo" | "video" {
 export async function GET() {
   try {
     const products = await sqlGetAllProducts();
-    return NextResponse.json(products);
+    
+    return NextResponse.json(products, {
+      headers: {
+        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+      },
+    });
   } catch (error) {
     console.error("[GET /products]", error);
     return NextResponse.json(
@@ -48,6 +53,9 @@ export async function GET() {
     );
   }
 }
+
+// Enable revalidation every 5 minutes
+export const revalidate = 300;
 
 // =========================
 // POST /api/products

@@ -1,42 +1,22 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useMemo } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
 import Link from "next/link";
-
-
-interface Product {
-  id: number;
-  name: string;
-  price: number;
-  top_sale: boolean;
-  media: { type: string; url: string }[];
-}
+import { getProductImageSrc } from "@/lib/getFirstProductImage";
+import { useProducts } from "@/lib/useProducts";
 
 export default function TopSale() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  // const prevRef = useRef<HTMLButtonElement>(null);
-  // const nextRef = useRef<HTMLButtonElement>(null);
+  const { products: allProducts, loading } = useProducts();
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const res = await fetch("/api/products");
-        const data = await res.json();
-        setProducts(data.filter((p: Product) => p.top_sale)); // Only top_sale products
-      } catch (error) {
-        console.error("Failed to fetch products:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProducts();
-  }, []);
+  // Filter only top_sale products
+  const products = useMemo(
+    () => allProducts.filter((p) => p.top_sale),
+    [allProducts]
+  );
 
   if (loading) {
     return <div className="text-center py-10">Завантаження...</div>;
@@ -68,11 +48,7 @@ export default function TopSale() {
             <div className="aspect-[2/3] w-full overflow-hidden">
               <img
                 className="w-full h-full object-cover group-hover:brightness-90 transition duration-300"
-                src={(() => {
-                  const firstPhoto = product.media?.find((m) => m.type === "photo");
-                  const imageUrl = firstPhoto?.url || product.media?.[0]?.url;
-                  return imageUrl ? `/api/images/${imageUrl}` : "https://placehold.co/432x613";
-                })()}
+                src={getProductImageSrc(product.media, "https://placehold.co/432x613")}
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.src = "https://placehold.co/432x613/cccccc/666666?text=No+Image";
@@ -106,11 +82,7 @@ export default function TopSale() {
               >
                 <img
                   className="w-full h-[350px] object-cover group-hover:brightness-90 transition duration-300"
-                  src={(() => {
-                    const firstPhoto = product.media?.find((m) => m.type === "photo");
-                    const imageUrl = firstPhoto?.url || product.media?.[0]?.url;
-                    return imageUrl ? `/api/images/${imageUrl}` : "https://placehold.co/432x613";
-                  })()}
+                  src={getProductImageSrc(product.media, "https://placehold.co/432x613")}
                   alt={product.name}
                 />
                 <div className="justify-center text-lg font-normal font-['Inter'] capitalize leading-normal text-center">

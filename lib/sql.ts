@@ -65,7 +65,7 @@ export async function sqlGetAllProducts() {
         '[]'
       ) AS sizes,
       COALESCE(
-        JSON_AGG(DISTINCT JSONB_BUILD_OBJECT('type', m.type, 'url', m.url))
+        JSON_AGG(JSONB_BUILD_OBJECT('type', m.type, 'url', m.url) ORDER BY m.id)
         FILTER (WHERE m.id IS NOT NULL),
         '[]'
       ) AS media,
@@ -119,7 +119,7 @@ export async function sqlGetProduct(id: number) {
     ) s ON true
     LEFT JOIN LATERAL (
       SELECT JSON_AGG(
-        JSONB_BUILD_OBJECT('type', m.type, 'url', m.url)
+        JSONB_BUILD_OBJECT('type', m.type, 'url', m.url) ORDER BY m.id
       ) AS media
       FROM product_media m
       WHERE m.product_id = p.id
@@ -155,7 +155,7 @@ export async function sqlGetProductsByCategory(categoryName: string) {
         '[]'
       ) AS sizes,
       COALESCE(
-        JSON_AGG(DISTINCT JSONB_BUILD_OBJECT('type', m.type, 'url', m.url))
+        JSON_AGG(JSONB_BUILD_OBJECT('type', m.type, 'url', m.url) ORDER BY m.id)
         FILTER (WHERE m.id IS NOT NULL),
         '[]'
       ) AS media,
@@ -197,7 +197,7 @@ export async function sqlGetProductsBySubcategoryName(name: string) {
         '[]'
       ) AS sizes,
       COALESCE(
-        JSON_AGG(DISTINCT JSONB_BUILD_OBJECT('type', m.type, 'url', m.url))
+        JSON_AGG(JSONB_BUILD_OBJECT('type', m.type, 'url', m.url) ORDER BY m.id)
         FILTER (WHERE m.id IS NOT NULL),
         '[]'
       ) AS media,
@@ -238,7 +238,7 @@ export async function sqlGetProductsBySeason(season: string) {
         '[]'
       ) AS sizes,
       COALESCE(
-        JSON_AGG(DISTINCT JSONB_BUILD_OBJECT('type', m.type, 'url', m.url))
+        JSON_AGG(JSONB_BUILD_OBJECT('type', m.type, 'url', m.url) ORDER BY m.id)
         FILTER (WHERE m.id IS NOT NULL),
         '[]'
       ) AS media,

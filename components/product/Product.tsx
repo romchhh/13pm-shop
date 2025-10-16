@@ -2,9 +2,11 @@
 
 import { useAppContext } from "@/lib/GeneralProvider";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useBasket } from "@/lib/BasketProvider";
 import Alert from "@/components/shared/Alert";
+import { getFirstProductImage } from "@/lib/getFirstProductImage";
+import { useProduct } from "@/lib/useProducts";
 
 const SIZE_MAP: Record<string, string> = {
   "1": "XL",
@@ -14,28 +16,16 @@ const SIZE_MAP: Record<string, string> = {
   "5": "XS",
 };
 
-interface Product {
-  id: number;
-  name: string;
-  price: number;
-  media: { url: string; type: string }[];
-  description: string;
-  sizes?: { size: string; stock: string }[];
-  colors?: { label: string; hex?: string | null }[];
-  has_lining?: boolean;
-  lining_description?: string;
-  fabric_composition?: string;
-}
-
 export default function Product() {
   const { addItem } = useBasket();
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const quantity = 1;
   const { isDark } = useAppContext();
   const { id } = useParams();
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  
+  // Use the optimized hook for product fetching
+  const { product, loading, error } = useProduct(id as string);
+  
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [showToast, setShowToast] = useState(false);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
@@ -45,8 +35,8 @@ export default function Product() {
   const [showSizeGuide, setShowSizeGuide] = useState(false);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
 
+  // Auto-select first color if available
   useEffect(() => {
-    // Auto-select first color if available
     if (product?.colors && product.colors.length > 0 && !selectedColor) {
       setSelectedColor(product.colors[0].label);
     }
@@ -71,40 +61,19 @@ export default function Product() {
       setTimeout(() => setAlertMessage(null), 3000);
       return;
     }
+    const media = product.media || [];
     addItem({
       id: product.id,
       name: product.name,
       price: product.price,
       size: selectedSize,
       quantity,
-      imageUrl: media.find((m) => m.type === "photo")?.url || "",
+      imageUrl: getFirstProductImage(media),
       color: selectedColor || undefined,
     });
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);
   };
-
-  useEffect(() => {
-    async function fetchProduct() {
-      try {
-        const res = await fetch(`/api/products/${id}`);
-        if (!res.ok) throw new Error("Failed to fetch product");
-        const data = await res.json();
-        // console.log(data);
-        setProduct(data);
-      } catch (err: unknown) {
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError("An unknown error occurred");
-        }
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    if (id) fetchProduct();
-  }, [id]);
 
   if (loading) return <div className="p-10">Loading product...</div>;
   if (error || !product)

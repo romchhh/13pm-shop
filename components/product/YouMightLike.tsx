@@ -1,40 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
-
-interface Product {
-  id: number;
-  name: string;
-  price: number;
-  media: { url: string; type: string }[];
-}
+import { getProductImageSrc } from "@/lib/getFirstProductImage";
+import { useProducts } from "@/lib/useProducts";
 
 export default function YouMightLike() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { products: allProducts, loading } = useProducts();
 
-  useEffect(() => {
-    async function fetchProducts() {
-      try {
-        const res = await fetch("/api/products");
-        if (!res.ok) throw new Error("Failed to fetch products");
-        const allProducts: Product[] = await res.json();
-
-        // Shuffle and pick 4
-        const shuffled = allProducts.sort(() => 0.5 - Math.random());
-        const selected = shuffled.slice(0, 4);
-        setProducts(selected);
-      } catch (err) {
-        console.error("Error fetching products:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchProducts();
-  }, []);
+  // Shuffle and pick 4 random products
+  const products = useMemo(() => {
+    const shuffled = [...allProducts].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, 4);
+  }, [allProducts]);
 
   if (loading) return null; // or a spinner
 
@@ -51,11 +30,7 @@ export default function YouMightLike() {
         {/* Products list */}
         <div className="flex flex-col sm:flex-row sm:flex-wrap justify-center sm:justify-around gap-8">
           {products.map((product) => {
-            const firstPhoto = product.media.find((m) => m.type === "photo");
-            const imageUrl = firstPhoto?.url || product.media?.[0]?.url;
-            const image = imageUrl
-              ? `/api/images/${imageUrl}`
-              : "https://placehold.co/432x613";
+            const image = getProductImageSrc(product.media, "https://placehold.co/432x613");
             return (
               <Link
                 key={product.id}
