@@ -275,6 +275,7 @@ export default function FormElements() {
                     options={multiOptions}
                     defaultSelected={sizes}
                     onChange={setSizes}
+                    zIndex={51}
                   />
                 </div>
                 <div>

@@ -221,7 +221,7 @@ export default function Product() {
               <div
                 key={size}
                 onClick={() => setSelectedSize(size)}
-                className={`w-14 sm:w-16 md:w-18 p-2 sm:p-3 border-2 flex justify-center text-base md:text-lg font-['Inter'] uppercase cursor-pointer transition-all duration-200 ${
+                className={`w-19 sm:w-19 md:w-22 p-2 sm:p-3 border-2 flex justify-center text-base md:text-lg font-['Inter'] uppercase cursor-pointer transition-all duration-200 ${
                   selectedSize === size
                     ? "border-black dark:border-white font-bold scale-105 shadow-md"
                     : "border-gray-300 dark:border-gray-600 hover:border-gray-600 dark:hover:border-gray-400 hover:scale-105 hover:shadow-md"
