@@ -1,0 +1,73 @@
+/* Mobile-first CSS optimizations */
+
+/* Reduce animations on mobile for better performance */
+@media (max-width: 768px) {
+  * {
+    animation-duration: 0.2s !important;
+    transition-duration: 0.2s !important;
+  }
+  
+  /* Disable hover effects on touch devices */
+  .group:hover .group-hover\:brightness-90 {
+    filter: none;
+  }
+  
+  /* Optimize font rendering */
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeSpeed;
+  }
+  
+  /* Reduce blur effects on mobile */
+  .blur-\[88\.5px\] {
+    backdrop-filter: blur(20px);
+  }
+  
+  /* Optimize images for mobile */
+  img {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}
+
+/* Critical CSS for above-the-fold content */
+@media (max-width: 420px) {
+  /* Reduce padding/margins for small screens */
+  .p-10 {
+    padding: 1rem;
+  }
+  
+  .gap-10 {
+    gap: 1rem;
+  }
+  
+  /* Optimize grid for very small screens */
+  .grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+}
+
+/* Preload critical fonts */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Inter Regular'), local('Inter-Regular');
+}
+
+/* Reduce layout shift */
+.aspect-\[2\/3\] {
+  aspect-ratio: 2/3;
+  contain: layout style paint;
+}
+
+/* Optimize video for mobile */
+@media (max-width: 768px) {
+  video {
+    will-change: auto;
+    transform: translateZ(0);
+  }
+}

@@ -1,0 +1,177 @@
+/* Critical CSS - Above the fold styles */
+
+/* Reset and base styles */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
+}
+
+/* Header critical styles */
+.header-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: white;
+  border-bottom: 1px solid #e5e5e5;
+  height: 64px;
+}
+
+@media (min-width: 1024px) {
+  .header-container {
+    height: 80px;
+  }
+}
+
+/* Hero section critical styles */
+.hero-container {
+  width: 100%;
+  height: 600px;
+  position: relative;
+  overflow: hidden;
+}
+
+@media (min-width: 640px) {
+  .hero-container {
+    height: 720px;
+  }
+}
+
+@media (min-width: 768px) {
+  .hero-container {
+    height: 900px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero-container {
+    height: 1080px;
+  }
+}
+
+/* Video/Image loading state */
+.hero-media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Hero content */
+.hero-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  height: 100%;
+  padding: 2.5rem;
+  gap: 3.5rem;
+}
+
+@media (min-width: 768px) {
+  .hero-content {
+    padding: 8.75rem;
+    gap: 4.375rem;
+  }
+}
+
+/* Hero text */
+.hero-title {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: white;
+  font-size: 1.875rem;
+  font-weight: 500;
+  font-family: 'Montserrat', sans-serif;
+  text-transform: uppercase;
+  text-align: center;
+  line-height: 1.2;
+}
+
+@media (min-width: 768px) {
+  .hero-title {
+    font-size: 4.375rem;
+  }
+}
+
+/* Hero button */
+.hero-button {
+  cursor: pointer;
+  margin: 0 auto;
+  width: 10rem;
+  height: 3rem;
+  padding: 0.5rem;
+  background: white;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  transition: opacity 0.3s;
+}
+
+.hero-button:hover {
+  opacity: 0.5;
+}
+
+@media (min-width: 640px) {
+  .hero-button {
+    width: 13rem;
+    height: 3.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .hero-button {
+    width: 15rem;
+    height: 4rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero-button {
+    width: 18rem;
+    height: 4rem;
+  }
+}
+
+/* Loading states */
+.loading-skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

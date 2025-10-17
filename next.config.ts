@@ -14,11 +14,12 @@ const nextConfig: NextConfig = {
       },
     ],
     formats: ["image/webp", "image/avif"],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+    // Optimized device sizes for mobile-first
+    deviceSizes: [320, 420, 640, 750, 828, 1080, 1200, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     minimumCacheTTL: 31536000, // 1 year
     dangerouslyAllowSVG: true,
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;"
   },
   // Enable compression
   compress: true,
@@ -32,27 +33,49 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: "100mb", // for images, videos
     },
-    // Enable optimized package imports
-    optimizePackageImports: ["@react-jvectormap/core", "swiper", "react-apexcharts"],
+    // Enable optimized package imports with tree shaking
+    optimizePackageImports: [
+      "@react-jvectormap/core", 
+      "swiper", 
+      "react-apexcharts",
+      "web-vitals"
+    ],
+    // Enable modern bundling
+    esmExternals: true,
   },
   // Turbopack configuration removed to avoid SVG loader issues
   // Production optimizations
   productionBrowserSourceMaps: false,
-  // Webpack optimizations
+  // Advanced Webpack optimizations
   webpack: (config, { dev, isServer }) => {
+    // Tree shaking optimization
+    config.optimization.usedExports = true;
+    config.optimization.sideEffects = false;
+    
     // Optimize bundle size
     if (!dev && !isServer) {
       config.optimization.splitChunks = {
         chunks: 'all',
+        minSize: 20000,
+        maxSize: 244000,
         cacheGroups: {
           default: false,
           vendors: false,
+          // Framework chunk (React, Next.js)
+          framework: {
+            name: 'framework',
+            chunks: 'all',
+            test: /[\\/]node_modules[\\/](react|react-dom|next)[\\/]/,
+            priority: 40,
+            enforce: true,
+          },
           // Vendor chunk
           vendor: {
             name: 'vendor',
             chunks: 'all',
-            test: /node_modules/,
-            priority: 20
+            test: /[\\/]node_modules[\\/]/,
+            priority: 20,
+            enforce: true,
           },
           // Common chunk
           common: {
@@ -65,7 +88,11 @@ const nextConfig: NextConfig = {
           }
         }
       };
+      
+      // Minimize bundle
+      config.optimization.minimize = true;
     }
+    
     return config;
   },
   // Headers for better caching and performance

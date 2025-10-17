@@ -95,13 +95,13 @@ export default function CatalogClient({ initialProducts, colors }: CatalogClient
           </button>
         </div>
 
-        {/* Product Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {sortedProducts.map((product) => (
+        {/* Product Grid - Mobile Optimized */}
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
+          {sortedProducts.map((product, index) => (
             <Link
               href={`/product/${product.id}`}
               key={product.id}
-              className="flex flex-col gap-4 group"
+              className="flex flex-col gap-2 sm:gap-4 group"
             >
               {/* Image */}
               <div className="relative w-full aspect-[2/3] bg-gray-200 group-hover:filter group-hover:brightness-90 transition duration-300">
@@ -110,15 +110,20 @@ export default function CatalogClient({ initialProducts, colors }: CatalogClient
                   alt={product.name}
                   className="object-cover transition-all duration-300 group-hover:brightness-90"
                   fill
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
-                  loading="lazy"
+                  sizes="(max-width: 420px) 45vw, (max-width: 640px) 45vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 20vw"
+                  loading={index < 6 ? "eager" : "lazy"} // First 6 images load immediately
+                  priority={index < 4} // First 4 get priority
+                  quality={index < 8 ? 80 : 70} // Progressive quality
+                  placeholder="blur"
+                  blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
                 />
               </div>
 
               {/* Product Title + Price */}
-              <span className="text-base sm:text-lg">
+              <span className="text-sm sm:text-base lg:text-lg leading-tight">
                 {product.name}
-                <br /> {product.price}₴
+                <br /> 
+                <span className="font-medium">{product.price}₴</span>
               </span>
             </Link>
           ))}

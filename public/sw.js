@@ -1,26 +1,22 @@
-// Optimized service worker for CHARS e-commerce
-const CACHE_NAME = 'chars-v2';
-const STATIC_CACHE = 'chars-static-v2';
-const DYNAMIC_CACHE = 'chars-dynamic-v2';
-const IMAGE_CACHE = 'chars-images-v2';
+// Mobile-optimized service worker for CHARS e-commerce
+const CACHE_NAME = 'chars-mobile-v3';
+const STATIC_CACHE = 'chars-static-v3';
+const DYNAMIC_CACHE = 'chars-dynamic-v3';
+const IMAGE_CACHE = 'chars-images-v3';
+const MOBILE_CACHE = 'chars-mobile-v3';
 
 // Critical resources to cache immediately
 const STATIC_ASSETS = [
   '/',
   '/catalog',
   '/images/light-theme/chars-logo-header-light.png',
-  '/images/IMG_5831.webm',
+  '/images/Знімок екрана 2025-10-17 о 22.25.53.png', // Mobile hero image
   '/images/dark-theme/chars-logo-header-dark.png',
   '/images/location-icon.svg',
   '/images/email-icon.svg',
   '/images/instagram-icon.svg',
-  '/images/facebook-icon.svg',
-  // Why Choose Us images
-  '/images/IMG_0043.JPG',
-  '/images/IMAGE 2025-10-17 21:48:37.jpg',
-  '/images/IMG_0045.JPG',
-  '/images/IMAGE 2025-10-17 21:48:55.jpg',
-  '/images/IMG_0042.JPG'
+  '/images/facebook-icon.svg'
+  // Video only cached on desktop, Why Choose Us images load on scroll
 ];
 
 // Install event - cache critical resources
@@ -87,11 +83,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Handle images and videos with cache-first strategy
+  // Handle images and videos with mobile-optimized cache-first strategy
   if (url.pathname.startsWith('/images/') || 
       url.pathname.startsWith('/api/images/') ||
       request.destination === 'image' ||
       request.destination === 'video') {
+    
     event.respondWith(
       caches.open(IMAGE_CACHE).then((cache) => {
         return cache.match(request).then((cachedResponse) => {
@@ -101,7 +98,15 @@ self.addEventListener('fetch', (event) => {
           
           return fetch(request).then((response) => {
             if (response.status === 200) {
-              cache.put(request, response.clone());
+              // Only cache smaller images on mobile to save storage
+              const isMobile = request.headers.get('user-agent')?.includes('Mobile');
+              const contentLength = response.headers.get('content-length');
+              const fileSize = contentLength ? parseInt(contentLength) : 0;
+              
+              // Cache all images on desktop, only <2MB on mobile
+              if (!isMobile || fileSize < 2 * 1024 * 1024) {
+                cache.put(request, response.clone());
+              }
             }
             return response;
           });

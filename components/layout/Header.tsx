@@ -126,8 +126,8 @@ export default function Header() {
               />
             </Link>
 
-            <div className="flex items-center gap-10 text-xl font-['Inter']">
-              <Link href="/#about" className="hover:text-[#8C7461]">
+            <div className="flex items-center gap-10 text-xl font-normal font-['Inter']">
+              <Link href="/#about" className="hover:text-[#8C7461] font-['Inter']">
                 Про нас
               </Link>
 
@@ -138,30 +138,11 @@ export default function Header() {
                   if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
                   setCatalogOpen(true);
                 }}
-                // onClick={() => {
-                //   setPinnedCatalog((prev) => {
-                //     const willBePinned = !prev;
-
-                //     if (!willBePinned) {
-                //       // Just unpinned — prevent re-opening on hover
-                //       setJustUnpinned(true);
-                //       setCatalogOpen(false);
-                //       setHoveredCategoryId(null);
-
-                //       // Reset after 300ms to allow hover again
-                //       setTimeout(() => setJustUnpinned(false), 300);
-                //     } else {
-                //       setCatalogOpen(true);
-                //     }
-
-                //     return willBePinned;
-                //   });
-                // }}
                 className="relative"
               >
                 <Link
                 href="/catalog"
-                  className={`cursor-pointer hover:text-[#8C7461] ${
+                  className={`cursor-pointer hover:text-[#8C7461] font-['Inter'] ${
                     pinnedCatalog
                       ? "text-[#8C7461] font-semibold underline"
                       : ""
@@ -173,14 +154,14 @@ export default function Header() {
 
               <Link
                 href="/#payment-and-delivery"
-                className="hover:text-[#8C7461]"
+                className="hover:text-[#8C7461] font-['Inter']"
               >
                 Оплата і доставка
               </Link>
-              <Link href="/#reviews" className="hover:text-[#8C7461]">
+              <Link href="/#reviews" className="hover:text-[#8C7461] font-['Inter']">
                 Відгуки
               </Link>
-              <Link href="/#contacts" className="hover:text-[#8C7461]">
+              <Link href="/#contacts" className="hover:text-[#8C7461] font-['Inter']">
                 Контакти
               </Link>
             </div>
@@ -265,7 +246,7 @@ export default function Header() {
                         category.name
                       )}`)
                     }
-                    className="cursor-pointer whitespace-nowrap hover:text-[#8C7461] text-lg"
+                    className="cursor-pointer whitespace-nowrap hover:text-[#8C7461] text-lg font-normal font-['Inter']"
                   >
                     {category.name}
                   </button>
@@ -280,7 +261,7 @@ export default function Header() {
                             href={`/catalog?subcategory=${encodeURIComponent(
                               subcat.name
                             )}`}
-                            className="hover:text-[#8C7461] text-base py-1"
+                            className="hover:text-[#8C7461] text-base py-1 font-normal font-['Inter'] text-black"
                           >
                             {subcat.name}
                           </Link>

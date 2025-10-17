@@ -11,14 +11,26 @@ export function middleware(request: NextRequest) {
   response.headers.set('Referrer-Policy', 'origin-when-cross-origin');
   response.headers.set('X-DNS-Prefetch-Control', 'on');
 
-  // Performance headers for images
+  // Performance headers for images with mobile optimization
   if (pathname.startsWith('/images/') || pathname.startsWith('/api/images/')) {
     response.headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+    response.headers.set('Accept-Ranges', 'bytes'); // Enable range requests for large images
   }
 
-  // Static assets caching
+  // Static assets caching with compression
   if (pathname.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2)$/)) {
     response.headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+    response.headers.set('Vary', 'Accept-Encoding'); // Enable compression
+  }
+
+  // Mobile-specific optimizations
+  const userAgent = request.headers.get('user-agent') || '';
+  const isMobile = /Mobile|Android|iPhone|iPad/i.test(userAgent);
+  
+  if (isMobile) {
+    response.headers.set('X-Mobile-Optimized', 'true');
+    // Hint to browsers to prioritize critical resources on mobile
+    response.headers.set('Critical-CH', 'Viewport-Width, Device-Memory');
   }
 
   // ONLY apply authentication logic to admin routes

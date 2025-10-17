@@ -27,8 +27,8 @@ export default function YouMightLike() {
           Вам може сподобатися
         </div>
 
-        {/* Products list */}
-        <div className="flex flex-col sm:flex-row sm:flex-wrap justify-center sm:justify-around gap-8">
+        {/* Products list - Mobile Optimized */}
+        <div className="grid grid-cols-2 sm:flex sm:flex-row sm:flex-wrap justify-center sm:justify-around gap-4 sm:gap-8">
           {products.map((product) => {
             const image = getProductImageSrc(product.media, "https://placehold.co/432x613");
             return (
@@ -40,13 +40,16 @@ export default function YouMightLike() {
                 <Image
                   src={image}
                   alt={product.name}
-                  width={400} // Adjust based on your layout
-                  height={600} // Adjust based on your layout
+                  width={400}
+                  height={600}
                   className="w-full h-auto sm:h-[613px] object-cover"
+                  sizes="(max-width: 420px) 45vw, (max-width: 640px) 45vw, (max-width: 1024px) 33vw, 400px"
+                  loading="lazy"
+                  quality={75} // Lower quality for recommendations
                   placeholder="blur"
-                  blurDataURL="https://placehold.co/400x600/cccccc/666666?text=No+Image"
+                  blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
                 />
-                <div className="mt-2 text-lg sm:text-xl font-normal font-['Inter'] capitalize leading-normal text-center">
+                <div className="mt-2 text-sm sm:text-lg lg:text-xl font-normal font-['Inter'] capitalize leading-normal text-center">
                   {product.name}
                 </div>
                 <div className="mt-1 w-24 h-4 mx-auto text-lg sm:text-xl font-normal font-['Inter'] leading-none text-center">

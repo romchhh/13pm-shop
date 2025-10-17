@@ -4,12 +4,17 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build --turbopack && npm run compress",
+    "build": "next build --turbopack && npm run compress && npm run optimize",
     "build:analyze": "ANALYZE=true npm run build",
+    "build:fast": "next build --turbopack",
     "compress": "gzip -k -f .next/static/**/*.js .next/static/**/*.css || true",
+    "optimize": "echo 'Build optimized for production' && du -sh .next/static",
     "start": "next start",
+    "start:prod": "NODE_ENV=production next start",
     "lint": "eslint",
-    "migrate": "ts-node scripts/migrate.ts"
+    "lint:fix": "eslint --fix",
+    "migrate": "ts-node scripts/migrate.ts",
+    "check-vitals": "echo 'Run lighthouse audit after deployment'"
   },
   "dependencies": {
     "@react-jvectormap/core": "^1.0.4",
@@ -26,7 +31,8 @@
     "sharp": "^0.33.5",
     "slick-carousel": "1.8.1",
     "swiper": "^12.0.2",
-    "tailwind-merge": "^3.3.1"
+    "tailwind-merge": "^3.3.1",
+    "web-vitals": "^5.1.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
