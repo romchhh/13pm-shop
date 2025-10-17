@@ -15,15 +15,19 @@ export default function SocialMedia() {
     >
       <div className="flex flex-col-reverse lg:flex-row justify-center">
         <div className="flex justify-center gap-4 sm:gap-7 overflow-x-auto">
-          <img
+          <Image
             className="w-44 h-auto sm:w-80 sm:h-auto rounded-[24px] sm:rounded-[46.43px] max-w-full max-h-[calc(100vh-20px)]"
             src="/images/social-media-0.png"
             alt="image-1"
+            width={320}
+            height={480}
           />
-          <img
+          <Image
             className="w-44 h-auto sm:w-80 sm:h-auto rounded-[24px] sm:rounded-[53.20px] max-w-full max-h-[calc(100vh-20px)]"
             src="/images/social-media-1.png"
             alt="image-2"
+            width={320}
+            height={480}
           />
         </div>
 

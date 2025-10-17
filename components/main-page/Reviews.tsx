@@ -4,6 +4,7 @@ import React, { useRef } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
 import Link from "next/link";
+import Image from "next/image";
 
 import "swiper/css";
 import "swiper/css/navigation";
@@ -48,26 +49,30 @@ export default function Reviews() {
             ref={prevRef}
             className="text-4xl lg:text-5xl font-bold cursor-pointer"
           >
-            <img
-              src={`${
+            <Image
+              src={
                 isDark
                   ? "/images/dark-theme/slider-button-left.svg"
                   : "/images/light-theme/slider-button-left.svg"
-              }`}
+              }
               alt="Previous"
+              width={48}
+              height={48}
             />
           </button>
           <button
             ref={prevRef}
             className="text-4xl lg:text-5xl font-bold cursor-pointer"
           >
-            <img
-              src={`${
+            <Image
+              src={
                 isDark
                   ? "/images/dark-theme/slider-button-right.svg"
                   : "/images/light-theme/slider-button-right.svg"
-              }`}
+              }
               alt="Next"
+              width={48}
+              height={48}
             />
           </button>
         </div>

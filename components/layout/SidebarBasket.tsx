@@ -2,6 +2,7 @@
 
 import { useBasket } from "@/lib/BasketProvider";
 import Link from "next/link";
+import Image from "next/image";
 
 interface SidebarBasketProps {
   isOpen: boolean;
@@ -51,13 +52,11 @@ export default function SidebarBasket({
                 key={`${item.id}-${item.size}`}
                 className="flex gap-4 border-b pb-4 last:border-none"
               >
-                <img
+                <Image
                   src={item.imageUrl ? `/api/images/${item.imageUrl}` : "https://placehold.co/100x150/cccccc/666666?text=No+Image"}
                   alt={item.name}
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = "https://placehold.co/100x150/cccccc/666666?text=No+Image";
-                  }}
+                  width={96}
+                  height={128}
                   className="w-24 h-32 object-cover"
                 />
                 <div className="flex flex-col justify-between flex-1">

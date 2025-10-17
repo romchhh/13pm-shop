@@ -1,22 +1,17 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { getProductImageSrc } from "@/lib/getFirstProductImage";
 import { useProducts } from "@/lib/useProducts";
 
 export default function TopSale() {
-  const { products: allProducts, loading } = useProducts();
-
-  // Filter only top_sale products
-  const products = useMemo(
-    () => allProducts.filter((p) => p.top_sale),
-    [allProducts]
-  );
+  const { products, loading } = useProducts({ topSale: true });
 
   if (loading) {
     return <div className="text-center py-10">Завантаження...</div>;
@@ -45,15 +40,13 @@ export default function TopSale() {
             key={product.id}
             className="flex flex-col gap-3 group w-full"
           >
-            <div className="aspect-[2/3] w-full overflow-hidden">
-              <img
-                className="w-full h-full object-cover group-hover:brightness-90 transition duration-300"
-                src={getProductImageSrc(product.media, "https://placehold.co/432x613")}
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = "https://placehold.co/432x613/cccccc/666666?text=No+Image";
-                }}
+            <div className="aspect-[2/3] w-full overflow-hidden relative">
+              <Image
+                className="object-cover group-hover:brightness-90 transition duration-300"
+                src={getProductImageSrc(product.first_media, "https://placehold.co/432x613")}
                 alt={product.name}
+                fill
+                sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
               />
             </div>
 
@@ -80,11 +73,15 @@ export default function TopSale() {
                 href={`/product/${product.id}`}
                 className="relative flex flex-col gap-3 group"
               >
-                <img
-                  className="w-full h-[350px] object-cover group-hover:brightness-90 transition duration-300"
-                  src={getProductImageSrc(product.media, "https://placehold.co/432x613")}
-                  alt={product.name}
-                />
+                <div className="relative w-full h-[350px]">
+                  <Image
+                    className="object-cover group-hover:brightness-90 transition duration-300"
+                    src={getProductImageSrc(product.first_media, "https://placehold.co/432x613")}
+                    alt={product.name}
+                    fill
+                    sizes="90vw"
+                  />
+                </div>
                 <div className="justify-center text-lg font-normal font-['Inter'] capitalize leading-normal text-center">
                   {product.name} <br />
                   {product.price.toLocaleString()} ₴

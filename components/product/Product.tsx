@@ -4,6 +4,7 @@ import { useAppContext } from "@/lib/GeneralProvider";
 import { useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useBasket } from "@/lib/BasketProvider";
+import Image from "next/image";
 import Alert from "@/components/shared/Alert";
 import { getFirstProductImage } from "@/lib/getFirstProductImage";
 import { useProduct } from "@/lib/useProducts";
@@ -104,13 +105,13 @@ export default function Product() {
                 playsInline
               />
             ) : (
-              <img
-                className="w-full h-auto max-h-[85vh] object-contain"
-                src={
-                  `/api/images/${media[activeImageIndex]?.url}` ||
-                  "https://placehold.co/800x1160"
-                }
+              <Image
+                className="object-contain"
+                src={`/api/images/${media[activeImageIndex]?.url}`}
                 alt={product.name}
+                width={800}
+                height={1160}
+                style={{ maxHeight: "85vh", width: "auto", height: "auto" }}
               />
             )}
           </div>
@@ -126,13 +127,15 @@ export default function Product() {
                   )
                 }
               >
-                <img
-                  src={`${
+                <Image
+                  src={
                     isDark
                       ? "/images/dark-theme/slider-button-left.svg"
                       : "/images/light-theme/slider-button-left.svg"
-                  }`}
+                  }
                   alt="Previous"
+                  width={32}
+                  height={32}
                   className="w-6 h-6 md:w-8 md:h-8"
                 />
               </button>
@@ -146,13 +149,15 @@ export default function Product() {
                   )
                 }
               >
-                <img
-                  src={`${
+                <Image
+                  src={
                     isDark
                       ? "/images/dark-theme/slider-button-right.svg"
                       : "/images/light-theme/slider-button-right.svg"
-                  }`}
+                  }
                   alt="Next"
+                  width={32}
+                  height={32}
                   className="w-6 h-6 md:w-8 md:h-8"
                 />
               </button>
@@ -257,6 +262,20 @@ export default function Product() {
           >
             в кошик
           </div>
+
+          {/* Telegram Manager Link */}
+          <a
+            href="https://t.me/Nikita_Dom_A"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`w-full text-center border ${
+              isDark 
+                ? "border-gray-500 text-gray-400 hover:border-white hover:text-white" 
+                : "border-gray-400 text-gray-600 hover:border-black hover:text-black"
+            } py-2 px-3 text-sm md:text-base font-light font-['Inter'] cursor-pointer transition-all duration-200`}
+          >
+            Написати менеджеру
+          </a>
 
           {/* Size Guide Link */}
           <div className="text-right">
@@ -396,22 +415,13 @@ export default function Product() {
                   </div>
 
                   <div className="text-center mt-10 pt-6 border-t border-gray-200">
-                    <img
+                    <Image
                       src="/images/light-theme/chars-logo-header-light.png"
                       alt="CHARS Logo"
+                      width={120}
+                      height={40}
                       className="mx-auto h-10 opacity-80"
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                        const nextElement = e.currentTarget
-                          .nextElementSibling as HTMLElement;
-                        if (nextElement) {
-                          nextElement.style.display = "block";
-                        }
-                      }}
                     />
-                    <div className="text-2xl font-bold hidden font-['Inter']">
-                      CHARS
-                    </div>
                   </div>
                 </div>
               </div>

@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
+    "build": "next build --turbopack && npm run compress",
+    "build:analyze": "ANALYZE=true npm run build",
+    "compress": "gzip -k -f .next/static/**/*.js .next/static/**/*.css || true",
     "start": "next start",
     "lint": "eslint",
     "migrate": "ts-node scripts/migrate.ts"

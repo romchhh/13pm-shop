@@ -39,48 +39,30 @@ export const sql = Object.assign(
 // 👕 PRODUCTS
 // =====================
 
-// Get all products with sizes & media
+// Get all products - optimized for catalog list (only first photo)
 export async function sqlGetAllProducts() {
   return await sql`
     SELECT
       p.id,
       p.name,
-      p.description,
       p.price,
       p.top_sale,
       p.limited_edition,
       p.season,
       p.category_id,
       p.subcategory_id,
-      p.color,
-      p.fabric_composition,
-      p.has_lining,
-      p.lining_description,
       c.name AS category_name,
       sc.name AS subcategory_name,
-      p.created_at,
-      COALESCE(
-        JSON_AGG(DISTINCT JSONB_BUILD_OBJECT('size', s.size, 'stock', s.stock))
-        FILTER (WHERE s.id IS NOT NULL),
-        '[]'
-      ) AS sizes,
-      COALESCE(
-        JSON_AGG(JSONB_BUILD_OBJECT('type', m.type, 'url', m.url) ORDER BY m.id)
-        FILTER (WHERE m.id IS NOT NULL),
-        '[]'
-      ) AS media,
-      COALESCE(
-        JSON_AGG(DISTINCT JSONB_BUILD_OBJECT('label', pc.label, 'hex', pc.hex))
-        FILTER (WHERE pc.id IS NOT NULL),
-        '[]'
-      ) AS colors
+      (
+        SELECT JSONB_BUILD_OBJECT('type', m.type, 'url', m.url)
+        FROM product_media m
+        WHERE m.product_id = p.id AND m.type = 'photo'
+        ORDER BY m.id
+        LIMIT 1
+      ) AS first_media
     FROM products p
     LEFT JOIN categories c ON p.category_id = c.id
     LEFT JOIN subcategories sc ON p.subcategory_id = sc.id
-    LEFT JOIN product_sizes s ON p.id = s.product_id
-    LEFT JOIN product_media m ON p.id = m.product_id
-    LEFT JOIN product_colors pc ON p.id = pc.product_id
-    GROUP BY p.id, c.name, sc.name
     ORDER BY p.id DESC;
   `;
 }
@@ -140,37 +122,22 @@ export async function sqlGetProductsByCategory(categoryName: string) {
     SELECT
       p.id,
       p.name,
-      p.description,
       p.price,
       p.top_sale,
       p.limited_edition,
       p.season,
-      p.color,
       p.category_id,
       c.name AS category_name,
-      p.created_at,
-      COALESCE(
-        JSON_AGG(DISTINCT JSONB_BUILD_OBJECT('size', s.size, 'stock', s.stock))
-        FILTER (WHERE s.id IS NOT NULL),
-        '[]'
-      ) AS sizes,
-      COALESCE(
-        JSON_AGG(JSONB_BUILD_OBJECT('type', m.type, 'url', m.url) ORDER BY m.id)
-        FILTER (WHERE m.id IS NOT NULL),
-        '[]'
-      ) AS media,
-      COALESCE(
-        JSON_AGG(DISTINCT JSONB_BUILD_OBJECT('label', pc.label, 'hex', pc.hex))
-        FILTER (WHERE pc.id IS NOT NULL),
-        '[]'
-      ) AS colors
+      (
+        SELECT JSONB_BUILD_OBJECT('type', m.type, 'url', m.url)
+        FROM product_media m
+        WHERE m.product_id = p.id AND m.type = 'photo'
+        ORDER BY m.id
+        LIMIT 1
+      ) AS first_media
     FROM products p
     LEFT JOIN categories c ON p.category_id = c.id
-    LEFT JOIN product_sizes s ON p.id = s.product_id
-    LEFT JOIN product_media m ON p.id = m.product_id
-    LEFT JOIN product_colors pc ON p.id = pc.product_id
     WHERE c.name = ${categoryName}
-    GROUP BY p.id, c.name
     ORDER BY p.id DESC;
   `;
 }
@@ -180,40 +147,25 @@ export async function sqlGetProductsBySubcategoryName(name: string) {
     SELECT
       p.id,
       p.name,
-      p.description,
       p.price,
       p.top_sale,
       p.limited_edition,
       p.season,
-      p.color,
       p.category_id,
       p.subcategory_id,
       c.name AS category_name,
       sc.name AS subcategory_name,
-      p.created_at,
-      COALESCE(
-        JSON_AGG(DISTINCT JSONB_BUILD_OBJECT('size', s.size, 'stock', s.stock))
-        FILTER (WHERE s.id IS NOT NULL),
-        '[]'
-      ) AS sizes,
-      COALESCE(
-        JSON_AGG(JSONB_BUILD_OBJECT('type', m.type, 'url', m.url) ORDER BY m.id)
-        FILTER (WHERE m.id IS NOT NULL),
-        '[]'
-      ) AS media,
-      COALESCE(
-        JSON_AGG(DISTINCT JSONB_BUILD_OBJECT('label', pc.label, 'hex', pc.hex))
-        FILTER (WHERE pc.id IS NOT NULL),
-        '[]'
-      ) AS colors
+      (
+        SELECT JSONB_BUILD_OBJECT('type', m.type, 'url', m.url)
+        FROM product_media m
+        WHERE m.product_id = p.id AND m.type = 'photo'
+        ORDER BY m.id
+        LIMIT 1
+      ) AS first_media
     FROM products p
     LEFT JOIN categories c ON p.category_id = c.id
     LEFT JOIN subcategories sc ON p.subcategory_id = sc.id
-    LEFT JOIN product_sizes s ON p.id = s.product_id
-    LEFT JOIN product_media m ON p.id = m.product_id
-    LEFT JOIN product_colors pc ON p.id = pc.product_id
     WHERE LOWER(sc.name) = LOWER(${name})
-    GROUP BY p.id, c.name, sc.name
     ORDER BY p.id DESC;
   `;
 }
@@ -223,37 +175,66 @@ export async function sqlGetProductsBySeason(season: string) {
     SELECT
       p.id,
       p.name,
-      p.description,
       p.price,
       p.top_sale,
       p.limited_edition,
       p.season,
-      p.color,
       p.category_id,
       c.name AS category_name,
-      p.created_at,
-      COALESCE(
-        JSON_AGG(DISTINCT JSONB_BUILD_OBJECT('size', s.size, 'stock', s.stock))
-        FILTER (WHERE s.id IS NOT NULL),
-        '[]'
-      ) AS sizes,
-      COALESCE(
-        JSON_AGG(JSONB_BUILD_OBJECT('type', m.type, 'url', m.url) ORDER BY m.id)
-        FILTER (WHERE m.id IS NOT NULL),
-        '[]'
-      ) AS media,
-      COALESCE(
-        JSON_AGG(DISTINCT JSONB_BUILD_OBJECT('label', pc.label, 'hex', pc.hex))
-        FILTER (WHERE pc.id IS NOT NULL),
-        '[]'
-      ) AS colors
+      (
+        SELECT JSONB_BUILD_OBJECT('type', m.type, 'url', m.url)
+        FROM product_media m
+        WHERE m.product_id = p.id AND m.type = 'photo'
+        ORDER BY m.id
+        LIMIT 1
+      ) AS first_media
     FROM products p
     LEFT JOIN categories c ON p.category_id = c.id
-    LEFT JOIN product_sizes s ON p.id = s.product_id
-    LEFT JOIN product_media m ON p.id = m.product_id
-    LEFT JOIN product_colors pc ON p.id = pc.product_id
     WHERE ${season} = ANY(p.season)
-    GROUP BY p.id, c.name
+    ORDER BY p.id DESC;
+  `;
+}
+
+// Get only top sale products (optimized - only first photo for list view)
+export async function sqlGetTopSaleProducts() {
+  return await sql`
+    SELECT
+      p.id,
+      p.name,
+      p.price,
+      p.top_sale,
+      p.limited_edition,
+      (
+        SELECT JSONB_BUILD_OBJECT('type', m.type, 'url', m.url)
+        FROM product_media m
+        WHERE m.product_id = p.id AND m.type = 'photo'
+        ORDER BY m.id
+        LIMIT 1
+      ) AS first_media
+    FROM products p
+    WHERE p.top_sale = true
+    ORDER BY p.id DESC;
+  `;
+}
+
+// Get only limited edition products (optimized - only first photo for list view)
+export async function sqlGetLimitedEditionProducts() {
+  return await sql`
+    SELECT
+      p.id,
+      p.name,
+      p.price,
+      p.top_sale,
+      p.limited_edition,
+      (
+        SELECT JSONB_BUILD_OBJECT('type', m.type, 'url', m.url)
+        FROM product_media m
+        WHERE m.product_id = p.id AND m.type = 'photo'
+        ORDER BY m.id
+        LIMIT 1
+      ) AS first_media
+    FROM products p
+    WHERE p.limited_edition = true
     ORDER BY p.id DESC;
   `;
 }
@@ -427,26 +408,34 @@ export async function sqlPutProduct(
   `;
 
   // Step 2: Fetch old media URLs before deleting from DB
-  const oldMedia = await sql`
+  const oldMediaRows = await sql`
     SELECT url FROM product_media WHERE product_id = ${id};
   `;
+  const oldMediaUrls = oldMediaRows.map((row: { url: string }) => row.url);
+  const newMediaUrls = (update.media || []).map((m) => m.url);
 
-  // Step 3: Clear old sizes, media, colors
+  // Step 3: Determine which files to DELETE from disk (old files NOT in new list)
+  const filesToDelete = oldMediaUrls.filter(
+    (oldUrl: string) => !newMediaUrls.includes(oldUrl)
+  );
+
+  // Step 4: Clear old sizes, media, colors from DB
   await sql`DELETE FROM product_sizes WHERE product_id = ${id};`;
   await sql`DELETE FROM product_media WHERE product_id = ${id};`;
   await sql`DELETE FROM product_colors WHERE product_id = ${id};`;
 
-  // Step 4: Delete old image files from disk
-  for (const { url } of oldMedia) {
+  // Step 5: Delete ONLY unused image files from disk
+  for (const url of filesToDelete) {
     const filePath = path.join(process.cwd(), "product-images", url);
     try {
       await unlink(filePath);
+      console.log(`✓ Deleted unused file: ${url}`);
     } catch (error) {
       console.error(`Failed to delete image: ${filePath}`, error);
     }
   }
 
-  // Step 5: Re-insert new sizes
+  // Step 6: Re-insert new sizes
   if (update.sizes?.length) {
     for (const size of update.sizes) {
       await sql`
@@ -456,7 +445,7 @@ export async function sqlPutProduct(
     }
   }
 
-  // Step 6: Re-insert new media
+  // Step 7: Re-insert new media (including old ones that weren't deleted)
   if (update.media?.length) {
     for (const media of update.media) {
       await sql`
@@ -466,7 +455,7 @@ export async function sqlPutProduct(
     }
   }
 
-  // Step 7: Re-insert new colors
+  // Step 8: Re-insert new colors
   if (update.colors?.length) {
     for (const color of update.colors) {
       await sql`

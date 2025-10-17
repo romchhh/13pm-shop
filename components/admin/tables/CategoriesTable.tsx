@@ -109,11 +109,6 @@ export default function CategoriesTable() {
     }
   }
 
-  function startEditing(category: Category) {
-    setEditingId(category.id);
-    setEditingName(category.name);
-  }
-
   function cancelEditing() {
     setEditingId(null);
     setEditingName("");

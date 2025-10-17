@@ -22,7 +22,6 @@ export default function Header() {
   const {
     isDark,
     setIsDark,
-    isSidebarOpen,
     setIsSidebarOpen,
     isBasketOpen,
     setIsBasketOpen,
@@ -44,8 +43,7 @@ export default function Header() {
   const [pinnedCatalog, setPinnedCatalog] = useState(false);
   const hoverTimeout = useRef<NodeJS.Timeout | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
-
-  const [justUnpinned, setJustUnpinned] = useState(false);
+  const [justUnpinned] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {

@@ -5,6 +5,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { AppProvider } from "@/lib/GeneralProvider";
 import { BasketProvider } from "@/lib/BasketProvider";
+import { registerServiceWorker } from "@/lib/registerSW";
 
 const inter = Inter({
   subsets: ["latin", "cyrillic"],
@@ -39,6 +40,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="uk" className={inter.className}>
+      <head>
+        {/* Preload critical resources */}
+        <link rel="preload" href="/images/light-theme/chars-logo-header-light.png" as="image" />
+        <link rel="preload" href="/api/products/top-sale" as="fetch" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="//placehold.co" />
+      </head>
       <body>
         <AppProvider>
           <BasketProvider>
@@ -47,6 +54,9 @@ export default function RootLayout({
             <Footer />
           </BasketProvider>
         </AppProvider>
+        <script dangerouslySetInnerHTML={{
+          __html: `(${registerServiceWorker.toString()})()`
+        }} />
       </body>
     </html>
   );

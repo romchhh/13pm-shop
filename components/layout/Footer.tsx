@@ -3,6 +3,7 @@
 import { useAppContext } from "@/lib/GeneralProvider";
 import { Montserrat } from "next/font/google";
 import Link from "next/link";
+import Image from "next/image";
 
 const montserrat = Montserrat({ subsets: ["latin"] });
 
@@ -31,9 +32,11 @@ export default function Footer() {
                 isDark ? "border-white" : "border-black"
               }`}
             >
-              <img
+              <Image
                 src="/images/location-icon.svg"
                 alt="Location"
+                width={40}
+                height={40}
                 className={`w-8 h-8 md:w-10 md:h-10 ${isDark ? "invert" : ""}`}
               />
             </div>
@@ -54,9 +57,11 @@ export default function Footer() {
                 isDark ? "border-white" : "border-black"
               }`}
             >
-              <img
+              <Image
                 src="/images/email-icon.svg"
                 alt="Email"
+                width={40}
+                height={40}
                 className={`w-8 h-8 md:w-10 md:h-10 ${isDark ? "invert" : ""}`}
               />
             </div>
@@ -76,9 +81,11 @@ export default function Footer() {
                 isDark ? "border-white" : "border-black"
               }`}
             >
-              <img
+              <Image
                 src="/images/instagram-icon.svg"
                 alt="Instagram"
+                width={40}
+                height={40}
                 className={`w-8 h-8 md:w-10 md:h-10 ${isDark ? "invert" : ""}`}
               />
             </div>
@@ -97,9 +104,11 @@ export default function Footer() {
                 isDark ? "border-white" : "border-black"
               }`}
             >
-              <img
+              <Image
                 src="/images/facebook-icon.svg"
                 alt="Facebook"
+                width={40}
+                height={40}
                 className={`w-8 h-8 md:w-10 md:h-10 ${isDark ? "invert" : ""}`}
               />
             </div>
@@ -246,9 +255,11 @@ export default function Footer() {
                   isDark ? "border-white" : "border-black"
                 }`}
               >
-                <img
+                <Image
                   src="/images/location-icon.svg"
                   alt="Location"
+                  width={16}
+                  height={16}
                   className={`w-3 h-3 md:w-4 md:h-4 ${isDark ? "invert" : ""}`}
                 />
               </div>
@@ -269,9 +280,11 @@ export default function Footer() {
                   isDark ? "border-white" : "border-black"
                 }`}
               >
-                <img
+                <Image
                   src="/images/email-icon.svg"
                   alt="Email"
+                  width={16}
+                  height={16}
                   className={`w-3 h-3 md:w-4 md:h-4 ${isDark ? "invert" : ""}`}
                 />
               </div>
@@ -289,9 +302,11 @@ export default function Footer() {
                   isDark ? "border-white" : "border-black"
                 }`}
               >
-                <img
+                <Image
                   src="/images/instagram-icon.svg"
                   alt="Instagram"
+                  width={16}
+                  height={16}
                   className={`w-3 h-3 md:w-4 md:h-4 ${isDark ? "invert" : ""}`}
                 />
               </div>
@@ -310,9 +325,11 @@ export default function Footer() {
                   isDark ? "border-white" : "border-black"
                 }`}
               >
-                <img
+                <Image
                   src="/images/facebook-icon.svg"
                   alt="Facebook"
+                  width={16}
+                  height={16}
                   className={`w-3 h-3 md:w-4 md:h-4 ${isDark ? "invert" : ""}`}
                 />
               </div>

@@ -9,6 +9,7 @@ import {
   TableRow,
 } from "../ui/table";
 import Link from "next/link";
+import Image from "next/image";
 import Pagination from "./Pagination";
 import { getProductImageSrc } from "@/lib/getFirstProductImage";
 
@@ -261,19 +262,15 @@ export default function ProductsTable() {
                   >
                     <TableCell className="px-5 py-4">
                       {product.media && product.media.length > 0 ? (
-                        <img
-                          src={getProductImageSrc(product.media)}
-                          alt={product.name}
-                          className="w-12 h-12 object-cover rounded"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = "none";
-                            const parent = target.parentElement;
-                            if (parent) {
-                              parent.innerHTML = '<span class="text-xs text-gray-400">—</span>';
-                            }
-                          }}
-                        />
+                        <div className="relative w-12 h-12">
+                          <Image
+                            src={getProductImageSrc(product.media)}
+                            alt={product.name}
+                            width={48}
+                            height={48}
+                            className="object-cover rounded"
+                          />
+                        </div>
                       ) : (
                         <span className="text-xs text-gray-400">—</span>
                       )}

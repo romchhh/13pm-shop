@@ -6,6 +6,7 @@ import SidebarFilter from "../layout/SidebarFilter";
 import { useAppContext } from "@/lib/GeneralProvider";
 import SidebarMenu from "../layout/SidebarMenu";
 import Link from "next/link";
+import Image from "next/image";
 import { getProductImageSrc } from "@/lib/getFirstProductImage";
 import { cachedFetch, CACHE_KEYS } from "@/lib/cache";
 
@@ -13,9 +14,9 @@ interface Product {
   id: number;
   name: string;
   price: number;
-  media: { url: string; type: string }[];
-  sizes: { size: string; stock: string }[]; // updated
-  color: string;
+  first_media?: { url: string; type: string } | null;
+  sizes?: { size: string; stock: string }[];
+  color?: string;
 }
 
 export default function Catalog() {
@@ -43,7 +44,7 @@ export default function Catalog() {
         product.sizes?.some((s) => selectedSizes.includes(s.size));
 
       const matchesColor =
-        selectedColors.length === 0 || selectedColors.includes(product.color);
+        selectedColors.length === 0 || (product.color && selectedColors.includes(product.color));
 
       const matchesMinPrice = minPrice === null || product.price >= minPrice;
       const matchesMaxPrice = maxPrice === null || product.price <= maxPrice;
@@ -164,15 +165,12 @@ export default function Catalog() {
             >
               {/* Image */}
               <div className="relative w-full aspect-[2/3] bg-gray-200 group-hover:filter group-hover:brightness-90 transition duration-300">
-                <img
-                  src={getProductImageSrc(product.media)}
+                <Image
+                  src={getProductImageSrc(product.first_media)}
                   alt={product.name}
-                  className="w-full h-full object-cover transition-all duration-300 group-hover:brightness-90"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src =
-                      "https://placehold.co/400x600/cccccc/666666?text=No+Image";
-                  }}
+                  className="object-cover transition-all duration-300 group-hover:brightness-90"
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
                 />
               </div>
 

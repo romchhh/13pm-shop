@@ -4,6 +4,7 @@ import React, { useMemo } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import Link from "next/link";
+import Image from "next/image";
 import { getProductImageSrc } from "@/lib/getFirstProductImage";
 import { useProducts } from "@/lib/useProducts";
 
@@ -12,17 +13,15 @@ const templateProduct = {
   id: -1,
   name: "Шовкова сорочка без рукавів",
   price: 1780,
-  media: [{ type: "image", url: "https://placehold.co/432x682" }],
+  first_media: { type: "photo", url: "template-placeholder" },
   limited_edition: false,
 };
 
 export default function LimitedEdition() {
-  const { products: allProducts, loading } = useProducts();
+  const { products: limitedEditionProducts, loading } = useProducts({ limitedEdition: true });
 
-  // Filter and fill limited edition products
+  // Fill with template products if there are not enough
   const products = useMemo(() => {
-    const limitedEditionProducts = allProducts.filter((p) => p.limited_edition);
-
     // If there are not enough products, fill with template products
     if (limitedEditionProducts.length < 8) {
       return [
@@ -31,7 +30,7 @@ export default function LimitedEdition() {
       ];
     }
     return limitedEditionProducts;
-  }, [allProducts]);
+  }, [limitedEditionProducts]);
 
   if (loading) {
     return <div className="text-center py-10">Завантаження...</div>;
@@ -71,16 +70,15 @@ export default function LimitedEdition() {
                   href={`/product/${product.id}`}
                   className="w-full group space-y-5"
                 >
-                  <img
-                    className="w-full h-[500px] object-cover group-hover:brightness-90 transition duration-300"
-                    src={getProductImageSrc(product.media, "https://placehold.co/432x682")}
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src =
-                        "https://placehold.co/432x682/cccccc/666666?text=No+Image";
-                    }}
-                    alt={product.name}
-                  />
+                  <div className="relative w-full h-[500px]">
+                    <Image
+                      className="object-cover group-hover:brightness-90 transition duration-300"
+                      src={getProductImageSrc(product.first_media, "https://placehold.co/432x682")}
+                      alt={product.name}
+                      fill
+                      sizes="90vw"
+                    />
+                  </div>
                   <div>
                     <div className="text-xl font-normal font-['Inter'] capitalize leading-normal text-center">
                       {product.name}
@@ -114,16 +112,15 @@ export default function LimitedEdition() {
                   href={`/product/${product.id}`}
                   className="w-full group space-y-5"
                 >
-                  <img
-                    className="w-full h-[500px] object-cover group-hover:brightness-90 transition duration-300"
-                    src={getProductImageSrc(product.media, "https://placehold.co/432x682")}
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src =
-                        "https://placehold.co/432x682/cccccc/666666?text=No+Image";
-                    }}
-                    alt={product.name}
-                  />
+                  <div className="relative w-full h-[500px]">
+                    <Image
+                      className="object-cover group-hover:brightness-90 transition duration-300"
+                      src={getProductImageSrc(product.first_media, "https://placehold.co/432x682")}
+                      alt={product.name}
+                      fill
+                      sizes="90vw"
+                    />
+                  </div>
                   <div>
                     <div className="text-xl font-normal font-['Inter'] capitalize leading-normal text-center">
                       {product.name}
@@ -146,11 +143,13 @@ export default function LimitedEdition() {
               key={product.id !== -1 ? product.id : `template-${i}`}
               className="group space-y-4 sm:space-y-5 w-full"
             >
-              <div className="aspect-[2/3] w-full overflow-hidden">
-                <img
-                  className="w-full h-full object-cover group-hover:brightness-90 transition duration-300"
-                  src={getProductImageSrc(product.media, "https://placehold.co/432x682")}
+              <div className="aspect-[2/3] w-full overflow-hidden relative">
+                <Image
+                  className="object-cover group-hover:brightness-90 transition duration-300"
+                  src={getProductImageSrc(product.first_media, "https://placehold.co/432x682")}
                   alt={product.name}
+                  fill
+                  sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
                 />
               </div>
 
@@ -169,10 +168,11 @@ export default function LimitedEdition() {
         {/* Call to action for more products */}
         <div className="flex flex-col lg:flex-row justify-between gap-10">
           <div className="relative w-full sm:w-[600px] md:w-[700px] lg:w-[894px] h-[600px] sm:h-[800px] md:h-[1000px] lg:h-[1279px]">
-            <img
+            <Image
               src="https://placehold.co/894x1279"
-              className="w-full h-full object-cover"
+              className="object-cover"
               alt="Product Background"
+              fill
             />
             <div className="absolute bottom-1/12 left-1/2 transform -translate-x-1/2">
               <div className="px-6 py-3 bg-white flex justify-center items-center">
@@ -187,10 +187,11 @@ export default function LimitedEdition() {
           </div>
 
           <div className="relative w-full sm:w-[600px] md:w-[700px] lg:w-[894px] h-[600px] sm:h-[800px] md:h-[1000px] lg:h-[1279px]">
-            <img
+            <Image
               src="https://placehold.co/894x1279"
-              className="w-full h-full object-cover"
+              className="object-cover"
               alt="Product Background"
+              fill
             />
             <div className="absolute bottom-1/12 left-1/2 transform -translate-x-1/2">
               <div className="px-6 py-3 bg-white flex justify-center items-center">

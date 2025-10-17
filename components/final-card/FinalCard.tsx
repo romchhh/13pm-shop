@@ -10,7 +10,6 @@ import "swiper/css";
 import "swiper/css/navigation";
 import { Mousewheel } from "swiper/modules";
 import "swiper/css/scrollbar";
-import { getFirstProductImage } from "@/lib/getFirstProductImage";
 
 // interface Product {
 //   id: number;
@@ -101,7 +100,6 @@ export default function FinalCard() {
       (total, item) => total + item.price * item.quantity,
       0
     );
-    const amountToPay = paymentType === "prepay" ? 300 : fullAmount;
 
     // Конвертуємо в копійки
     // const amountInKopecks = Math.round(amountToPay * 100);
@@ -166,7 +164,7 @@ export default function FinalCard() {
           window.location.href = invoiceUrl;
         }, 2000);
       }
-    } catch (err) {
+    } catch {
       setError("Помилка мережі. Спробуйте пізніше.");
     } finally {
       setLoading(false);
@@ -192,8 +190,8 @@ export default function FinalCard() {
   const [postOfficeListVisible, setPostOfficeListVisible] = useState(false);
   const [region, setRegion] = useState(""); // For Ukrposhta - область
   const [district, setDistrict] = useState(""); // For Ukrposhta - район
-  const [regionListVisible, setRegionListVisible] = useState(false); // Controls region list visibility
-  const [districtListVisible, setDistrictListVisible] = useState(false); // Controls district list visibility
+  const [regionListVisible] = useState(false); // Controls region list visibility
+  const [districtListVisible] = useState(false); // Controls district list visibility
 
   // Example useEffect for region and district fetching for Ukrposhta
   useEffect(() => {
@@ -239,8 +237,8 @@ export default function FinalCard() {
           setCities(cityData.map((city: { Description: unknown }) => city.Description));
           // console.log(data);
         })
-        .catch((error) => {
-          console.error("Error fetching cities:", error);
+        .catch(() => {
+          console.error("Error fetching cities");
           setError("Failed to load cities.");
         })
         .finally(() => {
@@ -271,8 +269,8 @@ export default function FinalCard() {
           setCities(cityData.map((city: { Description: unknown }) => city.Description));
           // console.log(data);
         })
-        .catch((error) => {
-          console.error("Error fetching cities:", error);
+        .catch(() => {
+          console.error("Error fetching cities");
           setError("Failed to load cities.");
         })
         .finally(() => {
@@ -338,8 +336,8 @@ export default function FinalCard() {
           setPostOffices(postOfficeData.map((post: { Description: unknown}) => post.Description));
           // console.log(data);
         })
-        .catch((error) => {
-          console.error("Error fetching post offices:", error);
+        .catch(() => {
+          console.error("Error fetching post offices");
           setError("Failed to load post offices.");
         })
         .finally(() => {
@@ -387,17 +385,6 @@ export default function FinalCard() {
     setPostOfficeListVisible(true); // Show the post office list while typing
   };
 
-  // Handling changes for region and district (for Ukrposhta)
-  const handleRegionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setRegion(e.target.value);
-    setRegionListVisible(true); // Show region list while typing
-  };
-
-  const handleDistrictChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setDistrict(e.target.value);
-    setDistrictListVisible(true); // Show district list while typing
-  };
-
   const handleCitySelect = (cityOption: string) => {
     setCity(cityOption);
     setCityListVisible(false); // Hide the city list after selecting an option
@@ -406,17 +393,6 @@ export default function FinalCard() {
   const handlePostOfficeSelect = (postOfficeOption: string) => {
     setPostOffice(postOfficeOption);
     setPostOfficeListVisible(false); // Hide the post office list after selecting an option
-  };
-
-  // Handle the selection of region and district for Ukrposhta
-  const handleRegionSelect = (regionOption: string) => {
-    setRegion(regionOption);
-    setRegionListVisible(false); // Hide region list after selection
-  };
-
-  const handleDistrictSelect = (districtOption: string) => {
-    setDistrict(districtOption);
-    setDistrictListVisible(false); // Hide district list after selection
   };
 
   // STATE
@@ -454,11 +430,15 @@ export default function FinalCard() {
                 <SwiperSlide key={`${item.id}-${item.size}-${idx}`}>
                   <div className="flex gap-4 items-start p-4 border border-stone-200 rounded">
                     {item.imageUrl ? (
-                      <img
-                        src={`/api/images/${item.imageUrl}`}
-                        alt={item.name}
-                        className="w-20 h-28 object-cover rounded"
-                      />
+                      <div className="relative w-20 h-28">
+                        <Image
+                          src={`/api/images/${item.imageUrl}`}
+                          alt={item.name}
+                          width={80}
+                          height={112}
+                          className="object-cover rounded"
+                        />
+                      </div>
                     ) : (
                       <div className="w-20 h-28 bg-gray-200 rounded flex items-center justify-center">
                         <span className="text-gray-400 text-xs">Фото</span>
@@ -816,14 +796,12 @@ export default function FinalCard() {
                     key={`${item.id}-${item.size}`}
                     className="w-full rounded p-4 flex flex-col sm:flex-row gap-4 sm:gap-3 items-center"
                   >
-                    <img
+                    <Image
                       className="w-24 h-32 sm:w-28 sm:h-40 object-cover rounded"
                       src={item.imageUrl ? `/api/images/${item.imageUrl}` : "https://placehold.co/200x300/cccccc/666666?text=No+Image"}
                       alt={item.name}
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = "https://placehold.co/200x300/cccccc/666666?text=No+Image";
-                      }}
+                      width={112}
+                      height={160}
                     />
                     <div className="flex flex-col flex-1 gap-1">
                       <div className="text-base font-normal font-['Inter'] leading-normal">

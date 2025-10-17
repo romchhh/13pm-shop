@@ -19,7 +19,7 @@ export async function GET(request: Request) {
         "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
       },
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Failed to fetch products by subcategory" },
       { status: 500 }

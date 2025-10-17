@@ -1,6 +1,7 @@
 "use client";
 
 import { useAppContext } from "@/lib/GeneralProvider";
+import Image from "next/image";
 
 export default function WhyChooseUs() {
   const { isDark } = useAppContext();
@@ -59,10 +60,12 @@ export default function WhyChooseUs() {
           <div key={i} className="border-y">
             <div className="flex justify-between gap-5 m-5 lg:m-15">
               <div className="flex flex-col lg:flex-row gap-3 lg:gap-15 items-center">
-                <img
+                <Image
                   className="w-full md:w-[589px] md:h-80 object-cover"
                   src={item.pic}
                   alt={`image-${i}`}
+                  width={589}
+                  height={320}
                 />
                 <div className="w-full justify-center text-3xl lg:text-5xl font-normal font-['Inter'] lowercase">
                   {item.top_text} <br />

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useMemo } from "react";
 import { getProductImageSrc } from "@/lib/getFirstProductImage";
 import { useProducts } from "@/lib/useProducts";
@@ -89,14 +90,12 @@ export default function SearchSidebar({
                         isDark ? "hover:bg-stone-800" : "hover:bg-stone-200"
                       }`}
                     >
-                      <img
+                      <Image
                         src={getProductImageSrc(product.media, "https://placehold.co/64x64")}
                         alt={product.name}
+                        width={64}
+                        height={64}
                         className="w-16 h-16 object-cover rounded border"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = "https://placehold.co/64x64/cccccc/666666?text=No+Image";
-                        }}
                       />
                       <div className="flex flex-col">
                         <span className="font-medium">{product.name}</span>

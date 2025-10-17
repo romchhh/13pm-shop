@@ -9,7 +9,8 @@ interface Product {
   id: number;
   name: string;
   price: number;
-  media: { url: string; type: string }[];
+  media?: { url: string; type: string }[];
+  first_media?: { url: string; type: string } | null;
   sizes?: { size: string; stock: string }[];
   color?: string;
   colors?: { label: string; hex?: string | null }[];
@@ -27,10 +28,12 @@ interface UseProductsOptions {
   category?: string | null;
   season?: string | null;
   subcategory?: string | null;
+  topSale?: boolean;
+  limitedEdition?: boolean;
 }
 
 export function useProducts(options: UseProductsOptions = {}) {
-  const { category, season, subcategory } = options;
+  const { category, season, subcategory, topSale, limitedEdition } = options;
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -44,7 +47,13 @@ export function useProducts(options: UseProductsOptions = {}) {
         let url = "/api/products";
         let cacheKey = CACHE_KEYS.PRODUCTS;
 
-        if (subcategory) {
+        if (topSale) {
+          url = "/api/products/top-sale";
+          cacheKey = "products_top_sale";
+        } else if (limitedEdition) {
+          url = "/api/products/limited-edition";
+          cacheKey = "products_limited_edition";
+        } else if (subcategory) {
           url = `/api/products/subcategory?subcategory=${encodeURIComponent(
             subcategory
           )}`;
@@ -71,7 +80,7 @@ export function useProducts(options: UseProductsOptions = {}) {
     }
 
     fetchProducts();
-  }, [category, season, subcategory]);
+  }, [category, season, subcategory, topSale, limitedEdition]);
 
   return { products, loading, error };
 }
