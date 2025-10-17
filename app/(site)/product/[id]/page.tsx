@@ -1,10 +1,39 @@
-import Product from "@/components/product/Product";
+import ProductServer from "@/components/product/ProductServer";
 import YouMightLike from "@/components/product/YouMightLike";
+import { Suspense } from "react";
 
-export default function Page() {
+interface PageProps {
+  params: Promise<{
+    id: string;
+  }>;
+}
+
+export const revalidate = 300; // ISR every 5 minutes
+
+// Generate static params for popular products
+export async function generateStaticParams() {
+  try {
+    const { sqlGetAllProducts } = await import("@/lib/sql");
+    const products = await sqlGetAllProducts();
+    
+    // Generate static pages for all products (or limit to top N)
+    return products.slice(0, 50).map((product: { id: number }) => ({
+      id: String(product.id),
+    }));
+  } catch (error) {
+    console.error("Error generating static params:", error);
+    return [];
+  }
+}
+
+export default async function Page({ params }: PageProps) {
+  const { id } = await params;
+  
   return (
     <main>
-      <Product />
+      <Suspense fallback={<div className="text-center py-20 text-lg">Завантаження товару...</div>}>
+        <ProductServer id={id} />
+      </Suspense>
       <YouMightLike />
     </main>
   );

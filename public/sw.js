@@ -1,30 +1,50 @@
-const CACHE_NAME = 'chars-v1';
-const STATIC_CACHE = [
+// Optimized service worker for CHARS e-commerce
+const CACHE_NAME = 'chars-v2';
+const STATIC_CACHE = 'chars-static-v2';
+const DYNAMIC_CACHE = 'chars-dynamic-v2';
+const IMAGE_CACHE = 'chars-images-v2';
+
+// Critical resources to cache immediately
+const STATIC_ASSETS = [
   '/',
   '/catalog',
   '/images/light-theme/chars-logo-header-light.png',
+  '/images/IMG_5831.webm',
+  '/images/dark-theme/chars-logo-header-dark.png',
   '/images/location-icon.svg',
   '/images/email-icon.svg',
   '/images/instagram-icon.svg',
-  '/images/facebook-icon.svg'
+  '/images/facebook-icon.svg',
+  // Why Choose Us images
+  '/images/IMG_0043.JPG',
+  '/images/IMAGE 2025-10-17 21:48:37.jpg',
+  '/images/IMG_0045.JPG',
+  '/images/IMAGE 2025-10-17 21:48:55.jpg',
+  '/images/IMG_0042.JPG'
 ];
 
-// Install event - cache static assets
+// Install event - cache critical resources
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(STATIC_CACHE))
+    caches.open(STATIC_CACHE)
+      .then((cache) => {
+        console.log('Caching static assets');
+        return cache.addAll(STATIC_ASSETS);
+      })
       .then(() => self.skipWaiting())
   );
 });
 
-// Activate event - clean old caches
+// Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
+          if (cacheName !== STATIC_CACHE && 
+              cacheName !== DYNAMIC_CACHE && 
+              cacheName !== IMAGE_CACHE) {
+            console.log('Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
@@ -33,34 +53,80 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch event - serve from cache, fallback to network
+// Fetch event - implement caching strategies
 self.addEventListener('fetch', (event) => {
-  // Skip non-GET requests
-  if (event.request.method !== 'GET') return;
+  const { request } = event;
+  const url = new URL(request.url);
 
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // Return cached version or fetch from network
-        return response || fetch(event.request).then((fetchResponse) => {
-          // Cache API responses and images
-          if (
-            event.request.url.includes('/api/') ||
-            event.request.url.includes('/images/') ||
-            event.request.destination === 'image'
-          ) {
-            const responseClone = fetchResponse.clone();
-            caches.open(CACHE_NAME)
-              .then((cache) => cache.put(event.request, responseClone));
+  // Skip non-GET requests
+  if (request.method !== 'GET') return;
+
+  // Handle API requests with network-first strategy
+  if (url.pathname.startsWith('/api/')) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          // Cache successful API responses for 5 minutes
+          if (response.status === 200) {
+            const responseClone = response.clone();
+            caches.open(DYNAMIC_CACHE).then((cache) => {
+              cache.put(request, responseClone);
+              // Clean cache after 5 minutes
+              setTimeout(() => {
+                cache.delete(request);
+              }, 5 * 60 * 1000);
+            });
           }
-          return fetchResponse;
+          return response;
+        })
+        .catch(() => {
+          // Fallback to cache if network fails
+          return caches.match(request);
+        })
+    );
+    return;
+  }
+
+  // Handle images and videos with cache-first strategy
+  if (url.pathname.startsWith('/images/') || 
+      url.pathname.startsWith('/api/images/') ||
+      request.destination === 'image' ||
+      request.destination === 'video') {
+    event.respondWith(
+      caches.open(IMAGE_CACHE).then((cache) => {
+        return cache.match(request).then((cachedResponse) => {
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+          
+          return fetch(request).then((response) => {
+            if (response.status === 200) {
+              cache.put(request, response.clone());
+            }
+            return response;
+          });
         });
       })
-      .catch(() => {
-        // Fallback for offline
-        if (event.request.destination === 'document') {
-          return caches.match('/');
+    );
+    return;
+  }
+
+  // Handle static assets and pages with stale-while-revalidate
+  event.respondWith(
+    caches.match(request).then((cachedResponse) => {
+      const fetchPromise = fetch(request).then((networkResponse) => {
+        if (networkResponse.status === 200) {
+          const cache = url.pathname.startsWith('/_next/') ? 
+            caches.open(STATIC_CACHE) : 
+            caches.open(DYNAMIC_CACHE);
+          
+          cache.then((c) => c.put(request, networkResponse.clone()));
         }
-      })
+        return networkResponse;
+      });
+
+      // Return cached version immediately, update in background
+      return cachedResponse || fetchPromise;
+    })
   );
 });

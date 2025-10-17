@@ -1,6 +1,7 @@
 import dynamic from "next/dynamic";
 import Hero from "@/components/main-page/Hero";
-import TopSale from "@/components/main-page/TopSale";
+import TopSaleServer from "@/components/main-page/TopSaleServer";
+import { Suspense } from "react";
 
 // Lazy load components that are below the fold
 const AboutUs = dynamic(() => import("@/components/main-page/AboutUs"), {
@@ -22,11 +23,15 @@ const Reviews = dynamic(() => import("@/components/main-page/Reviews"), {
   loading: () => <div className="h-96 animate-pulse bg-gray-100" />
 });
 
+export const revalidate = 300; // ISR every 5 minutes
+
 export default function Home() {
   return (
     <>
       <Hero />
-      <TopSale />
+      <Suspense fallback={<div className="text-center py-20 text-lg">Завантаження топових товарів...</div>}>
+        <TopSaleServer />
+      </Suspense>
       <AboutUs />
       <WhyChooseUs />
       <SocialMedia />

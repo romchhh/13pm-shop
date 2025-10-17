@@ -2,16 +2,18 @@ import { Pool } from "pg";
 import { unlink } from "fs/promises";
 import path from "path";
 
-// Create a PostgreSQL connection pool
+// Create a PostgreSQL connection pool with optimized settings
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.DATABASE_URL?.includes("sslmode=require")
     ? { rejectUnauthorized: false }
     : false,
+  // Connection pool optimization
+  max: 20, // Maximum number of clients in the pool
+  idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
+  connectionTimeoutMillis: 2000, // Return an error after 2 seconds if connection could not be established
+  maxUses: 7500, // Close (and replace) a connection after it has been used 7500 times
 });
-
-// Debug: Log the actual DATABASE_URL being used
-console.log("🔍 DATABASE_URL:", process.env.DATABASE_URL);
 
 // Create a template literal function that mimics Neon's API
 export const sql = Object.assign(

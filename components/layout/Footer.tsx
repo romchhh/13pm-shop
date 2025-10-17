@@ -66,10 +66,10 @@ export default function Footer() {
               />
             </div>
             <Link
-              href="mailto:charskyiev91@gmail.com"
+              href="mailto:Charsukrainianbrand@gmail.com"
               className="w-48 h-5 md:w-56 md:h-5 text-sm md:text-xl flex justify-start my-auto hover:underline"
             >
-              charskyiev91@gmail.com
+              Charsukrainianbrand@gmail.com
             </Link>
           </div>
         </div>
@@ -113,7 +113,7 @@ export default function Footer() {
               />
             </div>
             <Link
-              href="https://www.facebook.com/chars.ua"
+              href="https://www.facebook.com/profile.php?id=61554965091065"
               target="_blank"
               className="w-28 h-5 md:w-32 md:h-5 text-sm md:text-xl flex justify-start my-auto hover:underline"
             >
@@ -289,10 +289,10 @@ export default function Footer() {
                 />
               </div>
               <Link
-                href="mailto:charskyiev91@gmail.com"
+                href="mailto:Charsukrainianbrand@gmail.com"
                 className="w-48 h-5 md:w-56 md:h-5 text-sm md:text-xl flex justify-start my-auto hover:underline"
               >
-                charskyiev91@gmail.com
+                Charsukrainianbrand@gmail.com
               </Link>
             </div>
 
@@ -334,7 +334,7 @@ export default function Footer() {
                 />
               </div>
               <Link
-                href="https://www.facebook.com/chars.ua"
+                href="https://www.facebook.com/profile.php?id=61554965091065"
                 target="_blank"
                 className="w-28 h-5 md:w-32 md:h-5 text-sm md:text-xl flex justify-start my-auto hover:underline"
               >

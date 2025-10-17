@@ -1,5 +1,10 @@
 import type { NextConfig } from "next";
 
+// Bundle analyzer
+const withBundleAnalyzer = require('@next/bundle-analyzer')({
+  enabled: process.env.ANALYZE === 'true',
+});
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
@@ -30,9 +35,40 @@ const nextConfig: NextConfig = {
     // Enable optimized package imports
     optimizePackageImports: ["@react-jvectormap/core", "swiper", "react-apexcharts"],
   },
+  // Turbopack configuration removed to avoid SVG loader issues
   // Production optimizations
   productionBrowserSourceMaps: false,
-  // Headers for better caching
+  // Webpack optimizations
+  webpack: (config, { dev, isServer }) => {
+    // Optimize bundle size
+    if (!dev && !isServer) {
+      config.optimization.splitChunks = {
+        chunks: 'all',
+        cacheGroups: {
+          default: false,
+          vendors: false,
+          // Vendor chunk
+          vendor: {
+            name: 'vendor',
+            chunks: 'all',
+            test: /node_modules/,
+            priority: 20
+          },
+          // Common chunk
+          common: {
+            name: 'common',
+            minChunks: 2,
+            chunks: 'all',
+            priority: 10,
+            reuseExistingChunk: true,
+            enforce: true
+          }
+        }
+      };
+    }
+    return config;
+  },
+  // Headers for better caching and performance
   async headers() {
     return [
       {
@@ -53,8 +89,29 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      {
+        source: "/(.*)",
+        headers: [
+          {
+            key: "X-DNS-Prefetch-Control",
+            value: "on"
+          },
+          {
+            key: "X-XSS-Protection",
+            value: "1; mode=block"
+          },
+          {
+            key: "X-Frame-Options",
+            value: "SAMEORIGIN"
+          },
+          {
+            key: "X-Content-Type-Options",
+            value: "nosniff"
+          }
+        ]
+      }
     ];
   },
 };
 
-export default nextConfig;
+export default withBundleAnalyzer(nextConfig);

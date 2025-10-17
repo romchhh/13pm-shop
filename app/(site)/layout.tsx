@@ -12,6 +12,8 @@ const inter = Inter({
   display: "swap",
   preload: true,
   fallback: ["system-ui", "arial"],
+  variable: "--font-inter",
+  adjustFontFallback: true,
 });
 
 export const metadata: Metadata = {
@@ -43,8 +45,13 @@ export default function RootLayout({
       <head>
         {/* Preload critical resources */}
         <link rel="preload" href="/images/light-theme/chars-logo-header-light.png" as="image" />
+        <link rel="preload" href="/images/IMG_5831.webm" as="video" type="video/webm" />
         <link rel="preload" href="/api/products/top-sale" as="fetch" crossOrigin="anonymous" />
+        {/* Preload Why Choose Us images */}
+        <link rel="preload" href="/images/IMG_0043.JPG" as="image" />
+        <link rel="preload" href="/images/IMAGE 2025-10-17 21:48:37.jpg" as="image" />
         <link rel="dns-prefetch" href="//placehold.co" />
+        {/* Fonts are already optimized via next/font/google */}
       </head>
       <body>
         <AppProvider>

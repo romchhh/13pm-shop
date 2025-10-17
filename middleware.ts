@@ -3,10 +3,32 @@ import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const response = NextResponse.next();
+
+  // Security headers
+  response.headers.set('X-Frame-Options', 'DENY');
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('Referrer-Policy', 'origin-when-cross-origin');
+  response.headers.set('X-DNS-Prefetch-Control', 'on');
+
+  // Performance headers for images
+  if (pathname.startsWith('/images/') || pathname.startsWith('/api/images/')) {
+    response.headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+  }
+
+  // Static assets caching
+  if (pathname.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2)$/)) {
+    response.headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+  }
+
+  // ONLY apply authentication logic to admin routes
+  if (!pathname.startsWith("/admin")) {
+    return response;
+  }
 
   // Allow access to API routes
   if (pathname.startsWith("/api/auth/")) {
-    return NextResponse.next();
+    return response;
   }
 
   // Check for authentication cookie
@@ -38,7 +60,7 @@ export function middleware(request: NextRequest) {
 
   // Allow access to login page if not authenticated
   if (pathname === "/admin/login") {
-    return NextResponse.next();
+    return response;
   }
 
   // If not authenticated, redirect to login
@@ -48,9 +70,12 @@ export function middleware(request: NextRequest) {
   }
 
   // User is authenticated, allow access
-  return NextResponse.next();
+  return response;
 }
 
 export const config = {
-  matcher: ["/admin/:path*"], // Protect admin pages
+  matcher: [
+    "/admin/:path*", // Protect admin pages
+    "/((?!_next/static|_next/image|favicon.ico).*)", // Apply headers to all routes except Next.js internals
+  ],
 };
