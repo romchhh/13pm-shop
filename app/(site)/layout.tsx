@@ -68,7 +68,7 @@ export default function RootLayout({
         
         {/* Conditional preload for mobile vs desktop */}
         <link rel="preload" href="/images/IMG_0043.JPG" as="image" media="(min-width: 768px)" />
-        <link rel="preload" href="/images/IMAGE 2025-10-17 21:48:37.jpg" as="image" media="(min-width: 768px)" />
+        <link rel="preload" href="/images/IMAGE-2025-10-17_21-48-37.jpg" as="image" media="(min-width: 768px)" />
         
         {/* Mobile-specific prefetch */}
         <link rel="prefetch" href="/catalog" />
