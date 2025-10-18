@@ -119,6 +119,7 @@ export default function ProductsTable() {
         const data = await res.json();
         
         setProducts(data);
+        console.log(data[0].created_at)
         
         // Зберігаємо в кеш
         localStorage.setItem(CACHE_KEY, JSON.stringify(data));

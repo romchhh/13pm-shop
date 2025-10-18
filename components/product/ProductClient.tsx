@@ -1,11 +1,16 @@
 "use client";
 
 import { useAppContext } from "@/lib/GeneralProvider";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useBasket } from "@/lib/BasketProvider";
 import Image from "next/image";
 import Alert from "@/components/shared/Alert";
 import { getFirstProductImage } from "@/lib/getFirstProductImage";
+import SidebarMenu from "../layout/SidebarMenu";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/navigation";
 
 const SIZE_MAP: Record<string, string> = {
   "1": "XL",
@@ -20,6 +25,8 @@ interface ProductClientProps {
     id: number;
     name: string;
     price: number;
+    old_price?: number;
+    discount_percentage?: number;
     description?: string;
     media?: { url: string; type: string }[];
     sizes?: { size: string; stock: string }[];
@@ -34,8 +41,9 @@ export default function ProductClient({ product }: ProductClientProps) {
   const { addItem } = useBasket();
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const quantity = 1;
-  const { isDark } = useAppContext();
-  
+  const { isDark, isSidebarOpen, setIsSidebarOpen } = useAppContext();
+  const swiperRef = useRef(null); // Reference to the Swiper instance
+
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [showToast, setShowToast] = useState(false);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
@@ -94,49 +102,71 @@ export default function ProductClient({ product }: ProductClientProps) {
     "xl",
   ];
 
+  const [swiperInstance, setSwiperInstance] = useState<any>(null);
+  // Use this callback to store the swiper instance
+  const onSwiper = (swiper: any) => {
+    setSwiperInstance(swiper);
+  };
+
   return (
     <section className="max-w-[1920px] w-full mx-auto">
       <div className="flex flex-col lg:flex-row justify-around p-4 md:p-10 gap-10">
-        {/* Media Section */}
         <div className="relative flex justify-center w-full lg:w-1/2">
-          <div className="w-full max-w-[800px] max-h-[85vh] flex items-center justify-center overflow-hidden">
-            {media[activeImageIndex]?.type === "video" ? (
-              <video
-                className="w-full h-auto max-h-[85vh] object-contain"
-                src={`/api/images/${media[activeImageIndex]?.url}`}
-                autoPlay
-                loop
-                muted
-                playsInline
-                preload="metadata"
-              />
-            ) : (
-              <Image
-                className="object-contain"
-                src={`/api/images/${media[activeImageIndex]?.url}`}
-                alt={product.name}
-                width={800}
-                height={1160}
-                style={{ maxHeight: "85vh", width: "auto", height: "auto" }}
-                priority={activeImageIndex === 0}
-                quality={activeImageIndex === 0 ? 90 : 80}
-                sizes="(max-width: 420px) 100vw, (max-width: 768px) 90vw, (max-width: 1024px) 50vw, 800px"
-                placeholder="blur"
-                blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
-              />
-            )}
-          </div>
+          {/* Swiper component */}
+          <Swiper
+            onSwiper={onSwiper} // Store the swiper instance here
+            modules={[Navigation]}
+            spaceBetween={16}
+            slidesPerView={1}
+            centeredSlides
+            grabCursor
+            onSlideChange={(swiper) => setActiveImageIndex(swiper.activeIndex)} // Sync slide change with state
+            initialSlide={activeImageIndex} // Set the initial slide to activeImageIndex
+          >
+            {media.map((item, index) => (
+              <SwiperSlide key={index}>
+                <div className="w-full max-w-[800px] max-h-[85vh] flex items-center justify-center overflow-hidden">
+                  {item?.type === "video" ? (
+                    <video
+                      className="w-full h-auto max-h-[85vh] object-contain"
+                      src={`/api/images/${item?.url}`}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      preload="metadata"
+                    />
+                  ) : (
+                    <Image
+                      className="object-contain"
+                      src={`/api/images/${item?.url}`}
+                      alt={`Media ${index}`}
+                      width={800}
+                      height={1160}
+                      style={{
+                        maxHeight: "85vh",
+                        width: "auto",
+                        height: "auto",
+                      }}
+                      priority={activeImageIndex === index}
+                      quality={activeImageIndex === index ? 90 : 80}
+                      sizes="(max-width: 420px) 100vw, (max-width: 768px) 90vw, (max-width: 1024px) 50vw, 800px"
+                      placeholder="blur"
+                      blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+                    />
+                  )}
+                </div>
+              </SwiperSlide>
+            ))}
+          </Swiper>
 
+          {/* Navigation buttons */}
           {media.length > 1 && (
             <>
-              {/* Prev */}
+              {/* Prev button */}
               <button
                 className="absolute top-[40%] -translate-y-1/2 left-2 md:left-4 rounded-full cursor-pointer z-10 opacity-60 hover:opacity-100 transition"
-                onClick={() =>
-                  setActiveImageIndex((prev) =>
-                    prev === 0 ? media.length - 1 : prev - 1
-                  )
-                }
+                onClick={() => swiperInstance?.slidePrev()} // Use swiperInstance to call slidePrev
               >
                 <Image
                   src={
@@ -151,14 +181,10 @@ export default function ProductClient({ product }: ProductClientProps) {
                 />
               </button>
 
-              {/* Next */}
+              {/* Next button */}
               <button
                 className="absolute top-[40%] -translate-y-1/2 right-2 md:right-4 rounded-full cursor-pointer z-10 opacity-60 hover:opacity-100 transition"
-                onClick={() =>
-                  setActiveImageIndex((prev) =>
-                    prev === media.length - 1 ? 0 : prev + 1
-                  )
-                }
+                onClick={() => swiperInstance?.slideNext()} // Use swiperInstance to call slideNext
               >
                 <Image
                   src={
@@ -190,8 +216,18 @@ export default function ProductClient({ product }: ProductClientProps) {
 
           {/* Price */}
           <div className="w-full flex flex-col sm:flex-row justify-start border-b p-2 sm:p-4 gap-2">
-            <div className="text-red-500 text-lg md:text-xl font-['Helvetica']">
-              {product.price} ₴
+            <div className="flex justify-start gap-8 text-2xl md:text-3xl font-['Helvetica']">
+              <div className=" ">{product.price} ₴ </div>
+              {product.old_price && (
+                <span className="text-red-500 line-through">
+                  {product.old_price} ₴{"   "}
+                </span>
+              )}
+              {product.discount_percentage && (
+                <span className="text-red-500 underline">
+                  знижка: {product.discount_percentage} %{"   "}
+                </span>
+              )}
             </div>
           </div>
 
@@ -280,8 +316,8 @@ export default function ProductClient({ product }: ProductClientProps) {
             target="_blank"
             rel="noopener noreferrer"
             className={`w-full text-center border ${
-              isDark 
-                ? "border-gray-500 text-gray-400 hover:border-white hover:text-white" 
+              isDark
+                ? "border-gray-500 text-gray-400 hover:border-white hover:text-white"
                 : "border-gray-400 text-gray-600 hover:border-black hover:text-black"
             } py-2 px-3 text-sm md:text-base font-light font-['Inter'] cursor-pointer transition-all duration-200`}
           >
@@ -479,7 +515,12 @@ export default function ProductClient({ product }: ProductClientProps) {
           )}
         </div>
       </div>
+
+      <SidebarMenu
+        isDark={isDark}
+        isOpen={isSidebarOpen}
+        setIsOpen={setIsSidebarOpen}
+      />
     </section>
   );
 }
-

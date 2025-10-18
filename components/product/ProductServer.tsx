@@ -6,6 +6,8 @@ interface Product {
   id: number;
   name: string;
   price: number;
+  old_price?: number;
+  discount_percentage?: number;
   description?: string;
   media?: { url: string; type: string }[];
   sizes?: { size: string; stock: string }[];
@@ -38,4 +40,3 @@ export default async function ProductServer({ id }: ProductServerProps) {
 
   return <ProductClient product={product} />;
 }
-

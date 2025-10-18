@@ -39,22 +39,23 @@ function getFileType(mimeType: string, filename: string): "photo" | "video" {
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const limit = searchParams.get('limit');
-    const offset = searchParams.get('offset');
-    
+    const limit = searchParams.get("limit");
+    const offset = searchParams.get("offset");
+
     let products = await sqlGetAllProducts();
-    
+
     // Mobile pagination for better performance
     if (limit) {
       const limitNum = parseInt(limit);
-      const offsetNum = parseInt(offset || '0');
+      const offsetNum = parseInt(offset || "0");
       products = products.slice(offsetNum, offsetNum + limitNum);
     }
-    
+
     return NextResponse.json(products, {
       headers: {
         "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
-        "Content-Encoding": "gzip", // Enable compression
+        // "Content-Encoding": "gzip", // Enable compression
+        "Content-Type": "application/json",
       },
     });
   } catch (error) {

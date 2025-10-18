@@ -48,18 +48,7 @@ export default function Hero() {
     <section>
       <div className="max-w-[1920px] mx-auto w-full h-[600px] sm:h-[720px] md:h-[900px] lg:h-[1080px] relative overflow-hidden">
         {/* Show image on mobile, video on desktop */}
-        {isMobile ? (
-          <Image
-            src="/images/Знімок екрана 2025-10-17 о 22.25.53.png"
-            alt="CHARS Hero"
-            fill
-            priority
-            quality={90}
-            sizes="100vw"
-            className="object-cover object-center"
-            style={{ zIndex: 1 }}
-          />
-        ) : (
+        
           <>
             <video
               ref={videoRef}
@@ -107,7 +96,6 @@ export default function Hero() {
               </button>
             )}
           </>
-        )}
         
         <div className="relative z-10 flex flex-col justify-evenly p-10 md:p-35 gap-55 md:gap-70 h-full" style={{ zIndex: 2 }}>
           <div className="mx-auto relative lg:w-[1046px] h-52 flex items-center justify-center">

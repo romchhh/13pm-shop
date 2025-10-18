@@ -48,11 +48,14 @@ export async function sqlGetAllProducts() {
       p.id,
       p.name,
       p.price,
+      p.old_price,
+      p.discount_percentage,
       p.top_sale,
       p.limited_edition,
       p.season,
       p.category_id,
       p.subcategory_id,
+      p.created_at,
       c.name AS category_name,
       sc.name AS subcategory_name,
       (
@@ -77,6 +80,8 @@ export async function sqlGetProduct(id: number) {
       p.name,
       p.description,
       p.price,
+      p.old_price,
+      p.discount_percentage,
       p.top_sale,
       p.limited_edition,
       p.season,
@@ -125,6 +130,8 @@ export async function sqlGetProductsByCategory(categoryName: string) {
       p.id,
       p.name,
       p.price,
+      p.old_price,
+      p.discount_percentage,
       p.top_sale,
       p.limited_edition,
       p.season,
@@ -150,6 +157,8 @@ export async function sqlGetProductsBySubcategoryName(name: string) {
       p.id,
       p.name,
       p.price,
+      p.old_price,
+      p.discount_percentage,
       p.top_sale,
       p.limited_edition,
       p.season,
@@ -178,6 +187,8 @@ export async function sqlGetProductsBySeason(season: string) {
       p.id,
       p.name,
       p.price,
+      p.old_price,
+      p.discount_percentage,
       p.top_sale,
       p.limited_edition,
       p.season,
@@ -204,6 +215,8 @@ export async function sqlGetTopSaleProducts() {
       p.id,
       p.name,
       p.price,
+      p.old_price,
+      p.discount_percentage,
       p.top_sale,
       p.limited_edition,
       (
@@ -226,6 +239,8 @@ export async function sqlGetLimitedEditionProducts() {
       p.id,
       p.name,
       p.price,
+      p.old_price,
+      p.discount_percentage,
       p.top_sale,
       p.limited_edition,
       (
@@ -378,7 +393,7 @@ export async function sqlPutProduct(
     season?: string;
     color?: string;
     category_id?: number | null;
-    subcategory_id?: number | null; // ✅ NEW
+    subcategory_id?: number | null;
     fabric_composition?: string;
     has_lining?: boolean;
     lining_description?: string;
