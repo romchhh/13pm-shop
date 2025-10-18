@@ -11,6 +11,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
+import { Swiper as SwiperType } from 'swiper';
 
 const SIZE_MAP: Record<string, string> = {
   "1": "XL",
@@ -102,9 +103,9 @@ export default function ProductClient({ product }: ProductClientProps) {
     "xl",
   ];
 
-  const [swiperInstance, setSwiperInstance] = useState<any>(null);
+  const [swiperInstance, setSwiperInstance] = useState<SwiperType | null>(null);
   // Use this callback to store the swiper instance
-  const onSwiper = (swiper: any) => {
+  const onSwiper = (swiper: SwiperType) => {
     setSwiperInstance(swiper);
   };
 
