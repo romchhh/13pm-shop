@@ -22,7 +22,7 @@ export default function SidebarMenu({
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // "menu" = main menu with categories, "season" = season sidebar
   const [view, setView] = useState<"menu" | "season">("menu");
 
@@ -47,19 +47,19 @@ export default function SidebarMenu({
   const season_data = [
     {
       name: "Осінь",
-      image: "/images/autumn.png",
+      image: "/images/autumn2.jpg",
     },
     {
       name: "Зима",
-      image: "/images/winter.png",
+      image: "/images/winter2.jpg",
     },
     {
       name: "Весна",
-      image: "/images/spring.png",
+      image: "/images/spring2.jpg",
     },
     {
       name: "Літо",
-      image: "/images/summer.png",
+      image: "/images/summer2.jpg",
     },
   ];
 
@@ -115,7 +115,7 @@ export default function SidebarMenu({
               className="text-2xl text-start sm:text-3xl cursor-pointer hover:text-[#8C7461]"
               onClick={() => setView("season")}
             >
-              Сезон -{'>'}
+              Сезон -{">"}
             </button>
 
             {/* Render loading, error, or category links */}
@@ -125,7 +125,9 @@ export default function SidebarMenu({
               !error &&
               categories.map((category) => (
                 <Link
-                  href={`/catalog?category=${encodeURIComponent(category.name)}`}
+                  href={`/catalog?category=${encodeURIComponent(
+                    category.name
+                  )}`}
                   key={category.id}
                   className="hover:text-[#8C7461]"
                   onClick={() => setIsOpen(false)}
@@ -148,7 +150,7 @@ export default function SidebarMenu({
               </button>
             </div>
 
-            <div className="flex flex-col px-4 pb-6 space-y-4">
+            <div className="grid grid-cols-2 px-4 pb-6 gap-3">
               {season_data.map((item, i) => (
                 <Link
                   key={i}
@@ -162,7 +164,8 @@ export default function SidebarMenu({
                   }}
                 >
                   {/* Dark overlay on image */}
-                  <div className="absolute inset-0" />
+                  <div className="absolute inset-0 bg-black/30" />
+                  <span className="relative z-10">{item.name}</span>{" "}
                 </Link>
               ))}
             </div>

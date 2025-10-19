@@ -7,6 +7,7 @@ import { useAppContext } from "@/lib/GeneralProvider";
 import { useBasket } from "@/lib/BasketProvider";
 import SidebarBasket from "./SidebarBasket";
 import SidebarSearch from "./SidebarSearch";
+import SidebarMenu from "./SidebarMenu";
 
 interface Category {
   id: number;
@@ -22,6 +23,7 @@ export default function Header() {
   const {
     isDark,
     setIsDark,
+    isSidebarOpen,
     setIsSidebarOpen,
     isBasketOpen,
     setIsBasketOpen,
@@ -127,7 +129,10 @@ export default function Header() {
             </Link>
 
             <div className="flex items-center gap-10 text-xl font-normal font-['Inter']">
-              <Link href="/#about" className="hover:text-[#8C7461] font-['Inter']">
+              <Link
+                href="/#about"
+                className="hover:text-[#8C7461] font-['Inter']"
+              >
                 Про нас
               </Link>
 
@@ -141,7 +146,7 @@ export default function Header() {
                 className="relative"
               >
                 <Link
-                href="/catalog"
+                  href="/catalog"
                   className={`cursor-pointer hover:text-[#8C7461] font-['Inter'] ${
                     pinnedCatalog
                       ? "text-[#8C7461] font-semibold underline"
@@ -158,10 +163,16 @@ export default function Header() {
               >
                 Оплата і доставка
               </Link>
-              <Link href="/#reviews" className="hover:text-[#8C7461] font-['Inter']">
+              <Link
+                href="/#reviews"
+                className="hover:text-[#8C7461] font-['Inter']"
+              >
                 Відгуки
               </Link>
-              <Link href="/#contacts" className="hover:text-[#8C7461] font-['Inter']">
+              <Link
+                href="/#contacts"
+                className="hover:text-[#8C7461] font-['Inter']"
+              >
                 Контакти
               </Link>
             </div>
@@ -346,6 +357,12 @@ export default function Header() {
           </div>
         </div>
       </header>
+
+      <SidebarMenu
+        isDark={isDark}
+        isOpen={isSidebarOpen}
+        setIsOpen={setIsSidebarOpen}
+      />
 
       <SidebarBasket
         isDark={isDark}

@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { useBasket } from "@/lib/BasketProvider";
 import Link from "next/link";
@@ -53,7 +53,11 @@ export default function SidebarBasket({
                 className="flex gap-4 border-b pb-4 last:border-none"
               >
                 <Image
-                  src={item.imageUrl ? `/api/images/${item.imageUrl}` : "https://placehold.co/100x150/cccccc/666666?text=No+Image"}
+                  src={
+                    item.imageUrl
+                      ? `/api/images/${item.imageUrl}`
+                      : "https://placehold.co/100x150/cccccc/666666?text=No+Image"
+                  }
                   alt={item.name}
                   width={96}
                   height={128}
@@ -103,6 +107,13 @@ export default function SidebarBasket({
                 className={`text-center py-3 rounded-md mt-4 ${
                   isDark ? "bg-white text-black" : "bg-black text-white"
                 }`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setIsOpen(false);
+                  setTimeout(() => {
+                    window.location.href = "/final";
+                  }, 100);
+                }}
               >
                 Оформити замовлення
               </Link>

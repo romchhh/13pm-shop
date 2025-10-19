@@ -1,17 +1,16 @@
 "use client";
 
 import { useAppContext } from "@/lib/GeneralProvider";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect} from "react";
 import { useBasket } from "@/lib/BasketProvider";
 import Image from "next/image";
 import Alert from "@/components/shared/Alert";
 import { getFirstProductImage } from "@/lib/getFirstProductImage";
-import SidebarMenu from "../layout/SidebarMenu";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
-import { Swiper as SwiperType } from 'swiper';
+import { Swiper as SwiperType } from "swiper";
 
 const SIZE_MAP: Record<string, string> = {
   "1": "XL",
@@ -42,8 +41,7 @@ export default function ProductClient({ product }: ProductClientProps) {
   const { addItem } = useBasket();
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const quantity = 1;
-  const { isDark, isSidebarOpen, setIsSidebarOpen } = useAppContext();
-  const swiperRef = useRef(null); // Reference to the Swiper instance
+  const { isDark } = useAppContext();
 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [showToast, setShowToast] = useState(false);
@@ -516,12 +514,6 @@ export default function ProductClient({ product }: ProductClientProps) {
           )}
         </div>
       </div>
-
-      <SidebarMenu
-        isDark={isDark}
-        isOpen={isSidebarOpen}
-        setIsOpen={setIsSidebarOpen}
-      />
     </section>
   );
 }

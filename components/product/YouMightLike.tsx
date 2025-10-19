@@ -30,7 +30,10 @@ export default function YouMightLike() {
         {/* Products list - Mobile Optimized */}
         <div className="grid grid-cols-2 sm:flex sm:flex-row sm:flex-wrap justify-center sm:justify-around gap-4 sm:gap-8">
           {products.map((product) => {
-            const image = getProductImageSrc(product.media, "https://placehold.co/432x613");
+            const image = getProductImageSrc(
+              product.first_media,
+              "https://placehold.co/432x613"
+            );
             return (
               <Link
                 key={product.id}
@@ -61,10 +64,10 @@ export default function YouMightLike() {
         </div>
 
         {/* More products button container */}
-        <div className="w-full max-w-full sm:max-w-[1824px] h-[300px] sm:h-[679px] bg-gray-300 relative overflow-hidden mx-auto">
+<div className="w-full max-w-full sm:max-w-[1824px] h-[300px] sm:h-[679px] bg-[url('/images/bg-def.png')] bg-cover bg-center relative overflow-hidden mx-auto">
           <Link
             href="/catalog"
-            className="absolute bg-white inline-flex justify-center items-center gap-2 px-4 py-2 rounded-md left-1/2 transform -translate-x-1/2 bottom-30 w-max sm:w-80 h-auto sm:h-16"
+            className="absolute bg-white inline-flex justify-center items-center gap-2 px-4 py-2 left-1/2 transform -translate-x-1/2 bottom-30 w-max sm:w-80 h-auto sm:h-16"
           >
             <div className="text-center justify-center text-black text-base sm:text-2xl font-normal font-['Inter'] uppercase leading-none tracking-tight">
               більше товарів

@@ -36,8 +36,8 @@ interface Product {
   limited_edition?: boolean;
   season?: string;
   category_name?: string;
-  color: string
-  media?: { type: string; url: string }[];
+  color: string;
+  first_media?: { url: string; type: string } | null;
 }
 
 export default function ProductsTable() {
@@ -48,16 +48,17 @@ export default function ProductsTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const productsPerPage = 10;
 
-  const totalPages = useMemo(() => 
-    Math.ceil(products.length / productsPerPage), 
+  const totalPages = useMemo(
+    () => Math.ceil(products.length / productsPerPage),
     [products.length]
   );
 
-  const paginatedProducts = useMemo(() => 
-    products.slice(
-      (currentPage - 1) * productsPerPage,
-      currentPage * productsPerPage
-    ),
+  const paginatedProducts = useMemo(
+    () =>
+      products.slice(
+        (currentPage - 1) * productsPerPage,
+        currentPage * productsPerPage
+      ),
     [products, currentPage, productsPerPage]
   );
 
@@ -83,14 +84,17 @@ export default function ProductsTable() {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Failed to delete product");
-      
+
       // Оновлюємо стан
       const updatedProducts = products.filter((p) => p.id !== productId);
       setProducts(updatedProducts);
-      
+
       // Оновлюємо кеш
       localStorage.setItem(CACHE_KEY, JSON.stringify(updatedProducts));
-      localStorage.setItem(CACHE_EXPIRY_KEY, (Date.now() + CACHE_DURATION).toString());
+      localStorage.setItem(
+        CACHE_EXPIRY_KEY,
+        (Date.now() + CACHE_DURATION).toString()
+      );
     } catch (error) {
       console.error("Error deleting product:", error);
     }
@@ -117,13 +121,18 @@ export default function ProductsTable() {
         const res = await fetch("/api/products");
         if (!res.ok) throw new Error("Failed to fetch products");
         const data = await res.json();
-        
+
         setProducts(data);
-        console.log(data[0].created_at)
-        
+        console.log(data[0].name);
+
+        console.log(data[0].media);
+
         // Зберігаємо в кеш
         localStorage.setItem(CACHE_KEY, JSON.stringify(data));
-        localStorage.setItem(CACHE_EXPIRY_KEY, (now + CACHE_DURATION).toString());
+        localStorage.setItem(
+          CACHE_EXPIRY_KEY,
+          (now + CACHE_DURATION).toString()
+        );
       } catch (error) {
         console.error("Error fetching products:", error);
       } finally {
@@ -262,10 +271,10 @@ export default function ProductsTable() {
                     className="hover:bg-gray-50 dark:hover:bg-white/[0.03]"
                   >
                     <TableCell className="px-5 py-4">
-                      {product.media && product.media.length > 0 ? (
+                      {product.first_media ? (
                         <div className="relative w-12 h-12">
                           <Image
-                            src={getProductImageSrc(product.media)}
+                            src={getProductImageSrc(product.first_media)}
                             alt={product.name}
                             width={48}
                             height={48}
@@ -298,7 +307,7 @@ export default function ProductsTable() {
                       {product.category_name || "—"}
                     </TableCell>
                     <TableCell className="px-5 py-4 text-sm text-gray-600 dark:text-gray-400">
-                        {Array.isArray(product.season)
+                      {Array.isArray(product.season)
                         ? product.season.length > 0
                           ? product.season.join(", ")
                           : "—"

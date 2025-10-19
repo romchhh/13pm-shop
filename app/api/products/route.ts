@@ -43,6 +43,7 @@ export async function GET(request: Request) {
     const offset = searchParams.get("offset");
 
     let products = await sqlGetAllProducts();
+    console.log("api", products[0])
 
     // Mobile pagination for better performance
     if (limit) {

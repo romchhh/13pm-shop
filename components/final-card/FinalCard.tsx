@@ -212,34 +212,38 @@ export default function FinalCard() {
 
   useEffect(() => {
     // Fetch available cities when delivery method changes to Nova Poshta
-    if (deliveryMethod === "nova_poshta") {
+    if (deliveryMethod.startsWith("nova_poshta")) {
       setLoadingCities(true);
 
-      // Fetch cities with `fetch`
       fetch("https://api.novaposhta.ua/v2.0/json/", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           apiKey: process.env.NEXT_PUBLIC_NOVA_POSHTA_API_KEY,
           modelName: "AddressGeneral",
           calledMethod: "getCities",
           methodProperties: {
-            FindByString: city, // Replace with a dynamic city string if necessary
+            FindByString: city,
             limit: 20,
           },
         }),
       })
-        .then((response) => response.json())
+        .then((res) => res.json())
         .then((data) => {
-          const cityData = data.data || [];
-          setCities(cityData.map((city: { Description: unknown }) => city.Description));
-          // console.log(data);
+          console.log("City fetch response", data); // ✅ Add this
+          if (data.success) {
+            const cityData = data.data || [];
+            setCities(
+              cityData.map((c: { Description: string }) => c.Description)
+            );
+          } else {
+            setCities([]);
+            setError("Не вдалося знайти міста.");
+          }
         })
-        .catch(() => {
-          console.error("Error fetching cities");
-          setError("Failed to load cities.");
+        .catch((err) => {
+          console.error("Fetch error:", err);
+          setError("Помилка при завантаженні міст.");
         })
         .finally(() => {
           setLoadingCities(false);
@@ -266,7 +270,9 @@ export default function FinalCard() {
         .then((response) => response.json())
         .then((data) => {
           const cityData = data.data || [];
-          setCities(cityData.map((city: { Description: unknown }) => city.Description));
+          setCities(
+            cityData.map((city: { Description: unknown }) => city.Description)
+          );
           // console.log(data);
         })
         .catch(() => {
@@ -284,27 +290,27 @@ export default function FinalCard() {
     const filtered = cities.filter((cityOption) =>
       cityOption.toLowerCase().includes(city.toLowerCase())
     );
-    
+
     // Sort: exact matches first, then starts with, then contains
     const sorted = filtered.sort((a, b) => {
       const aLower = a.toLowerCase();
       const bLower = b.toLowerCase();
       const searchLower = city.toLowerCase();
-      
+
       // Exact match
       if (aLower === searchLower) return -1;
       if (bLower === searchLower) return 1;
-      
+
       // Starts with
       const aStarts = aLower.startsWith(searchLower);
       const bStarts = bLower.startsWith(searchLower);
       if (aStarts && !bStarts) return -1;
       if (!aStarts && bStarts) return 1;
-      
+
       // Alphabetical for remaining
       return a.localeCompare(b);
     });
-    
+
     setFilteredCities(sorted);
   }, [city, cities]); // Re-filter cities whenever `city` or `cities` changes
 
@@ -333,7 +339,11 @@ export default function FinalCard() {
         .then((response) => response.json())
         .then((data) => {
           const postOfficeData = data.data || [];
-          setPostOffices(postOfficeData.map((post: { Description: unknown}) => post.Description));
+          setPostOffices(
+            postOfficeData.map(
+              (post: { Description: unknown }) => post.Description
+            )
+          );
           // console.log(data);
         })
         .catch(() => {
@@ -351,27 +361,27 @@ export default function FinalCard() {
     const filtered = postOffices.filter((postOfficeOption) =>
       postOfficeOption.toLowerCase().includes(postOffice.toLowerCase())
     );
-    
+
     // Sort: exact matches first, then starts with, then contains
     const sorted = filtered.sort((a, b) => {
       const aLower = a.toLowerCase();
       const bLower = b.toLowerCase();
       const searchLower = postOffice.toLowerCase();
-      
+
       // Exact match
       if (aLower === searchLower) return -1;
       if (bLower === searchLower) return 1;
-      
+
       // Starts with
       const aStarts = aLower.startsWith(searchLower);
       const bStarts = bLower.startsWith(searchLower);
       if (aStarts && !bStarts) return -1;
       if (!aStarts && bStarts) return 1;
-      
+
       // Alphabetical for remaining
       return a.localeCompare(b);
     });
-    
+
     setFilteredPostOffices(sorted);
   }, [postOffice, postOffices]); // Re-filter post offices whenever `postOffice` or `postOffices` changes
 
@@ -503,7 +513,9 @@ export default function FinalCard() {
             {/* Back to home */}
             <Link
               href="/"
-              className={`w-80 h-16 ${isDark ? "bg-stone-100 text-black" : "bg-stone-900 text-white" } inline-flex justify-center items-center gap-2.5 p-2.5 rounded`}
+              className={`w-80 h-16 ${
+                isDark ? "bg-stone-100 text-black" : "bg-stone-900 text-white"
+              } inline-flex justify-center items-center gap-2.5 p-2.5 rounded`}
             >
               <span className=" text-xl font-medium font-['Inter'] tracking-tight leading-snug">
                 На головну
@@ -626,11 +638,19 @@ export default function FinalCard() {
                 required
               >
                 <option value="">Оберіть спосіб доставки</option>
-                <option value="nova_poshta_branch">Нова пошта — у відділення</option>
-                <option value="nova_poshta_locker">Нова пошта — у поштомат</option>
-                <option value="nova_poshta_courier">Нова пошта — кур’єром</option>
+                <option value="nova_poshta_branch">
+                  Нова пошта — у відділення
+                </option>
+                <option value="nova_poshta_locker">
+                  Нова пошта — у поштомат
+                </option>
+                <option value="nova_poshta_courier">
+                  Нова пошта — кур’єром
+                </option>
                 {/* <option value="ukrposhta">Укрпошта</option> */}
-                <option value="showroom_pickup">Самовивіз з шоуруму (13:00–19:00)</option>
+                <option value="showroom_pickup">
+                  Самовивіз з шоуруму (13:00–19:00)
+                </option>
               </select>
 
               {deliveryMethod.startsWith("nova_poshta") && (
@@ -640,7 +660,9 @@ export default function FinalCard() {
                       htmlFor="city"
                       className="text-xl sm:text-2xl font-normal font-['Arial']"
                     >
-                      {deliveryMethod === "nova_poshta_courier" ? "Місто для доставки кур’єром *" : "Місто *"}
+                      {deliveryMethod === "nova_poshta_courier"
+                        ? "Місто для доставки кур’єром *"
+                        : "Місто *"}
                     </label>
                     <input
                       type="text"
@@ -697,14 +719,20 @@ export default function FinalCard() {
                         htmlFor="postOffice"
                         className="text-xl sm:text-2xl font-normal font-['Arial']"
                       >
-                        {deliveryMethod === "nova_poshta_locker" ? "Поштомат *" : "Відділення *"}
+                        {deliveryMethod === "nova_poshta_locker"
+                          ? "Поштомат *"
+                          : "Відділення *"}
                       </label>
                       <input
                         type="text"
                         id="postOffice"
                         value={postOffice}
                         onChange={handlePostOfficeChange}
-                        placeholder={deliveryMethod === "nova_poshta_locker" ? "Введіть назву поштомата" : "Введіть назву відділення"}
+                        placeholder={
+                          deliveryMethod === "nova_poshta_locker"
+                            ? "Введіть назву поштомата"
+                            : "Введіть назву відділення"
+                        }
                         className="border p-3 sm:p-5 text-lg sm:text-xl font-normal font-['Arial'] rounded"
                         required
                       />
@@ -714,7 +742,8 @@ export default function FinalCard() {
                         postOfficeListVisible && (
                           <div className="max-h-40 overflow-y-auto shadow-lg rounded border mt-2">
                             <ul className="list-none p-0">
-                              {filteredPostOffices.map((postOfficeOption, idx) => (
+                              {filteredPostOffices.map(
+                                (postOfficeOption, idx) => (
                                   <li
                                     key={idx}
                                     className="p-3 cursor-pointer hover:bg-gray-200"
@@ -724,7 +753,8 @@ export default function FinalCard() {
                                   >
                                     {postOfficeOption}
                                   </li>
-                                ))}
+                                )
+                              )}
                             </ul>
                           </div>
                         )
@@ -736,7 +766,8 @@ export default function FinalCard() {
 
               {deliveryMethod === "showroom_pickup" && (
                 <div className="text-base sm:text-lg text-gray-700">
-                  Самовивіз з шоуруму з 13:00 до 19:00, Київ, вул. Костянтинівська, 21
+                  Самовивіз з шоуруму з 13:00 до 19:00, Київ, вул.
+                  Костянтинівська, 21
                 </div>
               )}
 
@@ -798,7 +829,11 @@ export default function FinalCard() {
                   >
                     <Image
                       className="w-24 h-32 sm:w-28 sm:h-40 object-cover rounded"
-                      src={item.imageUrl ? `/api/images/${item.imageUrl}` : "https://placehold.co/200x300/cccccc/666666?text=No+Image"}
+                      src={
+                        item.imageUrl
+                          ? `/api/images/${item.imageUrl}`
+                          : "https://placehold.co/200x300/cccccc/666666?text=No+Image"
+                      }
                       alt={item.name}
                       width={112}
                       height={160}

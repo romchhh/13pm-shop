@@ -91,7 +91,7 @@ export default function SearchSidebar({
                       }`}
                     >
                       <Image
-                        src={getProductImageSrc(product.media, "https://placehold.co/64x64")}
+                        src={getProductImageSrc(product.first_media, "https://placehold.co/64x64")}
                         alt={product.name}
                         width={64}
                         height={64}

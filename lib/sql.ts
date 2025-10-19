@@ -48,6 +48,7 @@ export async function sqlGetAllProducts() {
       p.id,
       p.name,
       p.price,
+      p.description,
       p.old_price,
       p.discount_percentage,
       p.top_sale,

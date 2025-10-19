@@ -3,7 +3,6 @@
 import SidebarMenu from "@/components/layout/SidebarMenu";
 import { useAppContext } from "@/lib/GeneralProvider";
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 
 export default function Hero() {
   const { isDark, isSidebarOpen, setIsSidebarOpen } = useAppContext();
