@@ -28,6 +28,14 @@ const seasonOptions = [
   { value: "Осінь", text: "Осінь", selected: false },
 ];
 
+type MediaFile = {
+  id?: number; // for existing ones
+  file?: File; // for new uploads
+  url?: string; // for existing ones
+  preview?: string; // for new ones (via URL.createObjectURL)
+  type: "photo" | "video";
+};
+
 export default function EditProductPage() {
   const params = useParams();
   const productId = params?.id;
@@ -54,6 +62,7 @@ export default function EditProductPage() {
   });
 
   const [images, setImages] = useState<File[]>([]);
+  const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [success, setSuccess] = useState<string | null>(null);
@@ -83,6 +92,12 @@ export default function EditProductPage() {
 
         const productData = await productRes.json();
         const categoryData = await categoriesRes.json();
+        setMediaFiles(
+          productData.media.map((item: { url: string; type: string }) => ({
+            type: item.type,
+            url: item.url,
+          }))
+        );
 
         setFormData({
           name: productData.name,
@@ -161,7 +176,35 @@ export default function EditProductPage() {
   // }, [formData]);
 
   const handleDrop = (files: File[]) => {
-    setImages((prevImages) => [...prevImages, ...files]);
+    const newMedia = files.map((file) => ({
+      file,
+      preview: URL.createObjectURL(file),
+      type: (file.type.startsWith("video/")
+        ? "video"
+        : "photo") as MediaFile["type"],
+    }));
+
+    setMediaFiles((prev) => [...prev, ...newMedia]);
+  };
+
+  // Reorder for existing images
+  const moveExistingMedia = (fromIndex: number, toIndex: number) => {
+    setFormData((prev) => {
+      const updated = [...prev.media];
+      const [moved] = updated.splice(fromIndex, 1);
+      updated.splice(toIndex, 0, moved);
+      return { ...prev, media: updated };
+    });
+  };
+
+  // Reorder for new images
+  const moveNewImage = (fromIndex: number, toIndex: number) => {
+    setMediaFiles((prev) => {
+      const updated = [...prev];
+      const [moved] = updated.splice(fromIndex, 1);
+      updated.splice(toIndex, 0, moved);
+      return updated;
+    });
   };
 
   const handleChange = (field: string, value: unknown) => {
@@ -466,18 +509,18 @@ export default function EditProductPage() {
                     />
                   </div>
                   {formData.hasLining && (
-                  <div>
-                    <Label>Опис підкладки</Label>
-                    <TextArea
-                      value={formData.liningDescription}
-                      onChange={(value) =>
-                        handleChange("liningDescription", value)
-                      }
-                      rows={2}
-                      placeholder="Опис підкладки товару"
-                    />
-                  </div>
-                )}
+                    <div>
+                      <Label>Опис підкладки</Label>
+                      <TextArea
+                        value={formData.liningDescription}
+                        onChange={(value) =>
+                          handleChange("liningDescription", value)
+                        }
+                        rows={2}
+                        placeholder="Опис підкладки товару"
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex items-center justify-between mt-4">
@@ -510,20 +553,42 @@ export default function EditProductPage() {
                     {item.type === "video" ? (
                       <video
                         src={`/api/images/${item.url}`}
-                        width={200}
-                        height={200}
                         controls
-                        className="rounded max-w-[200px] max-h-[200px]"
+                        className="w-32 h-32 object-cover rounded"
                       />
                     ) : (
                       <Image
                         src={`/api/images/${item.url}`}
-                        width={200}
-                        height={200}
-                        alt={`image-${i}`}
-                        className="rounded"
+                        alt={`media-${i}`}
+                        width={128}
+                        height={128}
+                        className="rounded object-cover"
                       />
                     )}
+                    <div className="absolute top-1 left-1 flex gap-1">
+                      {i > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => moveExistingMedia(i, i - 1)}
+                          className="bg-white text-black rounded-full w-6 h-6 text-xs flex items-center justify-center shadow"
+                          title="←"
+                        >
+                          ←
+                        </button>
+                      )}
+                      {i < formData.media.length - 1 && (
+                        <button
+                          type="button"
+                          onClick={() => moveExistingMedia(i, i + 1)}
+                          className="bg-white text-black rounded-full w-6 h-6 text-xs flex items-center justify-center shadow"
+                          title="→"
+                        >
+                          →
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Delete button */}
                     <button
                       type="button"
                       onClick={() => handleDeleteImage(i)}
@@ -542,23 +607,42 @@ export default function EditProductPage() {
                     <div key={`new-${i}`} className="relative inline-block">
                       {isVideo ? (
                         <video
-                          src={previewUrl}
-                          width={200}
-                          height={200}
+                          src={`/api/images/${previewUrl}`}
                           controls
-                          className="rounded max-w-[200px] max-h-[200px]"
-                          onLoadedData={() => URL.revokeObjectURL(previewUrl)}
+                          className="w-32 h-32 object-cover rounded"
                         />
                       ) : (
                         <Image
-                          src={previewUrl}
-                          alt={file.name}
-                          width={200}
-                          height={200}
-                          className="rounded max-w-[200px] max-h-[200px]"
-                          onLoad={() => URL.revokeObjectURL(previewUrl)}
+                          src={`/api/images/${previewUrl}`}
+                          alt={`new-media-${i}`}
+                          width={128}
+                          height={128}
+                          className="rounded object-cover"
                         />
                       )}
+                      <div className="absolute top-1 left-1 flex gap-1">
+                        {i > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => moveNewImage(i, i - 1)}
+                            className="bg-white text-black rounded-full w-6 h-6 text-xs flex items-center justify-center shadow"
+                            title="←"
+                          >
+                            ←
+                          </button>
+                        )}
+                        {i < images.length - 1 && (
+                          <button
+                            type="button"
+                            onClick={() => moveNewImage(i, i + 1)}
+                            className="bg-white text-black rounded-full w-6 h-6 text-xs flex items-center justify-center shadow"
+                            title="→"
+                          >
+                            →
+                          </button>
+                        )}
+                      </div>
+
                       <button
                         type="button"
                         onClick={() => handleDeleteNewImage(i)}

@@ -67,9 +67,9 @@ export default function Footer() {
             </div>
             <Link
               href="mailto:Charsukrainianbrand@gmail.com"
-              className="w-48 h-5 md:w-56 md:h-5 text-sm md:text-xl flex justify-start my-auto hover:underline"
+              className="w-48 h-5 items-center md:w-56 md:h-5 text-sm md:text-xl flex justify-start my-auto hover:underline"
             >
-              Charsukrainianbrand@gmail.com
+              Charsukrainianbrand <br /> @gmail.com
             </Link>
           </div>
         </div>

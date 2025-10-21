@@ -98,8 +98,8 @@ export default function Hero() {
         
         <div className="relative z-10 flex flex-col justify-evenly p-10 md:p-35 gap-55 md:gap-70 h-full" style={{ zIndex: 2 }}>
           <div className="mx-auto relative lg:w-[1046px] h-52 flex items-center justify-center">
-            <div className="text-white text-3xl md:text-7xl font-medium font-['Montserrat'] uppercase text-center">
-              Тиша у формі тканини <br /> CHARS
+            <div className="text-white opacity-40 text-3xl md:text-7xl font-medium font-['Montserrat'] uppercase text-center">
+              Тиша у формі <br /> CHARS
             </div>
           </div>
 

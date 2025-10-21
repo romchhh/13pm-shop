@@ -35,7 +35,7 @@ export default function FormElements() {
   const [discountPercentage, setDiscountPercentage] = useState("");
   const [priority, setPriority] = useState("0");
   const [sizes, setSizes] = useState<string[]>([]);
-  const [images, setImages] = useState<File[]>([]);
+  // const [images, setImages] = useState<File[]>([]);
 
   const [topSale, setTopSale] = useState(false);
   const [limitedEdition, setLimitedEdition] = useState(false);
@@ -114,13 +114,26 @@ export default function FormElements() {
     fetchSubcategories();
   }, [categoryId]);
 
-  const handleDrop = (files: File[]) => {
-    setImages((prev) => [...prev, ...files]);
+  type MediaFile = {
+    file: File;
+    type: "photo" | "video";
   };
 
-  const handleDeleteNewImage = (indexToRemove: number) => {
-    setImages((prev) => prev.filter((_, i) => i !== indexToRemove));
+  const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
+
+  const handleDrop = (files: File[]) => {
+    const newMedia = files.map((file) => ({
+      file,
+      type: (file.type.startsWith("video/")
+        ? "video"
+        : "photo") as MediaFile["type"],
+    }));
+    setMediaFiles((prev) => [...prev, ...newMedia]);
   };
+// const handleDeleteMediaFile = (indexToRemove: number) => {
+//   setMediaFiles((prev) => prev.filter((_, i) => i !== indexToRemove));
+// };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -131,17 +144,15 @@ export default function FormElements() {
     try {
       // 1) Upload images first (if any)
       let uploadedMedia: { type: "photo" | "video"; url: string }[] = [];
-      if (images.length > 0) {
+      if (mediaFiles.length > 0) {
         const uploadForm = new FormData();
-        images.forEach((img) => uploadForm.append("images", img));
+        mediaFiles.forEach((m) => uploadForm.append("images", m.file));
+
         const uploadRes = await fetch("/api/images", {
           method: "POST",
           body: uploadForm,
         });
-        if (!uploadRes.ok) {
-          const t = await uploadRes.text();
-          throw new Error(t || "Не вдалося завантажити файли");
-        }
+
         const uploadData = await uploadRes.json();
         uploadedMedia = uploadData.media || [];
       }
@@ -189,14 +200,14 @@ export default function FormElements() {
       setColor("");
       setColors([]);
       setSizes([]);
-      setImages([]);
+      setMediaFiles([]);
       setTopSale(false);
       setLimitedEdition(false);
       setSeason([]);
       setCategoryId(null);
       setFabricComposition("");
       setHasLining(false);
-      setLiningDescription("")
+      setLiningDescription("");
       setSubcategoryId(null);
       setSubcategories([]);
     } catch (err) {
@@ -457,7 +468,7 @@ export default function FormElements() {
           {/* Right side: images and videos */}
           <div className="p-4">
             <DropzoneComponent onDrop={handleDrop} />
-            {images.length > 0 &&
+            {/* {images.length > 0 &&
               images.map((file, i) => {
                 const previewUrl = URL.createObjectURL(file);
                 const isVideo = file.type.startsWith("video/");
@@ -490,6 +501,95 @@ export default function FormElements() {
                     >
                       ✕
                     </button>
+                  </div>
+                );
+              })} */}
+
+            {mediaFiles.length > 0 &&
+              mediaFiles.map((media, i) => {
+                const previewUrl = URL.createObjectURL(media.file);
+                const isVideo = media.type === "video";
+
+                return (
+                  <div
+                    key={`media-${i}`}
+                    className="relative inline-block mt-4 mx-2"
+                  >
+                    <span className="absolute bottom-1 left-1 text-xs bg-black/70 text-white px-1 rounded">
+                      #{i + 1}
+                    </span>
+
+                    {isVideo ? (
+                      <video
+                        src={previewUrl}
+                        width={200}
+                        height={200}
+                        controls
+                        className="rounded max-w-[200px] max-h-[200px]"
+                        onLoadedData={() => URL.revokeObjectURL(previewUrl)}
+                      />
+                    ) : (
+                      <Image
+                        src={previewUrl}
+                        alt={media.file.name}
+                        width={200}
+                        height={200}
+                        className="rounded max-w-[200px] max-h-[200px]"
+                        onLoad={() => URL.revokeObjectURL(previewUrl)}
+                      />
+                    )}
+
+                    {/* Delete Button */}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setMediaFiles((prev) =>
+                          prev.filter((_, idx) => idx !== i)
+                        )
+                      }
+                      className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"
+                      title="Видалити"
+                    >
+                      ✕
+                    </button>
+
+                    {/* Reorder Buttons */}
+                    <div className="flex justify-center gap-1 mt-2">
+                      <button
+                        type="button"
+                        disabled={i === 0}
+                        onClick={() =>
+                          setMediaFiles((prev) => {
+                            const newArr = [...prev];
+                            [newArr[i - 1], newArr[i]] = [
+                              newArr[i],
+                              newArr[i - 1],
+                            ];
+                            return newArr;
+                          })
+                        }
+                        className="text-sm bg-gray-200 px-2 py-1 rounded disabled:opacity-30"
+                      >
+                        ↑
+                      </button>
+                      <button
+                        type="button"
+                        disabled={i === mediaFiles.length - 1}
+                        onClick={() =>
+                          setMediaFiles((prev) => {
+                            const newArr = [...prev];
+                            [newArr[i], newArr[i + 1]] = [
+                              newArr[i + 1],
+                              newArr[i],
+                            ];
+                            return newArr;
+                          })
+                        }
+                        className="text-sm bg-gray-200 px-2 py-1 rounded disabled:opacity-30"
+                      >
+                        ↓
+                      </button>
+                    </div>
                   </div>
                 );
               })}
