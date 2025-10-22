@@ -20,39 +20,14 @@ function loadEnvUrl(): string {
   return process.env.DATABASE_URL;
 }
 
-// Define all migrations here (idempotent!)
+// Define this single migration
 const migrations: Migration[] = [
   {
-    id: "2025-10-14_create_subcategories_and_modify_products",
-    description: "Create subcategories table, modify products table (subcategory_id, season[], lining_description)",
+    id: "2025-10-22_add_priority_to_categories",
+    description: "Add 'priority' column to categories table",
     sql: `
-      -- Створення нової таблиці subcategories
-      CREATE TABLE IF NOT EXISTS subcategories (
-        id SERIAL PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        category_id INT,
-        FOREIGN KEY (category_id) REFERENCES categories(id)
-      );
-
-      -- Додавання нового поля subcategory_id в таблицю products
-      ALTER TABLE products
-      ADD COLUMN subcategory_id INT;
-
-      -- Додавання зовнішнього ключа до поля subcategory_id
-      ALTER TABLE products
-      ADD CONSTRAINT fk_subcategory
-      FOREIGN KEY (subcategory_id) REFERENCES subcategories(id);
-
-      -- Видалення старого поля season
-      ALTER TABLE products
-      DROP COLUMN season;
-
-      -- Додавання нового поля season типу TEXT[]
-      ALTER TABLE products
-      ADD COLUMN season TEXT[];
-
-      -- Додавання нового поля lining_description
-      ALTER TABLE products ADD COLUMN lining_description TEXT;
+      ALTER TABLE categories
+      ADD COLUMN IF NOT EXISTS priority INT DEFAULT 0;
     `,
   },
 ];
@@ -101,7 +76,7 @@ async function main() {
   }
 
   await pool.end();
-  console.log("All migrations done.");
+  console.log("Migration complete.");
 }
 
 main().catch((e) => {
