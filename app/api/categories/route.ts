@@ -23,7 +23,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name } = body;
+    const { name, priority } = body;
 
     if (!name) {
       return NextResponse.json(
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const newCategory = await sqlPostCategory(name);
+    const newCategory = await sqlPostCategory(name, priority ?? 0);
     return NextResponse.json(newCategory, { status: 201 });
   } catch (error) {
     console.error("[POST /api/categories]", error);

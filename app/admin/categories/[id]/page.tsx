@@ -28,6 +28,7 @@ export default function EditCategoryPage() {
 
   const [formData, setFormData] = useState({
     name: "",
+    priority: 0, // <-- add this
     subcategories: [] as Subcategory[],
   });
 
@@ -49,6 +50,7 @@ export default function EditCategoryPage() {
 
         setFormData({
           name: category.name,
+          priority: category.priority ?? 0,
           subcategories: subcategories || [],
         });
       } catch (err) {
@@ -63,7 +65,10 @@ export default function EditCategoryPage() {
   }, [categoryId]);
 
   const handleChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({
+      ...prev,
+      [field]: field === "priority" ? Number(value) : value,
+    }));
   };
 
   const handleSubcategoryNameChange = (index: number, value: string) => {
@@ -116,7 +121,7 @@ export default function EditCategoryPage() {
       const categoryRes = await fetch(`/api/categories/${categoryId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ name, priority: formData.priority }),
       });
 
       if (!categoryRes.ok) throw new Error("Failed to update category");
@@ -180,6 +185,13 @@ export default function EditCategoryPage() {
                 type="text"
                 value={formData.name}
                 onChange={(e) => handleChange("name", e.target.value)}
+              />
+
+              <Label className="mt-4">Пріоритет</Label>
+              <Input
+                type="number"
+                value={formData.priority}
+                onChange={(e) => handleChange("priority", e.target.value)}
               />
 
               <Label className="mt-6">Підкатегорії</Label>

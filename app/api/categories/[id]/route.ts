@@ -46,7 +46,7 @@ export async function PUT(
 
   try {
     const body = await req.json();
-    const { name } = body;
+    const { name, priority } = body;
 
     if (!name) {
       return NextResponse.json(
@@ -54,8 +54,19 @@ export async function PUT(
         { status: 400 }
       );
     }
+    // Optional: Validate priority is a number (integer >= 0)
+    if (
+      priority !== undefined &&
+      (typeof priority !== "number" || priority < 0)
+    ) {
+      return NextResponse.json(
+        { error: "Priority must be a non-negative number" },
+        { status: 400 }
+      );
+    }
 
-    const updated = await sqlPutCategory(id, name);
+    // Default priority to 0 if undefined
+    const updated = await sqlPutCategory(id, name, priority ?? 0);
     return NextResponse.json(updated);
   } catch (error) {
     console.error("[PUT /api/categories/:id]", error);

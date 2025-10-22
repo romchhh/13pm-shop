@@ -12,6 +12,7 @@ import SidebarMenu from "./SidebarMenu";
 interface Category {
   id: number;
   name: string;
+  priority: number;
 }
 
 interface Subcategory {
@@ -41,6 +42,8 @@ export default function Header() {
     null
   );
   const [catalogOpen, setCatalogOpen] = useState(false);
+  const [infoMenuOpen, setInfoMenuOpen] = useState(false);
+  const infoTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const [pinnedCatalog, setPinnedCatalog] = useState(false);
   const hoverTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -63,6 +66,12 @@ export default function Header() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [pinnedCatalog]);
+
+  useEffect(() => {
+    return () => {
+      if (infoTimeout.current) clearTimeout(infoTimeout.current);
+    };
+  }, []);
 
   useEffect(() => {
     async function fetchCategories() {
@@ -96,7 +105,7 @@ export default function Header() {
     }
   }, [hoveredCategoryId]);
 
-  const customSeasonCategory: Category & { subcategories: Subcategory[] } = {
+  const customSeasonCategory = {
     id: -1, // Use a negative ID or something unique to avoid conflicts
     name: "Сезон",
     subcategories: [
@@ -140,52 +149,149 @@ export default function Header() {
             </Link>
 
             <div className="flex items-center gap-10 text-xl font-normal font-['Inter']">
-              <Link
-                href="/#about"
-                className="hover:text-[#8C7461] font-['Inter']"
-              >
-                Про нас
-              </Link>
+              {/* Product Categories shown directly in top nav */}
+              {categories.map((category) => (
+                <div
+                  key={category.id}
+                  className="relative group"
+                  onMouseEnter={() => {
+                    if (hoverTimeout.current)
+                      clearTimeout(hoverTimeout.current);
+                    setHoveredCategoryId(category.id);
+                    setCatalogOpen(true);
+                  }}
+                  onMouseLeave={() => {
+                    if (!pinnedCatalog) {
+                      hoverTimeout.current = setTimeout(() => {
+                        setHoveredCategoryId(null);
+                      }, 200);
+                    }
+                  }}
+                >
+                  <button
+                    onClick={() =>
+                      (window.location.href = `/catalog?category=${encodeURIComponent(
+                        category.name
+                      )}`)
+                    }
+                    className="cursor-pointer whitespace-nowrap hover:text-[#8C7461] text-lg font-normal font-['Inter']"
+                  >
+                    {category.name}
+                  </button>
 
+                  {/* Subcategories dropdown */}
+                  {hoveredCategoryId === category.id &&
+                    subcategories.length > 0 && (
+                      <div className="absolute top-full left-0 mt-2 bg-white shadow-md rounded px-4 py-2 flex flex-col min-w-[200px] z-50">
+                        {subcategories.map((subcat) => (
+                          <Link
+                            key={subcat.id}
+                            href={`/catalog?subcategory=${encodeURIComponent(
+                              subcat.name
+                            )}`}
+                            className="hover:text-[#8C7461] text-base py-1 font-normal font-['Inter'] text-black"
+                          >
+                            {subcat.name}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                </div>
+              ))}
+
+              {/* Also include the "Сезон" category */}
               <div
+                className="relative group"
                 onMouseEnter={() => {
-                  if (justUnpinned) return;
-
                   if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
+                  setHoveredCategoryId(customSeasonCategory.id);
                   setCatalogOpen(true);
                 }}
-                className="relative"
+                onMouseLeave={() => {
+                  if (!pinnedCatalog) {
+                    hoverTimeout.current = setTimeout(() => {
+                      setHoveredCategoryId(null);
+                    }, 200);
+                  }
+                }}
               >
-                <Link
-                  href="/catalog"
-                  className={`cursor-pointer hover:text-[#8C7461] font-['Inter'] ${
-                    pinnedCatalog
-                      ? "text-[#8C7461] font-semibold underline"
-                      : ""
+                <button
+                  className="cursor-pointer whitespace-nowrap hover:text-[#8C7461] text-lg font-normal font-['Inter']"
+                  disabled
+                  onClick={() =>
+                    (window.location.href = `/catalog?category=${encodeURIComponent(
+                      customSeasonCategory.name
+                    )}`)
+                  }
+                >
+                  {customSeasonCategory.name}
+                </button>
+                {hoveredCategoryId === customSeasonCategory.id && (
+                  <div className="absolute top-full left-0 mt-2 bg-white shadow-md rounded px-4 py-2 flex flex-col min-w-[200px] z-50">
+                    {customSeasonCategory.subcategories.map((subcat) => (
+                      <Link
+                        key={subcat.id}
+                        href={`/catalog?season=${encodeURIComponent(
+                          subcat.name
+                        )}`}
+                        className="hover:text-[#8C7461] text-base py-1 font-normal font-['Inter'] text-black"
+                      >
+                        {subcat.name}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {/* Information dropdown */}
+              <div
+                className="relative"
+                onMouseEnter={() => {
+                  if (infoTimeout.current) clearTimeout(infoTimeout.current);
+                  setInfoMenuOpen(true);
+                }}
+                onMouseLeave={() => {
+                  infoTimeout.current = setTimeout(() => {
+                    setInfoMenuOpen(false);
+                  }, 200); // delay in ms
+                }}
+              >
+                <span className="cursor-default whitespace-nowrap hover:text-[#8C7461] text-lg font-normal font-['Inter']">
+                  Інформація
+                </span>
+
+                <div
+                  className={`absolute top-full left-0 mt-2 bg-white shadow-md rounded px-4 py-2 flex flex-col min-w-[200px] z-50 transition-opacity duration-200 ${
+                    infoMenuOpen
+                      ? "opacity-100 pointer-events-auto"
+                      : "opacity-0 pointer-events-none"
                   }`}
                 >
-                  Каталог
-                </Link>
+                  <Link
+                    href="/#about"
+                    className="hover:text-[#8C7461] text-base py-1 font-normal font-['Inter'] text-black"
+                  >
+                    Про нас
+                  </Link>
+                  <Link
+                    href="/#payment-and-delivery"
+                    className="hover:text-[#8C7461] text-base py-1 font-normal font-['Inter'] text-black"
+                  >
+                    Оплата і доставка
+                  </Link>
+                  <Link
+                    href="/#reviews"
+                    className="hover:text-[#8C7461] text-base py-1 font-normal font-['Inter'] text-black"
+                  >
+                    Відгуки
+                  </Link>
+                  <Link
+                    href="/#contacts"
+                    className="hover:text-[#8C7461] text-base py-1 font-normal font-['Inter'] text-black"
+                  >
+                    Контакти
+                  </Link>
+                </div>
               </div>
-
-              <Link
-                href="/#payment-and-delivery"
-                className="hover:text-[#8C7461] font-['Inter']"
-              >
-                Оплата і доставка
-              </Link>
-              <Link
-                href="/#reviews"
-                className="hover:text-[#8C7461] font-['Inter']"
-              >
-                Відгуки
-              </Link>
-              <Link
-                href="/#contacts"
-                className="hover:text-[#8C7461] font-['Inter']"
-              >
-                Контакти
-              </Link>
             </div>
 
             {/* Right Icons */}
@@ -237,107 +343,6 @@ export default function Header() {
               </button>
             </div>
           </div>
-
-          {/* Mega menu area — part of same wrapper! */}
-          {catalogOpen && (
-            <div
-              ref={menuRef}
-              className="flex justify-center gap-6 relative py-3"
-            >
-              {/* Custom Сезон category */}
-              <div
-                className="relative group"
-                onMouseEnter={() => {
-                  if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
-                  setHoveredCategoryId(customSeasonCategory.id);
-                  setCatalogOpen(true);
-                }}
-                onMouseLeave={() => {
-                  if (!pinnedCatalog) {
-                    hoverTimeout.current = setTimeout(() => {
-                      setHoveredCategoryId(null);
-                    }, 200);
-                  }
-                }}
-              >
-                <button
-                  onClick={() =>
-                    (window.location.href = `/catalog?category=${encodeURIComponent(
-                      customSeasonCategory.name
-                    )}`)
-                  }
-                  className="cursor-pointer whitespace-nowrap hover:text-[#8C7461] text-lg font-normal font-['Inter']"
-                >
-                  {customSeasonCategory.name}
-                </button>
-
-                {hoveredCategoryId === customSeasonCategory.id && (
-                  <div className="absolute top-full left-0 mt-2 bg-white shadow-md rounded px-4 py-2 flex flex-col min-w-[200px] z-50">
-                    {customSeasonCategory.subcategories.map((subcat) => (
-                      <Link
-                        key={subcat.id}
-                        href={`/catalog?season=${encodeURIComponent(
-                          subcat.name
-                        )}`}
-                        className="hover:text-[#8C7461] text-base py-1 font-normal font-['Inter'] text-black"
-                      >
-                        {subcat.name}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {categories.map((category) => (
-                <div
-                  key={category.id}
-                  className="relative group"
-                  onMouseEnter={() => {
-                    if (hoverTimeout.current)
-                      clearTimeout(hoverTimeout.current);
-                    setHoveredCategoryId(category.id);
-                    setCatalogOpen(true);
-                  }}
-                  onMouseLeave={() => {
-                    if (!pinnedCatalog) {
-                      hoverTimeout.current = setTimeout(() => {
-                        setHoveredCategoryId(null);
-                      }, 200);
-                    }
-                  }}
-                >
-                  <button
-                    onClick={() =>
-                      (window.location.href = `/catalog?category=${encodeURIComponent(
-                        category.name
-                      )}`)
-                    }
-                    className="cursor-pointer whitespace-nowrap hover:text-[#8C7461] text-lg font-normal font-['Inter']"
-                  >
-                    {category.name}
-                  </button>
-
-                  {/* Show subcategories only for hovered category */}
-                  {hoveredCategoryId === category.id &&
-                    subcategories.length > 0 && (
-                      <div className="absolute top-full left-0 mt-2 bg-white shadow-md rounded px-4 py-2 flex flex-col min-w-[200px] z-50">
-                        {subcategories.map((subcat) => (
-                          <Link
-                            key={subcat.id}
-                            href={`/catalog?subcategory=${encodeURIComponent(
-                              subcat.name
-                            )}`}
-                            className="hover:text-[#8C7461] text-base py-1 font-normal font-['Inter'] text-black"
-                          >
-                            {subcat.name}
-                          </Link>
-                        ))}
-                      </div>
-                    )}
-                </div>
-              ))}
-            </div>
-          )}
         </div>
 
         {/* Mobile Header (Unchanged) */}

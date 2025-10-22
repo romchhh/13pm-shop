@@ -722,7 +722,7 @@ export async function sqlGetOrderByInvoiceId(invoiceId: string) {
 export async function sqlGetAllCategories() {
   return await sql`
     SELECT * FROM categories
-    ORDER BY id;
+    ORDER BY priority DESC;
   `;
 }
 
@@ -735,20 +735,24 @@ export async function sqlGetCategory(id: number) {
 }
 
 // Create a new category
-export async function sqlPostCategory(name: string) {
+export async function sqlPostCategory(name: string, priority: number = 0) {
   const result = await sql`
-    INSERT INTO categories (name)
-    VALUES (${name})
+    INSERT INTO categories (name, priority)
+    VALUES (${name}, ${priority})
     RETURNING *;
   `;
   return result[0];
 }
 
 // Update a category by ID
-export async function sqlPutCategory(id: number, name: string) {
+export async function sqlPutCategory(
+  id: number,
+  name: string,
+  priority: number = 0
+) {
   const result = await sql`
     UPDATE categories
-    SET name = ${name}
+    SET name = ${name}, priority = ${priority}
     WHERE id = ${id}
     RETURNING *;
   `;
