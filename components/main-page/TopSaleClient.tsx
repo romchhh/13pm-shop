@@ -22,8 +22,12 @@ interface TopSaleClientProps {
 
 export default function TopSaleClient({ products }: TopSaleClientProps) {
   if (products.length === 0) {
-    return <div className="text-center py-10">Наразі немає топових товарів.</div>;
+    return (
+      <div className="text-center py-10">Наразі немає топових товарів.</div>
+    );
   }
+
+  const limitedProducts = products.slice(0, 4);
 
   return (
     <section className="max-w-[1920px] mx-auto w-full mb-35 relative overflow-hidden flex flex-col gap-10">
@@ -38,7 +42,7 @@ export default function TopSaleClient({ products }: TopSaleClientProps) {
 
       {/* Desktop layout */}
       <div className="hidden sm:grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8 lg:gap-10 px-6">
-        {products.map((product, index) => (
+        {limitedProducts.map((product, index) => (
           <Link
             href={`/product/${product.id}`}
             key={product.id}
@@ -47,7 +51,10 @@ export default function TopSaleClient({ products }: TopSaleClientProps) {
             <div className="aspect-[2/3] w-full overflow-hidden relative">
               <Image
                 className="object-cover group-hover:brightness-90 transition duration-300"
-                src={getProductImageSrc(product.first_media, "https://placehold.co/432x613")}
+                src={getProductImageSrc(
+                  product.first_media,
+                  "https://placehold.co/432x613"
+                )}
                 alt={product.name}
                 fill
                 sizes="(max-width: 420px) 90vw, (max-width: 640px) 45vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
@@ -76,7 +83,7 @@ export default function TopSaleClient({ products }: TopSaleClientProps) {
           centeredSlides
           grabCursor
         >
-          {products.map((product, index) => (
+          {limitedProducts.map((product, index) => (
             <SwiperSlide key={product.id}>
               <Link
                 href={`/product/${product.id}`}
@@ -85,7 +92,10 @@ export default function TopSaleClient({ products }: TopSaleClientProps) {
                 <div className="relative w-full h-[350px]">
                   <Image
                     className="object-cover group-hover:brightness-90 transition duration-300"
-                    src={getProductImageSrc(product.first_media, "https://placehold.co/432x613")}
+                    src={getProductImageSrc(
+                      product.first_media,
+                      "https://placehold.co/432x613"
+                    )}
                     alt={product.name}
                     fill
                     sizes="85vw"
@@ -108,4 +118,3 @@ export default function TopSaleClient({ products }: TopSaleClientProps) {
     </section>
   );
 }
-
