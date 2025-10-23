@@ -71,6 +71,7 @@ export default function Product() {
       quantity,
       imageUrl: getFirstProductImage(media),
       color: selectedColor || undefined,
+      discount_percentage: product.discount_percentage
     });
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);

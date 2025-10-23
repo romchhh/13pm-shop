@@ -105,6 +105,7 @@ export default function ProductClient({ product }: ProductClientProps) {
       quantity,
       imageUrl: getFirstProductImage(media),
       color: selectedColor || undefined,
+      discount_percentage: product.discount_percentage
     });
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);
@@ -241,16 +242,29 @@ export default function ProductClient({ product }: ProductClientProps) {
           {/* Price */}
           <div className="w-full flex flex-col sm:flex-row justify-start border-b p-2 sm:p-4 gap-2">
             <div className="flex justify-start gap-8 text-2xl md:text-3xl font-['Helvetica']">
-              <div className=" ">{product.price} ₴ </div>
-              {product.old_price && (
-                <span className="text-red-500 line-through">
-                  {product.old_price} ₴{"   "}
-                </span>
-              )}
-              {product.discount_percentage && (
-                <span className="text-red-500 underline">
-                  знижка: {product.discount_percentage} %{"   "}
-                </span>
+              {product.discount_percentage ? (
+                <div className="flex items-center gap-2">
+                  {/* Discounted price */}
+                  <span className="font-medium text-red-600">
+                    {(
+                      product.price *
+                      (1 - product.discount_percentage / 100)
+                    ).toFixed(2)}
+                    ₴
+                  </span>
+
+                  {/* Original (crossed-out) price */}
+                  <span className="line-through">
+                    {product.price}₴
+                  </span>
+
+                  {/* Optional: show discount percentage */}
+                  <span className="text-green-600 text-sm">
+                    -{product.discount_percentage}%
+                  </span>
+                </div>
+              ) : (
+                <span className="font-medium">{product.price}₴</span>
               )}
             </div>
           </div>

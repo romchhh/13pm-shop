@@ -87,35 +87,33 @@ export default function FinalCard() {
       return;
     }
 
-    const apiItems = items.map((item) => ({
-      product_id: item.id,
-      product_name: item.name,
-      size: item.size,
-      quantity: item.quantity,
-      price: item.price,
-    }));
+    // Формуємо товари для API (з урахуванням знижки)
+    const apiItems = items.map((item) => {
+      const discountedPrice = item.discount_percentage
+        ? item.price * (1 - item.discount_percentage / 100)
+        : item.price;
 
-    // Сума до оплати
-    const fullAmount = items.reduce(
-      (total, item) => total + item.price * item.quantity,
-      0
-    );
+      return {
+        product_id: item.id,
+        product_name: item.name,
+        size: item.size,
+        quantity: item.quantity,
+        price: discountedPrice.toFixed(2), // передаємо кінцеву ціну
+        original_price: item.price, // можна залишити для запису, якщо треба
+        discount_percentage: item.discount_percentage || null,
+      };
+    });
 
-    // Конвертуємо в копійки
-    // const amountInKopecks = Math.round(amountToPay * 100);
-
-    // Формуємо замовлення для інвойсу
-    // const basketOrder = items.map((item) => ({
-    //   name: item.name,
-    //   qty: item.quantity,
-    //   sum: Math.round(item.price * item.quantity * 100),
-    //   total: Math.round(item.price * item.quantity * 100),
-    //   unit: "шт.",
-    //   code: `${item.id}-${item.size}`,
-    // }));
+    // Підрахунок суми до оплати (з урахуванням знижки)
+    const fullAmount = items.reduce((total, item) => {
+      const price = item.discount_percentage
+        ? item.price * (1 - item.discount_percentage / 100)
+        : item.price;
+      return total + price * item.quantity;
+    }, 0);
 
     try {
-      // Create order and get payment URL
+      // Надсилаємо дані замовлення
       const response = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -128,6 +126,7 @@ export default function FinalCard() {
           post_office: postOffice,
           comment,
           payment_type: paymentType,
+          total_amount: fullAmount.toFixed(2),
           items: apiItems,
         }),
       });
@@ -159,7 +158,7 @@ export default function FinalCard() {
         setSuccess("Замовлення успішно створено! Переходимо до оплати...");
         clearBasket();
 
-        // Redirect to payment page after 2 seconds
+        // Перехід на сторінку оплати через 2 сек
         setTimeout(() => {
           window.location.href = invoiceUrl;
         }, 2000);
@@ -465,7 +464,30 @@ export default function FinalCard() {
                         Кількість: {item.quantity}x
                       </div>
                       <div className="text-base text-zinc-600 font-['Helvetica']">
-                        {(item.price * item.quantity).toFixed(2)} ₴
+                        {item.discount_percentage ? (
+                          <div className="flex items-center gap-2">
+                            {/* Discounted price */}
+                            <span className="font-medium text-red-600">
+                              {(
+                                item.price *
+                                (1 - item.discount_percentage / 100)
+                              ).toFixed(2)}
+                              ₴
+                            </span>
+
+                            {/* Original (crossed-out) price */}
+                            <span className="text-gray-500 line-through">
+                              {item.price}₴
+                            </span>
+
+                            {/* Optional: show discount percentage */}
+                            <span className="text-green-600 text-sm">
+                              -{item.discount_percentage}%
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="font-medium">{item.price}₴</span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -843,7 +865,30 @@ export default function FinalCard() {
                         {item.name}
                       </div>
                       <div className="text-zinc-600 text-base font-normal font-['Helvetica'] leading-relaxed tracking-wide">
-                        {item.price} ₴
+                        {item.discount_percentage ? (
+                          <div className="flex items-center gap-2">
+                            {/* Discounted price */}
+                            <span className="font-medium text-red-600">
+                              {(
+                                item.price *
+                                (1 - item.discount_percentage / 100)
+                              ).toFixed(2)}
+                              ₴
+                            </span>
+
+                            {/* Original (crossed-out) price */}
+                            <span className="text-gray-500 line-through">
+                              {item.price}₴
+                            </span>
+
+                            {/* Optional: show discount percentage */}
+                            <span className="text-green-600 text-sm">
+                              -{item.discount_percentage}%
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="font-medium">{item.price}₴</span>
+                        )}
                       </div>
                       <div className="text-base font-normal font-['Helvetica'] leading-relaxed tracking-wide">
                         {item.size}
@@ -902,10 +947,12 @@ export default function FinalCard() {
                 <div>Всього</div>
                 <div className="font-['Helvetica'] leading-relaxed tracking-wide">
                   {items
-                    .reduce(
-                      (total, item) => total + item.price * item.quantity,
-                      0
-                    )
+                    .reduce((total, item) => {
+                      const price = item.discount_percentage
+                        ? item.price * (1 - item.discount_percentage / 100)
+                        : item.price;
+                      return total + price * item.quantity;
+                    }, 0)
                     .toFixed(2)}{" "}
                   ₴
                 </div>

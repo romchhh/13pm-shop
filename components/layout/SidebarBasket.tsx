@@ -66,7 +66,25 @@ export default function SidebarBasket({
                 <div className="flex flex-col justify-between flex-1">
                   <div>
                     <p className="text-base font-medium">{item.name}</p>
-                    <p className="text-zinc-600 mt-1">{item.price} ₴</p>
+                    <div className="text-zinc-600 mt-1">
+                      {item.discount_percentage ? (
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-red-600">
+                            {(
+                              item.price *
+                              (1 - item.discount_percentage / 100)
+                            ).toFixed(2)}
+                            ₴
+                          </span>
+                          <span className="line-through">{item.price}₴</span>
+                          <span className="text-green-600 text-sm">
+                            -{item.discount_percentage}%
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="font-medium">{item.price}₴</span>
+                      )}
+                    </div>
                     <p className="text-stone-900 mt-1">Розмір: {item.size}</p>
                   </div>
 

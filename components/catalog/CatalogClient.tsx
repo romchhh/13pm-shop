@@ -16,6 +16,7 @@ interface Product {
   first_media?: { url: string; type: string } | null;
   sizes?: { size: string; stock: string }[];
   color?: string;
+  discount_percentage?: number;
 }
 
 interface CatalogClientProps {
@@ -133,7 +134,30 @@ export default function CatalogClient({
               <span className="text-sm sm:text-base lg:text-lg leading-tight">
                 {product.name}
                 <br />
-                <span className="font-medium">{product.price}₴</span>
+                {product.discount_percentage ? (
+                  <div className="flex items-center gap-2">
+                    {/* Discounted price */}
+                    <span className="font-medium text-red-600">
+                      {(
+                        product.price *
+                        (1 - product.discount_percentage / 100)
+                      ).toFixed(2)}
+                      ₴
+                    </span>
+
+                    {/* Original (crossed-out) price */}
+                    <span className="text-gray-500 line-through">
+                      {product.price}₴
+                    </span>
+
+                    {/* Optional: show discount percentage */}
+                    <span className="text-green-600 text-sm">
+                      -{product.discount_percentage}%
+                    </span>
+                  </div>
+                ) : (
+                  <span className="font-medium">{product.price}₴</span>
+                )}
               </span>
             </Link>
           ))}

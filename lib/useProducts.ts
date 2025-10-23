@@ -9,6 +9,7 @@ interface Product {
   id: number;
   name: string;
   price: number;
+  discount_percentage?: number;
   media?: { url: string; type: string }[];
   first_media?: { url: string; type: string } | null;
   sizes?: { size: string; stock: string }[];
