@@ -1,7 +1,7 @@
 "use client";
 
 import { useAppContext } from "@/lib/GeneralProvider";
-import { useState, useEffect} from "react";
+import { useState, useEffect } from "react";
 import { useBasket } from "@/lib/BasketProvider";
 import Image from "next/image";
 import Alert from "@/components/shared/Alert";
@@ -59,6 +59,24 @@ export default function ProductClient({ product }: ProductClientProps) {
     }
   }, [product, selectedColor]);
 
+  const handleNext = () => {
+    if (!swiperInstance) return;
+    if (swiperInstance.isEnd) {
+      swiperInstance.slideToLoop(0); // 👈 jump to first "looped" slide
+    } else {
+      swiperInstance.slideNext();
+    }
+  };
+
+  const handlePrev = () => {
+    if (!swiperInstance) return;
+    if (swiperInstance.isBeginning) {
+      swiperInstance.slideToLoop(media.length - 1); // 👈 jump to last "looped" slide
+    } else {
+      swiperInstance.slidePrev();
+    }
+  };
+
   const handleAddToCart = () => {
     if (!selectedSize) {
       setAlertMessage("Оберіть розмір");
@@ -107,6 +125,12 @@ export default function ProductClient({ product }: ProductClientProps) {
     setSwiperInstance(swiper);
   };
 
+  useEffect(() => {
+    if (swiperInstance) {
+      swiperInstance.slideToLoop(activeImageIndex, 0);
+    }
+  }, [swiperInstance]);
+
   return (
     <section className="max-w-[1920px] w-full mx-auto">
       <div className="flex flex-col lg:flex-row justify-around p-4 md:p-10 gap-10">
@@ -119,7 +143,8 @@ export default function ProductClient({ product }: ProductClientProps) {
             slidesPerView={1}
             centeredSlides
             grabCursor
-            onSlideChange={(swiper) => setActiveImageIndex(swiper.activeIndex)} // Sync slide change with state
+            loop
+            onSlideChange={(swiper) => setActiveImageIndex(swiper.realIndex)} // Sync slide change with state
             initialSlide={activeImageIndex} // Set the initial slide to activeImageIndex
           >
             {media.map((item, index) => (
@@ -165,7 +190,7 @@ export default function ProductClient({ product }: ProductClientProps) {
               {/* Prev button */}
               <button
                 className="absolute top-[40%] -translate-y-1/2 left-2 md:left-4 rounded-full cursor-pointer z-10 opacity-60 hover:opacity-100 transition"
-                onClick={() => swiperInstance?.slidePrev()} // Use swiperInstance to call slidePrev
+                onClick={handlePrev} // Use swiperInstance to call slidePrev
               >
                 <Image
                   src={
@@ -183,7 +208,7 @@ export default function ProductClient({ product }: ProductClientProps) {
               {/* Next button */}
               <button
                 className="absolute top-[40%] -translate-y-1/2 right-2 md:right-4 rounded-full cursor-pointer z-10 opacity-60 hover:opacity-100 transition"
-                onClick={() => swiperInstance?.slideNext()} // Use swiperInstance to call slideNext
+                onClick={handleNext} // Use swiperInstance to call slideNext
               >
                 <Image
                   src={
