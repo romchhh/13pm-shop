@@ -34,7 +34,7 @@ export default function TopSale() {
 
       {/* Desktop layout */}
       <div className="hidden sm:grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8 lg:gap-10 px-6">
-        {products.map((product) => (
+        {products.slice(0, 4).map((product) => (
           <Link
             href={`/product/${product.id}`}
             key={product.id}

@@ -23,7 +23,10 @@ interface CatalogClientProps {
   colors: string[];
 }
 
-export default function CatalogClient({ initialProducts, colors }: CatalogClientProps) {
+export default function CatalogClient({
+  initialProducts,
+  colors,
+}: CatalogClientProps) {
   const { isDark, isSidebarOpen, setIsSidebarOpen } = useAppContext();
   const searchParams = useSearchParams();
 
@@ -43,7 +46,8 @@ export default function CatalogClient({ initialProducts, colors }: CatalogClient
         product.sizes?.some((s) => selectedSizes.includes(s.size));
 
       const matchesColor =
-        selectedColors.length === 0 || (product.color && selectedColors.includes(product.color));
+        selectedColors.length === 0 ||
+        (product.color && selectedColors.includes(product.color));
 
       const matchesMinPrice = minPrice === null || product.price >= minPrice;
       const matchesMaxPrice = maxPrice === null || product.price <= maxPrice;
@@ -61,6 +65,12 @@ export default function CatalogClient({ initialProducts, colors }: CatalogClient
   const category = searchParams.get("category");
   const season = searchParams.get("season");
   const subcategory = searchParams.get("subcategory");
+
+  const [visibleCount, setVisibleCount] = useState(12);
+
+  const visibleProducts = useMemo(() => {
+    return sortedProducts.slice(0, visibleCount);
+  }, [sortedProducts, visibleCount]);
 
   return (
     <>
@@ -97,7 +107,7 @@ export default function CatalogClient({ initialProducts, colors }: CatalogClient
 
         {/* Product Grid - Mobile Optimized */}
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
-          {sortedProducts.map((product, index) => (
+          {visibleProducts.map((product, index) => (
             <Link
               href={`/product/${product.id}`}
               key={product.id}
@@ -122,12 +132,26 @@ export default function CatalogClient({ initialProducts, colors }: CatalogClient
               {/* Product Title + Price */}
               <span className="text-sm sm:text-base lg:text-lg leading-tight">
                 {product.name}
-                <br /> 
+                <br />
                 <span className="font-medium">{product.price}₴</span>
               </span>
             </Link>
           ))}
         </div>
+        {visibleCount < sortedProducts.length && (
+          <div className="mt-6 flex justify-center">
+            <button
+              onClick={() => setVisibleCount((prev) => prev + 12)}
+              className={`cursor-pointer px-6 py-3 ${
+                isDark
+                  ? "bg-stone-100 text-stone-900"
+                  : "bg-stone-900 text-stone-100"
+              }`}
+            >
+              Показати ще
+            </button>
+          </div>
+        )}
       </section>
 
       <SidebarFilter
@@ -158,4 +182,3 @@ export default function CatalogClient({ initialProducts, colors }: CatalogClient
     </>
   );
 }
-
