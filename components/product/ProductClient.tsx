@@ -189,7 +189,7 @@ export default function ProductClient({ product }: ProductClientProps) {
             <>
               {/* Prev button */}
               <button
-                className="absolute top-[40%] -translate-y-1/2 left-2 md:left-4 rounded-full cursor-pointer z-10 opacity-60 hover:opacity-100 transition"
+                className="absolute top-[10%] -translate-y-1/2 left-2 md:left-4 rounded-full cursor-pointer z-10 opacity-60 hover:opacity-100 transition"
                 onClick={handlePrev} // Use swiperInstance to call slidePrev
               >
                 <Image
@@ -207,7 +207,7 @@ export default function ProductClient({ product }: ProductClientProps) {
 
               {/* Next button */}
               <button
-                className="absolute top-[40%] -translate-y-1/2 right-2 md:right-4 rounded-full cursor-pointer z-10 opacity-60 hover:opacity-100 transition"
+                className="absolute top-[10%] -translate-y-1/2 right-2 md:right-4 rounded-full cursor-pointer z-10 opacity-60 hover:opacity-100 transition"
                 onClick={handleNext} // Use swiperInstance to call slideNext
               >
                 <Image
