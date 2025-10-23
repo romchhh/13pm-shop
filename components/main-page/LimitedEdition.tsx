@@ -21,16 +21,19 @@ export default function LimitedEdition() {
   const { products: limitedEditionProducts, loading } = useProducts({ limitedEdition: true });
 
   // Fill with template products if there are not enough
-  const products = useMemo(() => {
-    // If there are not enough products, fill with template products
-    if (limitedEditionProducts.length < 8) {
-      return [
-        ...limitedEditionProducts,
-        ...Array(8 - limitedEditionProducts.length).fill(templateProduct),
-      ];
-    }
-    return limitedEditionProducts;
-  }, [limitedEditionProducts]);
+const products = useMemo(() => {
+  // Fill up to 8 first (so we still get templates if needed)
+  const filled =
+    limitedEditionProducts.length < 8
+      ? [
+          ...limitedEditionProducts,
+          ...Array(8 - limitedEditionProducts.length).fill(templateProduct),
+        ]
+      : limitedEditionProducts;
+
+  // ✅ Then limit to 4
+  return filled.slice(0, 4);
+}, [limitedEditionProducts]);
 
   if (loading) {
     return <div className="text-center py-10">Завантаження...</div>;
