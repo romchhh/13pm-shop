@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
-import { stat, access } from "fs/promises";
+import { access, stat } from "fs/promises";
 
 interface RouteParams {
   params: Promise<{
@@ -9,12 +9,29 @@ interface RouteParams {
   }>;
 }
 
+// Helper: convert Node.js Readable to Web ReadableStream
+function nodeToWebStream(nodeStream: fs.ReadStream): ReadableStream<Uint8Array> {
+  return new ReadableStream({
+    start(controller) {
+      nodeStream.on("data", (chunk) => {
+        // chunk can be string | Buffer — ensure we pass an ArrayLike<number> to Uint8Array
+        const buffer = typeof chunk === "string" ? Buffer.from(chunk) : chunk;
+        controller.enqueue(new Uint8Array(buffer));
+      });
+      nodeStream.on("end", () => controller.close());
+      nodeStream.on("error", (err) => controller.error(err));
+    },
+    cancel() {
+      nodeStream.destroy();
+    },
+  });
+}
+
 export async function GET(request: NextRequest, context: RouteParams) {
   try {
     const { filename } = await context.params;
     const filePath = path.join(process.cwd(), "product-images", filename);
 
-    // ✅ Check existence
     try {
       await access(filePath);
     } catch {
@@ -23,7 +40,6 @@ export async function GET(request: NextRequest, context: RouteParams) {
 
     const ext = path.extname(filename).toLowerCase();
 
-    // 🟢 Determine content type (only minimal logic needed)
     const contentTypeMap: Record<string, string> = {
       ".webp": "image/webp",
       ".jpg": "image/jpeg",
@@ -36,19 +52,20 @@ export async function GET(request: NextRequest, context: RouteParams) {
       ".ogg": "video/ogg",
       ".mov": "video/quicktime",
     };
+
     const contentType = contentTypeMap[ext] || "application/octet-stream";
 
-    // 🧠 Serve videos/images as a stream
-    const stats = await stat(filePath);
-    const stream = fs.createReadStream(filePath);
+    const fileStats = await stat(filePath);
+    const nodeStream = fs.createReadStream(filePath);
+    const webStream = nodeToWebStream(nodeStream);
 
-    const headers: Record<string, string> = {
-      "Content-Type": contentType,
-      "Content-Length": stats.size.toString(),
-      "Cache-Control": "public, max-age=31536000, immutable",
-    };
-
-    return new NextResponse(stream as any, { headers });
+    return new NextResponse(webStream, {
+      headers: {
+        "Content-Type": contentType,
+        "Content-Length": fileStats.size.toString(),
+        "Cache-Control": "public, max-age=31536000, immutable",
+      },
+    });
   } catch (error) {
     console.error("Error serving file:", error);
     return new NextResponse("Internal Server Error", { status: 500 });
