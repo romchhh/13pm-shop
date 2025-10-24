@@ -105,7 +105,7 @@ export default function ProductClient({ product }: ProductClientProps) {
       quantity,
       imageUrl: getFirstProductImage(media),
       color: selectedColor || undefined,
-      discount_percentage: product.discount_percentage
+      discount_percentage: product.discount_percentage,
     });
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);
@@ -174,11 +174,10 @@ export default function ProductClient({ product }: ProductClientProps) {
                         height: "auto",
                       }}
                       priority={activeImageIndex === index}
-                      // quality={activeImageIndex === index ? 90 : 80}
+                      quality={activeImageIndex === index ? 90 : 80}
                       sizes="(max-width: 420px) 100vw, (max-width: 768px) 90vw, (max-width: 1024px) 50vw, 800px"
                       placeholder="blur"
                       blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
-                      unoptimized
                     />
                   )}
                 </div>
@@ -255,9 +254,7 @@ export default function ProductClient({ product }: ProductClientProps) {
                   </span>
 
                   {/* Original (crossed-out) price */}
-                  <span className="line-through">
-                    {product.price}₴
-                  </span>
+                  <span className="line-through">{product.price}₴</span>
 
                   {/* Optional: show discount percentage */}
                   <span className="text-green-600 text-sm">
