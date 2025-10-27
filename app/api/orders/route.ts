@@ -23,7 +23,11 @@ export async function GET() {
 // ==========================
 export async function POST(req: NextRequest) {
   try {
+    console.log("=".repeat(50));
+    console.log("[POST /api/orders] Starting order creation...");
+    
     const body = await req.json();
+    console.log("[POST /api/orders] Received body:", JSON.stringify(body, null, 2));
 
     const {
       customer_name,
@@ -37,6 +41,17 @@ export async function POST(req: NextRequest) {
       items,
     } = body;
 
+    console.log("[POST /api/orders] Extracted data:", {
+      customer_name,
+      phone_number,
+      email,
+      delivery_method,
+      city,
+      post_office,
+      payment_type,
+      itemsCount: items?.length,
+    });
+
     // ✅ Basic validation
     if (
       !customer_name ||
@@ -46,11 +61,20 @@ export async function POST(req: NextRequest) {
       !post_office ||
       !items?.length
     ) {
+      console.error("[POST /api/orders] Validation failed:", {
+        hasCustomerName: !!customer_name,
+        hasPhoneNumber: !!phone_number,
+        hasDeliveryMethod: !!delivery_method,
+        hasCity: !!city,
+        hasPostOffice: !!post_office,
+        hasItems: !!items?.length,
+      });
       return NextResponse.json(
         { error: "Missing required order fields" },
         { status: 400 }
       );
     }
+    console.log("[POST /api/orders] Validation passed");
 
     const fullAmount = items.reduce(
       (total: number, item: { price: number; quantity: number }) =>
@@ -60,6 +84,13 @@ export async function POST(req: NextRequest) {
 
     const amountToPay = payment_type === "prepay" ? 300 : fullAmount;
     const amountInKopecks = Math.round(amountToPay * 100);
+    
+    console.log("[POST /api/orders] Amount calculation:", {
+      fullAmount,
+      amountToPay,
+      amountInKopecks,
+      payment_type,
+    });
 
     const basketOrder = items.map(
       (item: {
@@ -79,6 +110,7 @@ export async function POST(req: NextRequest) {
     );
 
     const reference = crypto.randomUUID();
+    console.log("[POST /api/orders] Generated reference:", reference);
 
     // ✅ Створення інвойсу Monobank
 
@@ -92,20 +124,26 @@ export async function POST(req: NextRequest) {
 
     const PUBLIC_URL =
       process.env.NEXT_PUBLIC_PUBLIC_URL || "http://localhost:3000";
+    
+    console.log("[POST /api/orders] PUBLIC_URL:", PUBLIC_URL);
+    console.log("[POST /api/orders] MONO_TOKEN exists:", !!process.env.NEXT_PUBLIC_MONO_TOKEN);
 
-    // const monoResGET = await fetch(
-    //   PUBLIC_URL,
-    //   {
-    //     method: "GET",
-    //     headers: {
-    //       "Content-Type": "application/json",
-    //       "X-Token": process.env.NEXT_PUBLIC_MONO_TOKEN!,
-    //     },
-        
-    //   }
-    // );
-
-    // console.log("monoResGET", monoResGET);
+    const invoicePayload = {
+      amount: amountInKopecks,
+      ccy: 980,
+      merchantPaymInfo: {
+        reference,
+        destination: "Оплата замовлення",
+        comment: comment || "Оплата замовлення",
+        basketOrder,
+      },
+      redirectUrl: `${PUBLIC_URL}/final`,
+      webHookUrl: `${PUBLIC_URL}/api/mono-webhook`,
+      validity: 3600,
+      paymentType: "debit",
+    };
+    
+    console.log("[POST /api/orders] Creating invoice with payload:", JSON.stringify(invoicePayload, null, 2));
 
     const monoRes = await fetch(
       "https://api.monobank.ua/api/merchant/invoice/create",
@@ -115,38 +153,33 @@ export async function POST(req: NextRequest) {
           "Content-Type": "application/json",
           "X-Token": process.env.NEXT_PUBLIC_MONO_TOKEN!,
         },
-        body: JSON.stringify({
-          amount: amountInKopecks,
-          ccy: 980,
-          merchantPaymInfo: {
-            reference,
-            destination: "Оплата замовлення",
-            comment: comment || "Оплата замовлення",
-            basketOrder,
-          },
-          redirectUrl: `${PUBLIC_URL}/final`,
-          webHookUrl: `${PUBLIC_URL}/api/mono-webhook`,
-          validity: 3600,
-          paymentType: "debit",
-        }),
+        body: JSON.stringify(invoicePayload),
       }
     );
-    // console.log(`${PUBLIC_URL}/api/monowebhook`);
-    // console.log("monoRes", monoRes);
+    
+    console.log("[POST /api/orders] Monobank response status:", monoRes.status);
+    console.log("[POST /api/orders] Monobank response ok:", monoRes.ok);
 
     const invoiceData = await monoRes.json();
-    console.log("invoiceData api orders", invoiceData);
+    console.log("[POST /api/orders] Invoice data response:", JSON.stringify(invoiceData, null, 2));
+    
     if (!monoRes.ok) {
-      console.error("Monobank error:", invoiceData);
+      console.error("[POST /api/orders] Monobank error:", invoiceData);
       return NextResponse.json(
-        { error: "Не вдалося створити рахунок" },
+        { error: "Не вдалося створити рахунок", details: invoiceData },
         { status: 500 }
       );
     }
 
     const { invoiceId, pageUrl } = invoiceData;
+    
+    console.log("[POST /api/orders] Extracted from invoice data:", {
+      invoiceId,
+      pageUrl,
+    });
 
     // ✅ Зберігання замовлення у БД (статус "pending" - ще не оплачено)
+    console.log("[POST /api/orders] Saving order to database...");
     await sqlPostOrder({
       customer_name,
       phone_number,
@@ -160,15 +193,30 @@ export async function POST(req: NextRequest) {
       payment_status: "pending", // замовлення створено, але ще не оплачено
       items,
     });
+    console.log("[POST /api/orders] Order saved to database successfully");
 
     // ✅ НЕ відправляємо в Telegram поки не оплачено
     // Telegram повідомлення буде відправлено в webhook після успішної оплати
+    
+    console.log("[POST /api/orders] Returning response with:", {
+      invoiceUrl: pageUrl,
+      invoiceId: invoiceId,
+    });
 
+    console.log("[POST /api/orders] Successfully completed order creation");
+    console.log("=".repeat(50));
+    
     return NextResponse.json({ invoiceUrl: pageUrl, invoiceId: invoiceId });
   } catch (error) {
-    console.error("[POST /orders]", error);
+    console.error("[POST /api/orders] ERROR occurred:", error);
+    console.error("[POST /api/orders] Error details:", {
+      message: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    console.log("=".repeat(50));
+    
     return NextResponse.json(
-      { error: "Failed to create order" },
+      { error: "Failed to create order", details: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }
     );
   }

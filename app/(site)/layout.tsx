@@ -25,6 +25,11 @@ export const metadata: Metadata = {
     "CHARS — український бренд чоловічого одягу, заснований у 2023 році. Ми створюємо стильний одяг для різних чоловіків без компромісів. Класика, кежуал та спорт.",
   keywords:
     "CHARS, український бренд одягу, чоловічий одяг, стильний одяг, смарт-кежуал, кежуал-класик, українська мода, одяг для чоловіків, київ",
+  icons: {
+    icon: "/images/light-theme/chars-logo-header-light.png",
+    shortcut: "/images/light-theme/chars-logo-header-light.png",
+    apple: "/images/light-theme/chars-logo-header-light.png",
+  },
   openGraph: {
     title: "CHARS — Український Бренд Чоловічого Одягу",
     description:
@@ -51,10 +56,9 @@ export default function RootLayout({
         <meta name="format-detection" content="telephone=no" />
         
         {/* Favicon and App Icons */}
-        <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+        <link rel="icon" type="image/png" href="/images/light-theme/chars-logo-header-light.png" />
+        <link rel="shortcut icon" type="image/png" href="/images/light-theme/chars-logo-header-light.png" />
+        <link rel="apple-touch-icon" href="/images/light-theme/chars-logo-header-light.png" />
         <link rel="manifest" href="/site.webmanifest" />
         <meta name="theme-color" content="#000000" />
         <meta name="msapplication-TileColor" content="#000000" />

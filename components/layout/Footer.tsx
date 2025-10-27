@@ -345,11 +345,25 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="flex justify-between mt-10 gap-4 md:gap-6">
-        <span className="text-sm md:text-xl">
+      <div className="flex flex-col sm:flex-row justify-between items-center sm:items-start mt-10 gap-4 md:gap-6">
+        <span className="text-sm md:text-xl text-center sm:text-left">
           Chars Kyiv © 2025 All rights reserved
         </span>
-        <span className="text-sm md:text-xl">Політика конфіденційності</span>
+        <div className="flex gap-2 md:gap-4 items-center">
+          <Link
+            href="/privacy-policy"
+            className="text-sm md:text-xl hover:underline text-center"
+          >
+            Політика конфіденційності
+          </Link>
+          <span className="text-sm md:text-xl hidden sm:inline">|</span>
+          <Link
+            href="/terms-of-service"
+            className="text-sm md:text-xl hover:underline text-center"
+          >
+            Договір оферти
+          </Link>
+        </div>
       </div>
 
       {/* Centered developer credit */}

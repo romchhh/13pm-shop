@@ -89,9 +89,15 @@ export default function FinalCard() {
 
     // Формуємо товари для API (з урахуванням знижки)
     const apiItems = items.map((item) => {
-      const discountedPrice = item.discount_percentage
-        ? item.price * (1 - item.discount_percentage / 100)
-        : item.price;
+      // Перетворюємо ціну в число
+      const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+      const discount = item.discount_percentage 
+        ? (typeof item.discount_percentage === 'string' ? parseFloat(item.discount_percentage) : item.discount_percentage)
+        : 0;
+      
+      const discountedPrice = discount > 0
+        ? itemPrice * (1 - discount / 100)
+        : itemPrice;
 
       return {
         product_id: item.id,
@@ -99,44 +105,69 @@ export default function FinalCard() {
         size: item.size,
         quantity: item.quantity,
         price: discountedPrice.toFixed(2), // передаємо кінцеву ціну
-        original_price: item.price, // можна залишити для запису, якщо треба
-        discount_percentage: item.discount_percentage || null,
+        original_price: itemPrice, // можна залишити для запису, якщо треба
+        discount_percentage: discount || null,
       };
     });
 
     // Підрахунок суми до оплати (з урахуванням знижки)
     const fullAmount = items.reduce((total, item) => {
-      const price = item.discount_percentage
-        ? item.price * (1 - item.discount_percentage / 100)
-        : item.price;
+      // Перетворюємо ціну в число
+      const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+      const discount = item.discount_percentage 
+        ? (typeof item.discount_percentage === 'string' ? parseFloat(item.discount_percentage) : item.discount_percentage)
+        : 0;
+      
+      const price = discount > 0
+        ? itemPrice * (1 - discount / 100)
+        : itemPrice;
       return total + price * item.quantity;
     }, 0);
 
     try {
+      const requestBody = {
+        customer_name: customerName,
+        phone_number: phoneNumber,
+        email: email || null,
+        delivery_method: deliveryMethod,
+        city,
+        post_office: postOffice,
+        comment,
+        payment_type: paymentType,
+        total_amount: fullAmount.toFixed(2),
+        items: apiItems,
+      };
+      
+      console.log("[FinalCard] Sending order request with:", JSON.stringify(requestBody, null, 2));
+      
       // Надсилаємо дані замовлення
       const response = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          customer_name: customerName,
-          phone_number: phoneNumber,
-          email: email || null,
-          delivery_method: deliveryMethod,
-          city,
-          post_office: postOffice,
-          comment,
-          payment_type: paymentType,
-          total_amount: fullAmount.toFixed(2),
-          items: apiItems,
-        }),
+        body: JSON.stringify(requestBody),
       });
+
+      console.log("[FinalCard] Response status:", response.status);
+      console.log("[FinalCard] Response ok:", response.ok);
 
       if (!response.ok) {
         const data = await response.json();
+        console.error("[FinalCard] Error response:", data);
         setError(data.error || "Помилка при оформленні замовлення.");
       } else {
         const data = await response.json();
+        console.log("[FinalCard] Success response:", data);
+        
         const { invoiceUrl, invoiceId } = data;
+        
+        console.log("[FinalCard] Invoice URL:", invoiceUrl);
+        console.log("[FinalCard] Invoice ID:", invoiceId);
+
+        if (!invoiceUrl) {
+          console.error("[FinalCard] No invoice URL received!");
+          setError("Не вдалося отримати посилання на оплату.");
+          return;
+        }
 
         localStorage.setItem(
           "submittedOrder",
@@ -158,12 +189,15 @@ export default function FinalCard() {
         setSuccess("Замовлення успішно створено! Переходимо до оплати...");
         clearBasket();
 
+        console.log("[FinalCard] Redirecting to invoice URL in 2 seconds...");
         // Перехід на сторінку оплати через 2 сек
         setTimeout(() => {
+          console.log("[FinalCard] Redirecting to:", invoiceUrl);
           window.location.href = invoiceUrl;
         }, 2000);
       }
-    } catch {
+    } catch (error) {
+      console.error("[FinalCard] Network error:", error);
       setError("Помилка мережі. Спробуйте пізніше.");
     } finally {
       setLoading(false);
