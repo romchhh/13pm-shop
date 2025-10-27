@@ -30,28 +30,45 @@ export default function YouMightLike() {
         {/* Products list - Mobile Optimized */}
         <div className="grid grid-cols-2 sm:flex sm:flex-row sm:flex-wrap justify-center sm:justify-around gap-4 sm:gap-8">
           {products.map((product) => {
-            const image = getProductImageSrc(
-              product.first_media,
-              "https://placehold.co/432x613"
-            );
+            const isVideo = product.first_media?.type === "video";
+            
             return (
               <Link
                 key={product.id}
                 href={`/product/${product.id}`}
                 className="w-full sm:w-96 relative mx-auto"
               >
-                <Image
-                  src={image}
-                  alt={product.name}
-                  width={400}
-                  height={600}
-                  className="w-full h-auto sm:h-[613px] object-cover"
-                  sizes="(max-width: 420px) 45vw, (max-width: 640px) 45vw, (max-width: 1024px) 33vw, 400px"
-                  loading="lazy"
-                  quality={75} // Lower quality for recommendations
-                  placeholder="blur"
-                  blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
-                />
+                {isVideo && product.first_media ? (
+                  <video
+                    src={`/api/images/${product.first_media.url}`}
+                    className="w-full h-auto sm:h-[613px] object-cover"
+                    loop
+                    muted
+                    playsInline
+                    autoPlay
+                    preload="metadata"
+                  />
+                ) : product.first_media ? (
+                  <Image
+                    src={getProductImageSrc(
+                      product.first_media,
+                      "https://placehold.co/432x613"
+                    )}
+                    alt={product.name}
+                    width={400}
+                    height={600}
+                    className="w-full h-auto sm:h-[613px] object-cover"
+                    sizes="(max-width: 420px) 45vw, (max-width: 640px) 45vw, (max-width: 1024px) 33vw, 400px"
+                    loading="lazy"
+                    quality={75} // Lower quality for recommendations
+                    placeholder="blur"
+                    blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">
+                    Немає зображення
+                  </div>
+                )}
                 <div className="mt-2 text-sm sm:text-lg lg:text-xl font-normal font-['Inter'] capitalize leading-normal text-center">
                   {product.name}
                 </div>

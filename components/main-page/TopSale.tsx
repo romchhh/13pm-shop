@@ -41,13 +41,25 @@ export default function TopSale() {
             className="flex flex-col gap-3 group w-full"
           >
             <div className="aspect-[2/3] w-full overflow-hidden relative">
-              <Image
-                className="object-cover group-hover:brightness-90 transition duration-300"
-                src={getProductImageSrc(product.first_media, "https://placehold.co/432x613")}
-                alt={product.name}
-                fill
-                sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
-              />
+              {product.first_media?.type === "video" ? (
+                <video
+                  src={`/api/images/${product.first_media.url}`}
+                  className="object-cover group-hover:brightness-90 transition duration-300 w-full h-full"
+                  loop
+                  muted
+                  playsInline
+                  autoPlay
+                  preload="metadata"
+                />
+              ) : (
+                <Image
+                  className="object-cover group-hover:brightness-90 transition duration-300"
+                  src={getProductImageSrc(product.first_media, "https://placehold.co/432x613")}
+                  alt={product.name}
+                  fill
+                  sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+                />
+              )}
             </div>
 
             <div className="text-center text-base sm:text-lg md:text-xl font-normal font-['Inter'] capitalize leading-normal">
@@ -74,13 +86,25 @@ export default function TopSale() {
                 className="relative flex flex-col gap-3 group"
               >
                 <div className="relative w-full h-[350px]">
-                  <Image
-                    className="object-cover group-hover:brightness-90 transition duration-300"
-                    src={getProductImageSrc(product.first_media, "https://placehold.co/432x613")}
-                    alt={product.name}
-                    fill
-                    sizes="90vw"
-                  />
+                  {product.first_media?.type === "video" ? (
+                    <video
+                      src={`/api/images/${product.first_media.url}`}
+                      className="object-cover group-hover:brightness-90 transition duration-300 w-full h-full"
+                      loop
+                      muted
+                      playsInline
+                      autoPlay
+                      preload="metadata"
+                    />
+                  ) : (
+                    <Image
+                      className="object-cover group-hover:brightness-90 transition duration-300"
+                      src={getProductImageSrc(product.first_media, "https://placehold.co/432x613")}
+                      alt={product.name}
+                      fill
+                      sizes="90vw"
+                    />
+                  )}
                 </div>
                 <div className="justify-center text-lg font-normal font-['Inter'] capitalize leading-normal text-center">
                   {product.name} <br />

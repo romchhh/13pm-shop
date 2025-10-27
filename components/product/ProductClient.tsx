@@ -10,6 +10,20 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
+
+// Add custom styles for smooth transitions
+const swiperStyles = `
+  .swiper {
+    touch-action: pan-y pinch-zoom;
+    will-change: transform;
+  }
+  .swiper-slide {
+    transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  .swiper-slide-transition-allow {
+    will-change: transform;
+  }
+`;
 import { Swiper as SwiperType } from "swiper";
 
 const SIZE_MAP: Record<string, string> = {
@@ -42,6 +56,16 @@ export default function ProductClient({ product }: ProductClientProps) {
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const quantity = 1;
   const { isDark } = useAppContext();
+
+  // Inject custom styles for smoother transitions
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = swiperStyles;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, [swiperStyles]);
 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [showToast, setShowToast] = useState(false);
@@ -145,6 +169,16 @@ export default function ProductClient({ product }: ProductClientProps) {
             centeredSlides
             grabCursor
             loop
+            touchRatio={1}
+            touchAngle={45}
+            longSwipesRatio={0.5}
+            longSwipesMs={300}
+            swipeHandler=".swiper-slide"
+            simulateTouch={true}
+            followFinger={true}
+            resistance={true}
+            resistanceRatio={0.85}
+            speed={500}
             onSlideChange={(swiper) => setActiveImageIndex(swiper.realIndex)} // Sync slide change with state
             initialSlide={activeImageIndex} // Set the initial slide to activeImageIndex
           >
