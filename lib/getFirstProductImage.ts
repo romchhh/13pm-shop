@@ -42,3 +42,27 @@ export function getProductImageSrc(
   return `/api/images/${imageUrl}`;
 }
 
+/**
+ * Gets the first media (photo or video) from a product's media array
+ * @param media - Array of media items
+ * @returns First media item or null if no media found
+ */
+export function getFirstMedia(
+  media: { url: string; type: string }[] | { url: string; type: string } | undefined | null
+): { url: string; type: string } | null {
+  if (!media) return null;
+  
+  // Handle single media object (first_media format)
+  if (!Array.isArray(media) && 'url' in media) {
+    return media;
+  }
+  
+  // Handle array of media
+  if (Array.isArray(media) && media.length > 0) {
+    // Return first item if it exists
+    return media[0];
+  }
+  
+  return null;
+}
+

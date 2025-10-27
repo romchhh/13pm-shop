@@ -7,7 +7,7 @@ import { useAppContext } from "@/lib/GeneralProvider";
 import SidebarMenu from "../layout/SidebarMenu";
 import Link from "next/link";
 import Image from "next/image";
-import { getProductImageSrc } from "@/lib/getFirstProductImage";
+import { getProductImageSrc, getFirstMedia } from "@/lib/getFirstProductImage";
 import { cachedFetch, CACHE_KEYS } from "@/lib/cache";
 
 interface Product {
@@ -157,21 +157,39 @@ export default function Catalog() {
 
         {/* Product Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {sortedProducts.map((product) => (
+          {sortedProducts.map((product) => {
+            // Debug logging
+            if (product.first_media) {
+              console.log(`[Catalog] Product ${product.id} - first_media:`, product.first_media);
+            }
+            
+            return (
             <Link
               href={`/product/${product.id}`}
               key={product.id}
               className="flex flex-col gap-4 group"
             >
-              {/* Image */}
-              <div className="relative w-full aspect-[2/3] bg-gray-200 group-hover:filter group-hover:brightness-90 transition duration-300">
-                <Image
-                  src={getProductImageSrc(product.first_media)}
-                  alt={product.name}
-                  className="object-cover transition-all duration-300 group-hover:brightness-90"
-                  fill
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
-                />
+              {/* Image or Video */}
+              <div className="relative w-full aspect-[2/3] bg-gray-200 group-hover:filter group-hover:brightness-90 transition duration-300 overflow-hidden">
+                {product.first_media?.type === "video" ? (
+                  <video
+                    src={`/api/images/${product.first_media.url}`}
+                    className="object-cover transition-all duration-300 group-hover:brightness-90 w-full h-full"
+                    loop
+                    muted
+                    playsInline
+                    autoPlay
+                    preload="metadata"
+                  />
+                ) : (
+                  <Image
+                    src={getProductImageSrc(product.first_media)}
+                    alt={product.name}
+                    className="object-cover transition-all duration-300 group-hover:brightness-90"
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+                  />
+                )}
               </div>
 
               {/* Product Title + Price */}
@@ -180,7 +198,8 @@ export default function Catalog() {
                 <br /> {product.price}₴
               </span>
             </Link>
-          ))}
+          );
+          })}
         </div>
       </section>
 

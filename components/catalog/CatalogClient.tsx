@@ -7,7 +7,7 @@ import { useAppContext } from "@/lib/GeneralProvider";
 import SidebarMenu from "../layout/SidebarMenu";
 import Link from "next/link";
 import Image from "next/image";
-import { getProductImageSrc } from "@/lib/getFirstProductImage";
+import { getProductImageSrc, getFirstMedia } from "@/lib/getFirstProductImage";
 
 interface Product {
   id: number;
@@ -108,7 +108,13 @@ export default function CatalogClient({
 
         {/* Product Grid - Mobile Optimized */}
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
-          {visibleProducts.map((product, index) => (
+          {visibleProducts.map((product, index) => {
+            // Debug logging
+            if (product.first_media) {
+              console.log(`[CatalogClient] Product ${product.id} - first_media:`, product.first_media);
+            }
+            
+            return (
             <Link
               href={`/product/${product.id}`}
               key={product.id}
@@ -171,8 +177,9 @@ export default function CatalogClient({
                   <span className="font-medium">{product.price}₴</span>
                 )}
               </span>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
         {visibleCount < sortedProducts.length && (
           <div className="mt-6 flex justify-center">
