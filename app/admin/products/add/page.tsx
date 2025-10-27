@@ -122,12 +122,24 @@ export default function FormElements() {
   const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
 
   const handleDrop = (files: File[]) => {
-    const newMedia = files.map((file) => ({
-      file,
-      type: (file.type.startsWith("video/")
-        ? "video"
-        : "photo") as MediaFile["type"],
-    }));
+    const newMedia = files.map((file) => {
+      // Determine if file is video by mime type OR extension
+      const isVideo = file.type.startsWith("video/") || 
+        file.name.toLowerCase().endsWith('.webm') ||
+        file.name.toLowerCase().endsWith('.mp4') ||
+        file.name.toLowerCase().endsWith('.mov') ||
+        file.name.toLowerCase().endsWith('.avi') ||
+        file.name.toLowerCase().endsWith('.mkv') ||
+        file.name.toLowerCase().endsWith('.flv') ||
+        file.name.toLowerCase().endsWith('.wmv');
+      
+      console.log('[handleDrop] File:', file.name, 'Type:', file.type, 'Is video:', isVideo);
+      
+      return {
+        file,
+        type: (isVideo ? "video" : "photo") as MediaFile["type"],
+      };
+    });
     setMediaFiles((prev) => [...prev, ...newMedia]);
   };
 // const handleDeleteMediaFile = (indexToRemove: number) => {
@@ -509,6 +521,8 @@ export default function FormElements() {
               mediaFiles.map((media, i) => {
                 const previewUrl = URL.createObjectURL(media.file);
                 const isVideo = media.type === "video";
+                
+                console.log('[Preview] File:', media.file.name, 'Type:', media.type, 'Is video:', isVideo, 'MIME:', media.file.type);
 
                 return (
                   <div
@@ -525,17 +539,26 @@ export default function FormElements() {
                         width={200}
                         height={200}
                         controls
-                        className="rounded max-w-[200px] max-h-[200px]"
-                        onLoadedData={() => URL.revokeObjectURL(previewUrl)}
+                        className="rounded max-w-[200px] max-h-[200px] object-cover"
+                        onLoadedData={() => {
+                          console.log('[Preview] Video loaded');
+                          URL.revokeObjectURL(previewUrl);
+                        }}
+                        onError={(e) => {
+                          console.error('[Preview] Video error:', e);
+                        }}
                       />
                     ) : (
-                      <Image
+                      <img
                         src={previewUrl}
                         alt={media.file.name}
                         width={200}
                         height={200}
-                        className="rounded max-w-[200px] max-h-[200px]"
-                        onLoad={() => URL.revokeObjectURL(previewUrl)}
+                        className="rounded max-w-[200px] max-h-[200px] object-cover"
+                        onLoad={() => {
+                          console.log('[Preview] Image loaded');
+                          URL.revokeObjectURL(previewUrl);
+                        }}
                       />
                     )}
 

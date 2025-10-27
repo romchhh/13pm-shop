@@ -13,26 +13,53 @@ const DropzoneComponent: React.FC<DropzoneComponentProps> = ({
     // Default handler
   },
 }) => {
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: {
-      "image/png": [],
-      "image/jpeg": [],
-      "image/webp": [],
-      "image/svg+xml": [],
-      "video/mp4": [],
-      "video/webm": [],
-      "video/ogg": [],
-      "video/quicktime": [],
-      "video/x-msvideo": [],
-      "video/x-matroska": [],
-      "video/x-flv": [],
-      "video/x-ms-wmv": [],
+  const { getRootProps, getInputProps, isDragActive, fileRejections } = useDropzone({
+    onDrop: (acceptedFiles, fileRejections) => {
+      console.log("[Dropzone] Accepted files:", acceptedFiles);
+      console.log("[Dropzone] Rejected files:", fileRejections);
+      
+      if (fileRejections && fileRejections.length > 0) {
+        console.error("[Dropzone] File rejection errors:", fileRejections);
+      }
+      
+      onDrop(acceptedFiles);
     },
+    accept: {
+      "image/png": [".png"],
+      "image/jpeg": [".jpg", ".jpeg"],
+      "image/webp": [".webp"],
+      "image/svg+xml": [".svg"],
+      "video/mp4": [".mp4"],
+      "video/webm": [".webm"],
+      "video/ogg": [".ogg"],
+      "video/quicktime": [".mov"],
+      "video/x-msvideo": [".avi"],
+      "video/x-matroska": [".mkv"],
+      "video/x-flv": [".flv"],
+      "video/x-ms-wmv": [".wmv"],
+    },
+    maxSize: 15 * 1024 * 1024, // 15MB
   });
 
   return (
     <ComponentCard title="Фото й Відео">
+      {/* Error messages */}
+      {fileRejections && fileRejections.length > 0 && (
+        <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded text-red-600 dark:text-red-400">
+          <p className="font-semibold">Помилка завантаження файлів:</p>
+          {fileRejections.map(({ file, errors }) => (
+            <div key={file.name} className="mt-2">
+              <p className="font-medium">{file.name}:</p>
+              <ul className="list-disc ml-4">
+                {errors.map((error) => (
+                  <li key={error.code}>{error.message}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      )}
+      
       <div className="transition border border-gray-300 border-dashed cursor-pointer dark:hover:border-brand-500 dark:border-gray-700 rounded-xl hover:border-brand-500">
         <div
           {...getRootProps()}

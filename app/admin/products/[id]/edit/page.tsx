@@ -176,6 +176,12 @@ export default function EditProductPage() {
   // }, [formData]);
 
   const handleDrop = (files: File[]) => {
+    console.log('[EditProduct] handleDrop called with files:', files);
+    
+    // Add to images state (for new uploads)
+    setImages((prev) => [...prev, ...files]);
+    
+    // Also add to mediaFiles for preview with metadata
     const newMedia = files.map((file) => ({
       file,
       preview: URL.createObjectURL(file),
@@ -199,12 +205,20 @@ export default function EditProductPage() {
 
   // Reorder for new images
   const moveNewImage = (fromIndex: number, toIndex: number) => {
-    setMediaFiles((prev) => {
-      const updated = [...prev];
-      const [moved] = updated.splice(fromIndex, 1);
-      updated.splice(toIndex, 0, moved);
-      return updated;
-    });
+    console.log('[EditProduct] Moving new image from', fromIndex, 'to', toIndex);
+    
+    // Get only new files (with file property)
+    const newMediaFiles = mediaFiles.filter((m) => m.file);
+    const existingMedia = mediaFiles.filter((m) => !m.file);
+    
+    const updated = [...newMediaFiles];
+    const [moved] = updated.splice(fromIndex, 1);
+    updated.splice(toIndex, 0, moved);
+    
+    setMediaFiles([...existingMedia, ...updated]);
+    
+    // Also update images state
+    setImages(updated.map((m) => m.file!));
   };
 
   const handleChange = (field: string, value: unknown) => {
@@ -219,7 +233,29 @@ export default function EditProductPage() {
   };
 
   const handleDeleteNewImage = (indexToRemove: number) => {
-    setImages((prev) => prev.filter((_, i) => i !== indexToRemove));
+    console.log('[EditProduct] Deleting new image at index:', indexToRemove);
+    
+    // Get all new media files (those with file property)
+    const newMediaFiles = mediaFiles.filter((m) => m.file);
+    const itemToDelete = newMediaFiles[indexToRemove];
+    
+    // Revoke object URL to prevent memory leak
+    if (itemToDelete?.preview) {
+      URL.revokeObjectURL(itemToDelete.preview);
+    }
+    
+    // Remove from images state
+    const newMediaFilesArray = mediaFiles.filter((m) => m.file).map((m) => m.file).filter((f): f is File => !!f);
+    const newImages = newMediaFilesArray.filter((_, i) => i !== indexToRemove);
+    setImages(newImages);
+    
+    // Remove from mediaFiles state
+    setMediaFiles((prev) => {
+      const newFiles = prev.filter((m) => m.file);
+      const rest = prev.filter((m) => !m.file);
+      const updatedNewFiles = newFiles.filter((_, i) => i !== indexToRemove);
+      return [...rest, ...updatedNewFiles];
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -229,9 +265,13 @@ export default function EditProductPage() {
     setError(null);
 
     try {
+      console.log('[EditProduct] Submitting form. Images to upload:', images.length);
+      
       let uploadedMedia: { type: "photo" | "video"; url: string }[] = [];
 
       if (images.length > 0) {
+        console.log('[EditProduct] Uploading new images:', images.map(f => f.name));
+        
         const uploadForm = new FormData();
         images.forEach((img) => uploadForm.append("images", img));
 
@@ -244,6 +284,8 @@ export default function EditProductPage() {
 
         const uploadData = await uploadRes.json();
         uploadedMedia = uploadData.media;
+        
+        console.log('[EditProduct] Uploaded media:', uploadedMedia);
       }
 
       const updatedMedia = [...formData.media, ...uploadedMedia];
@@ -600,26 +642,29 @@ export default function EditProductPage() {
                   </div>
                 ))}
 
-                {images.map((file, i) => {
-                  const previewUrl = URL.createObjectURL(file);
-                  const isVideo = file.type.startsWith("video/");
-                  return (
-                    <div key={`new-${i}`} className="relative inline-block">
-                      {isVideo ? (
-                        <video
-                          src={`/api/images/${previewUrl}`}
-                          controls
-                          className="w-32 h-32 object-cover rounded"
-                        />
-                      ) : (
-                        <Image
-                          src={`/api/images/${previewUrl}`}
-                          alt={`new-media-${i}`}
-                          width={128}
-                          height={128}
-                          className="rounded object-cover"
-                        />
-                      )}
+                {mediaFiles
+                  .filter((m) => m.file) // Only show new files (with file property)
+                  .map((media, i) => {
+                    console.log('[EditProduct] Rendering new media preview:', media);
+                    const previewUrl = media.preview || URL.createObjectURL(media.file!);
+                    const isVideo = media.type === "video";
+                    return (
+                      <div key={`new-${i}`} className="relative inline-block">
+                        {isVideo ? (
+                          <video
+                            src={previewUrl}
+                            controls
+                            className="w-32 h-32 object-cover rounded"
+                          />
+                        ) : (
+                          <img
+                            src={previewUrl}
+                            alt={`new-media-${i}`}
+                            width={128}
+                            height={128}
+                            className="rounded object-cover"
+                          />
+                        )}
                       <div className="absolute top-1 left-1 flex gap-1">
                         {i > 0 && (
                           <button

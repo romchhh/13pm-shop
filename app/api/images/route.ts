@@ -26,8 +26,18 @@ async function convertToWebP(
 
 // Determine file type
 function getFileType(mimeType: string, filename: string): "photo" | "video" {
-  if (mimeType.startsWith("video/")) return "video";
+  console.log(`[getFileType] Analyzing file: ${filename}, MIME: ${mimeType}`);
+  
+  // Check if MIME type indicates video
+  if (mimeType.startsWith("video/")) {
+    console.log(`[getFileType] Detected video by MIME type`);
+    return "video";
+  }
+  
+  // Check file extension
   const ext = filename.split(".").pop()?.toLowerCase();
+  console.log(`[getFileType] File extension: ${ext}`);
+  
   const videoExtensions = [
     "mp4",
     "webm",
@@ -38,7 +48,14 @@ function getFileType(mimeType: string, filename: string): "photo" | "video" {
     "flv",
     "wmv",
   ];
-  return ext && videoExtensions.includes(ext) ? "video" : "photo";
+  
+  if (ext && videoExtensions.includes(ext)) {
+    console.log(`[getFileType] Detected video by extension: ${ext}`);
+    return "video";
+  }
+  
+  console.log(`[getFileType] Treating as photo`);
+  return "photo";
 }
 
 export async function POST(req: NextRequest) {
@@ -68,6 +85,8 @@ export async function POST(req: NextRequest) {
       const uniqueName = `${crypto.randomUUID()}.${ext}`;
       const filePath = path.join(uploadDir, uniqueName);
 
+      console.log(`📤 Uploading file: ${file.name}, MIME: ${file.type}, EXT: ${ext}, Size: ${file.size} bytes`);
+
       // Save file
       const buffer = Buffer.from(await file.arrayBuffer());
       await writeFile(filePath, buffer);
@@ -75,16 +94,24 @@ export async function POST(req: NextRequest) {
       const fileType = getFileType(file.type, file.name);
       let finalFileName = uniqueName;
 
+      console.log(`🔍 File type determined: ${fileType} for ${file.name}`);
+
       if (fileType === "photo") {
-        console.log(`🖼️ Converting ${uniqueName} → WebP`);
-        finalFileName = await convertToWebP(filePath, uploadDir);
-        console.log(`✅ Image saved as ${finalFileName}`);
+        try {
+          console.log(`🖼️ Converting ${uniqueName} → WebP`);
+          finalFileName = await convertToWebP(filePath, uploadDir);
+          console.log(`✅ Image saved as ${finalFileName}`);
+        } catch (error) {
+          console.error(`❌ Failed to convert image, keeping original:`, error);
+          // Keep original file if conversion fails
+        }
       } else {
-        console.log(`🎬 Keeping video ${uniqueName} without conversion`);
+        console.log(`🎬 Keeping video ${uniqueName} without conversion, type: ${fileType}`);
         // You could optionally rename to .mp4/.mov/.webm if needed
       }
 
       savedMedia.push({ type: fileType, url: finalFileName });
+      console.log(`✅ Saved media item: type=${fileType}, url=${finalFileName}`);
     }
 
     console.log("📦 Saved media:", savedMedia);
