@@ -127,22 +127,29 @@ export async function sqlGetProduct(id: number) {
 
 // =========================
 // Get related color variants by product name
+// Returns: id, name, first_color (main color from product_colors)
 // =========================
 export async function sqlGetRelatedColorsByName(name: string) {
   return await sql`
     SELECT
       p.id,
       p.name,
-      COALESCE(pc.colors, '[]') AS colors
+      COALESCE(
+        (
+          SELECT JSONB_BUILD_OBJECT('label', pc.label, 'hex', pc.hex)
+          FROM product_colors pc
+          WHERE pc.product_id = p.id
+          ORDER BY pc.id
+          LIMIT 1
+        ),
+        CASE 
+          WHEN p.color IS NOT NULL THEN JSONB_BUILD_OBJECT('label', p.color, 'hex', NULL)
+          ELSE NULL
+        END
+      ) AS first_color
     FROM products p
-    LEFT JOIN LATERAL (
-      SELECT JSON_AGG(
-        JSONB_BUILD_OBJECT('label', pc.label, 'hex', pc.hex)
-      ) AS colors
-      FROM product_colors pc
-      WHERE pc.product_id = p.id
-    ) pc ON true
-    WHERE p.name = ${name};
+    WHERE p.name = ${name}
+    ORDER BY p.id;
   `;
 }
 

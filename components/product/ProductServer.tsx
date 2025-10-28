@@ -1,4 +1,5 @@
 import ProductClient from "./ProductClient";
+import ProductClientWrapper from "./ProductClientWrapper";
 import { notFound } from "next/navigation";
 import { sqlGetProduct } from "@/lib/sql";
 
@@ -38,5 +39,6 @@ export default async function ProductServer({ id }: ProductServerProps) {
     notFound();
   }
 
-  return <ProductClient product={product} />;
+  // Wrap ProductClient to ensure it only renders client-side after hydration
+  return <ProductClientWrapper product={product} />;
 }

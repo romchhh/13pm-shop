@@ -8,6 +8,7 @@ import Alert from "@/components/shared/Alert";
 import { getFirstProductImage } from "@/lib/getFirstProductImage";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
+import { useRouter } from "next/navigation";
 import "swiper/css";
 import "swiper/css/navigation";
 
@@ -16,12 +17,28 @@ const swiperStyles = `
   .swiper {
     touch-action: pan-y pinch-zoom;
     will-change: transform;
+    -webkit-overflow-scrolling: touch;
+    overflow: hidden;
+  }
+  .swiper-wrapper {
+    transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   }
   .swiper-slide {
     transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
   }
   .swiper-slide-transition-allow {
     will-change: transform;
+  }
+  .swiper-slide img,
+  .swiper-slide video {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
   }
 `;
 import { Swiper as SwiperType } from "swiper";
@@ -51,11 +68,24 @@ interface ProductClientProps {
   };
 }
 
-export default function ProductClient({ product }: ProductClientProps) {
-  const { addItem } = useBasket();
+interface RelatedProduct {
+  id: number;
+  name: string;
+  first_color: { label: string; hex?: string | null } | null;
+}
+
+export default function ProductClient({ product: initialProduct }: ProductClientProps) {
+  const router = useRouter();
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const quantity = 1;
   const { isDark } = useAppContext();
+  const [relatedProducts, setRelatedProducts] = useState<RelatedProduct[]>([]);
+  const [product, setProduct] = useState(initialProduct);
+  const [isLoading, setIsLoading] = useState(false);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  
+  // Use basket hook - component is client-side only with 'use client'
+  const { addItem } = useBasket();
 
   // Inject custom styles for smoother transitions
   useEffect(() => {
@@ -82,6 +112,72 @@ export default function ProductClient({ product }: ProductClientProps) {
     }
   }, [product, selectedColor]);
 
+  // Fetch related products with same name
+  useEffect(() => {
+    async function fetchRelatedProducts() {
+      try {
+        const response = await fetch(
+          `/api/products/related-colors?name=${encodeURIComponent(product.name)}`
+        );
+        if (response.ok) {
+          const data: RelatedProduct[] = await response.json();
+          // Filter out current product
+          const filtered = data.filter((p) => p.id !== product.id);
+          setRelatedProducts(filtered);
+        } else {
+          // Silently fail - related products are optional
+          console.warn("Could not fetch related products:", response.statusText);
+        }
+      } catch (error) {
+        // Silently fail - related products are optional and shouldn't break the page
+        console.warn("Error fetching related products (non-critical):", error);
+      }
+    }
+    
+    if (product?.name) {
+      fetchRelatedProducts();
+    }
+  }, [product.name, product.id]);
+
+  // Handle color variant change
+  const handleColorVariantChange = async (productId: number) => {
+    if (productId === product.id) return;
+    
+    setIsLoading(true);
+    setActiveImageIndex(0);
+    
+    try {
+      const response = await fetch(`/api/products/${productId}`);
+      if (response.ok) {
+        const newProduct = await response.json();
+        
+        // Update URL without reload
+        window.history.pushState(null, '', `/product/${productId}`);
+        
+        // Update product state with smooth transition
+        setTimeout(() => {
+          setProduct(newProduct);
+          setSelectedSize(null); // Reset size selection
+          
+          // Auto-select first color if available
+          if (newProduct.colors && newProduct.colors.length > 0) {
+            setSelectedColor(newProduct.colors[0].label);
+          } else {
+            setSelectedColor(null);
+          }
+          
+          setIsLoading(false);
+        }, 100);
+      } else {
+        console.error("Failed to fetch product:", response.statusText);
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error("Error fetching product:", error);
+      setIsLoading(false);
+    }
+  };
+
   const handleAddToCart = () => {
     if (!selectedSize) {
       setAlertMessage("Оберіть розмір");
@@ -97,6 +193,12 @@ export default function ProductClient({ product }: ProductClientProps) {
     }
     if (!product) {
       setAlertMessage("Товар не завантажений");
+      setAlertType("error");
+      setTimeout(() => setAlertMessage(null), 3000);
+      return;
+    }
+    if (!addItem) {
+      setAlertMessage("Кошик недоступний. Спробуйте оновити сторінку.");
       setAlertType("error");
       setTimeout(() => setAlertMessage(null), 3000);
       return;
@@ -127,8 +229,15 @@ export default function ProductClient({ product }: ProductClientProps) {
 
   // SWIPER
   const [swiper, setSwiper] = useState<SwiperType | null>(null);
-  const [activeIndex, setActiveIndex] = useState(0);
   const [isMounted, setIsMounted] = useState(false);
+  
+  // Update swiper when product changes
+  useEffect(() => {
+    if (swiper && media.length > 0) {
+      setActiveImageIndex(0);
+      swiper.slideTo(0);
+    }
+  }, [product.id, swiper, media.length]);
 
   // Avoid SSR hydration flicker
   useEffect(() => setIsMounted(true), []);
@@ -137,19 +246,19 @@ export default function ProductClient({ product }: ProductClientProps) {
   // Manual next/prev handling (to avoid loop flickers)
   const handleNext = () => {
     if (!swiper) return;
-    if (activeIndex >= media.length - 1) {
+    if (activeImageIndex >= media.length - 1) {
       swiper.slideTo(0);
     } else {
-      swiper.slideTo(activeIndex + 1);
+      swiper.slideTo(activeImageIndex + 1);
     }
   };
 
   const handlePrev = () => {
     if (!swiper) return;
-    if (activeIndex === 0) {
+    if (activeImageIndex === 0) {
       swiper.slideTo(media.length - 1);
     } else {
-      swiper.slideTo(activeIndex - 1);
+      swiper.slideTo(activeImageIndex - 1);
     }
   };
 
@@ -158,21 +267,48 @@ export default function ProductClient({ product }: ProductClientProps) {
   return (
     <section className="max-w-[1920px] w-full mx-auto">
       <div className="flex flex-col lg:flex-row justify-around p-4 md:p-10 gap-10">
-        <div className="relative w-full lg:w-1/2 flex justify-center">
+        <div 
+          className={`relative w-full lg:w-1/2 flex justify-center transition-opacity duration-300 ${isLoading ? 'opacity-50' : 'opacity-100'}`}
+          style={{ touchAction: 'pan-y pinch-zoom' }}
+        >
+          {isLoading && (
+            <div className="absolute inset-0 flex items-center justify-center z-10">
+              <div className="w-8 h-8 border-2 border-gray-300 border-t-black dark:border-t-white rounded-full animate-spin"></div>
+            </div>
+          )}
           <Swiper
             modules={[Navigation]}
             onSwiper={setSwiper}
             slidesPerView={1}
             spaceBetween={10}
             speed={500}
-            allowTouchMove
-            centeredSlides
-            onSlideChange={(s) => setActiveIndex(s.activeIndex)}
+            allowTouchMove={!isLoading}
+            centeredSlides={true}
+            onSlideChange={(s) => setActiveImageIndex(s.activeIndex)}
             className="product-swiper w-full max-w-[800px]"
+            key={product.id}
+            touchRatio={1}
+            touchAngle={45}
+            resistance={true}
+            resistanceRatio={0.85}
+            followFinger={true}
+            threshold={5}
+            longSwipes={true}
+            longSwipesRatio={0.5}
+            longSwipesMs={300}
+            watchSlidesProgress={true}
+            cssMode={false}
           >
             {media.map((item, i) => (
-              <SwiperSlide key={i}>
-                <div className="flex justify-center items-center max-h-[85vh] overflow-hidden">
+              <SwiperSlide key={i} style={{ touchAction: 'pan-y pinch-zoom' }}>
+                <div 
+                  className="flex justify-center items-center max-h-[85vh] overflow-hidden"
+                  style={{ 
+                    WebkitUserSelect: 'none',
+                    userSelect: 'none',
+                    WebkitTouchCallout: 'none'
+                  }}
+                >
                   {item.type === "video" ? (
                     <video
                       className="object-contain w-full max-h-[85vh]"
@@ -181,6 +317,11 @@ export default function ProductClient({ product }: ProductClientProps) {
                       loop
                       muted
                       playsInline
+                      style={{ 
+                        WebkitUserSelect: 'none',
+                        userSelect: 'none',
+                        pointerEvents: 'auto'
+                      }}
                     />
                   ) : (
                     <Image
@@ -188,10 +329,16 @@ export default function ProductClient({ product }: ProductClientProps) {
                       alt={`Product media ${i}`}
                       width={800}
                       height={1160}
-                      priority={i === activeIndex}
-                      quality={i === activeIndex ? 90 : 80}
+                      priority={i === activeImageIndex}
+                      quality={i === activeImageIndex ? 90 : 80}
                       className="object-contain w-auto h-auto"
-                      style={{ maxHeight: "85vh" }}
+                      style={{ 
+                        maxHeight: "85vh",
+                        WebkitUserSelect: 'none',
+                        userSelect: 'none',
+                        pointerEvents: 'auto'
+                      }}
+                      draggable={false}
                     />
                   )}
                 </div>
@@ -246,7 +393,7 @@ export default function ProductClient({ product }: ProductClientProps) {
           </div>
 
           {/* Product Name */}
-          <div className="text-3xl md:text-5xl lg:text-6xl font-normal font-['Inter'] capitalize leading-tight">
+          <div className={`text-3xl md:text-5xl lg:text-6xl font-normal font-['Inter'] capitalize leading-tight transition-opacity duration-300 ${isLoading ? 'opacity-50' : 'opacity-100'}`}>
             {product.name}
           </div>
 
@@ -279,8 +426,16 @@ export default function ProductClient({ product }: ProductClientProps) {
           </div>
 
           {/* Size Picker Title */}
-          <div className="text-base md:text-lg font-['Inter'] uppercase tracking-tight">
-            Оберіть розмір
+          <div className="flex items-center justify-between">
+            <div className="text-base md:text-lg font-['Inter'] uppercase tracking-tight">
+              Оберіть розмір
+            </div>
+            <button
+              onClick={() => setShowSizeGuide(true)}
+              className="text-sm md:text-base text-gray-600 dark:text-gray-400 underline hover:text-black dark:hover:text-white cursor-pointer transition-all duration-200"
+            >
+              Розмірна сітка
+            </button>
           </div>
 
           {/* Size Options */}
@@ -301,49 +456,74 @@ export default function ProductClient({ product }: ProductClientProps) {
           </div>
 
           {/* Color Picker */}
-          {product.colors && product.colors.length > 0 && (
+          {(product.colors && product.colors.length > 0) || relatedProducts.length > 0 ? (
             <div className="flex flex-col gap-3">
-              <div className="flex items-center gap-3">
-                <div className="text-sm md:text-base font-['Inter'] uppercase tracking-tight">
-                  Колір
-                </div>
+              <div className="text-sm md:text-base font-['Inter'] uppercase tracking-tight">
+                Колір
               </div>
-              <div className="flex items-end gap-4">
-                {product.colors.map((c, idx) => {
-                  const isActive = selectedColor === c.label;
-                  return (
-                    <div
-                      key={`${c.label}-${idx}`}
-                      className="flex flex-col items-center"
-                    >
+              
+              <div className="flex flex-wrap items-center gap-3 md:gap-4">
+                {/* Current product colors */}
+                {product.colors && product.colors.length > 0 && 
+                  product.colors.map((c, idx) => {
+                    const isActive = selectedColor === c.label;
+                    return (
                       <button
+                        key={`current-${c.label}-${idx}`}
                         type="button"
                         onClick={() => setSelectedColor(c.label)}
-                        className={`relative flex items-center justify-center w-7 h-7 md:w-8 md:h-8 rounded-full border transition ${
+                        className={`relative w-10 h-10 md:w-11 md:h-11 rounded-full border transition-all duration-200 ${
                           isActive
-                            ? "border-gray-700"
-                            : "border-gray-300 hover:border-gray-500"
+                            ? "border-black dark:border-white scale-100"
+                            : "border-gray-200 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-500"
                         }`}
                         aria-label={c.label}
                         title={c.label}
-                        style={{ backgroundColor: c.hex || "#ffffff" }}
-                      />
-                      <div
-                        className={`mt-1 h-[2px] rounded-full ${
-                          isActive ? "w-6 bg-black" : "w-0 bg-transparent"
-                        }`}
-                      />
-                    </div>
+                        style={{ 
+                          backgroundColor: c.hex || "#ffffff",
+                        }}
+                      >
+                        {isActive && (
+                          <div className="absolute inset-0 rounded-full border-2 border-black dark:border-white"></div>
+                        )}
+                      </button>
+                    );
+                  })
+                }
+
+                {/* Related products colors */}
+                {relatedProducts.map((relatedProduct) => {
+                  if (!relatedProduct.first_color) return null;
+                  
+                  const color = relatedProduct.first_color;
+                  
+                  return (
+                    <button
+                      key={`related-${relatedProduct.id}`}
+                      type="button"
+                      onClick={() => handleColorVariantChange(relatedProduct.id)}
+                      disabled={isLoading}
+                      className={`relative w-10 h-10 md:w-11 md:h-11 rounded-full border border-dashed border-gray-300 dark:border-gray-600 transition-all duration-200 hover:border-gray-500 dark:hover:border-gray-400 cursor-pointer ${
+                        isLoading ? 'opacity-50 cursor-wait' : ''
+                      }`}
+                      aria-label={`Переглянути ${color.label}`}
+                      title={color.label}
+                      style={{ 
+                        backgroundColor: color.hex || "#ffffff",
+                        opacity: 0.7
+                      }}
+                    />
                   );
                 })}
               </div>
+              
               {selectedColor && (
-                <div className="text-base md:text-lg font-['Inter'] text-gray-700">
-                  Колір: {selectedColor}
+                <div className="text-sm font-['Inter'] text-gray-700 dark:text-gray-300 font-light tracking-wide">
+                  {selectedColor}
                 </div>
               )}
             </div>
-          )}
+          ) : null}
 
           {/* Add to Cart Button */}
           <div
@@ -370,16 +550,6 @@ export default function ProductClient({ product }: ProductClientProps) {
           >
             Написати менеджеру
           </a>
-
-          {/* Size Guide Link */}
-          <div className="text-right">
-            <button
-              onClick={() => setShowSizeGuide(true)}
-              className="text-sm md:text-base text-gray-600 dark:text-gray-400 underline hover:text-black dark:hover:text-white cursor-pointer transition-all duration-200 hover:scale-105"
-            >
-              Розмірна сітка
-            </button>
-          </div>
 
           {/* Size Guide Modal */}
           {showSizeGuide && (
