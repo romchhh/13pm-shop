@@ -9,6 +9,7 @@ import { AppProvider } from "@/lib/GeneralProvider";
 import { BasketProvider } from "@/lib/BasketProvider";
 import { registerServiceWorker } from "@/lib/registerSW";
 import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
+import { WebVitals } from "@/components/shared/WebVitals";
 
 const inter = Inter({
   subsets: ["latin", "cyrillic"],
@@ -109,17 +110,9 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{
           __html: `
             (${registerServiceWorker.toString()})();
-            
-            // Web Vitals monitoring
-            if ('requestIdleCallback' in window) {
-              requestIdleCallback(() => {
-                import('/lib/web-vitals.js').then(({ reportWebVitals }) => {
-                  reportWebVitals();
-                });
-              });
-            }
           `
         }} />
+        <WebVitals />
       </body>
     </html>
   );
