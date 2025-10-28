@@ -26,26 +26,69 @@ export default function Hero() {
   useEffect(() => {
     const video = videoRef.current;
     if (video) {
+      // Set all required attributes for mobile autoplay
+      video.muted = true;
+      video.playsInline = true;
+      video.setAttribute('muted', '');
+      video.setAttribute('playsinline', '');
+      video.setAttribute('webkit-playsinline', '');
+      
       // Try multiple approaches for mobile compatibility
       const playVideo = async () => {
         try {
-          video.muted = true; // Ensure muted for autoplay
-          video.playsInline = true; // Important for iOS
+          // First try: direct play
           await video.play();
+          setShowPlayButton(false);
         } catch (error) {
-          console.log("Video autoplay failed:", error);
-          // Show play button for mobile devices
-          setShowPlayButton(true);
+          console.log("Video autoplay failed, trying again:", error);
+          
+          // Second try: after a small delay (sometimes helps on mobile)
+          setTimeout(async () => {
+            try {
+              await video.play();
+              setShowPlayButton(false);
+            } catch (error2) {
+              console.log("Video autoplay failed again:", error2);
+              
+              // Third try: user interaction simulation (sometimes mobile needs this)
+              // But we'll show play button only if all attempts fail
+              if (isMobile) {
+                // On mobile, wait a bit more and try once more
+                setTimeout(async () => {
+                  try {
+                    await video.play();
+                    setShowPlayButton(false);
+                  } catch (error3) {
+                    console.log("Final autoplay attempt failed:", error3);
+                    setShowPlayButton(true);
+                  }
+                }, 500);
+              } else {
+                setShowPlayButton(true);
+              }
+            }
+          }, 100);
         }
       };
       
-      playVideo();
+      // Wait for video to be ready
+      if (video.readyState >= 2) {
+        // Video is already loaded
+        playVideo();
+      } else {
+        // Wait for video to load
+        video.addEventListener('loadeddata', playVideo, { once: true });
+        video.addEventListener('canplay', playVideo, { once: true });
+        
+        // Also try when video starts loading
+        video.load();
+      }
     }
-  }, []);
+  }, [isMobile]);
 
   return (
     <section>
-      <div className="max-w-[1920px] mx-auto w-full h-[600px] sm:h-[720px] md:h-[900px] lg:h-[1080px] relative overflow-hidden">
+      <div className="max-w-[1920px] mx-auto w-full h-screen sm:h-[720px] md:h-[900px] lg:h-[1080px] relative overflow-hidden">
         {/* Show image on mobile, video on desktop */}
         
           <>
@@ -60,7 +103,22 @@ export default function Hero() {
               preload="auto"
               style={{ zIndex: 1 }}
               onLoadedData={() => {
-                videoRef.current?.play().catch(() => setShowPlayButton(true));
+                const video = videoRef.current;
+                if (video) {
+                  video.play().catch((error) => {
+                    console.log("Play on loadeddata failed:", error);
+                    // Don't show play button immediately, let useEffect handle it
+                  });
+                  video.style.backgroundColor = "transparent";
+                }
+              }}
+              onCanPlay={() => {
+                const video = videoRef.current;
+                if (video) {
+                  video.play().catch((error) => {
+                    console.log("Play on canplay failed:", error);
+                  });
+                }
               }}
               onLoadStart={() => {
                 // Hide black background once video starts loading
@@ -68,10 +126,6 @@ export default function Hero() {
                   videoRef.current.style.backgroundColor = "transparent";
                 }
               }}
-              webkit-playsinline="true"
-              x5-playsinline="true"
-              x5-video-player-type="h5"
-              x5-video-player-fullscreen="true"
             />
             
             {/* Play button for desktop if autoplay fails */}
