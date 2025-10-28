@@ -174,7 +174,7 @@ export default function Header() {
                         category.name
                       )}`)
                     }
-                    className="cursor-pointer whitespace-nowrap hover:text-[#8C7461] text-lg font-normal font-['Inter']"
+                    className="cursor-pointer whitespace-nowrap hover:text-[#8C7461] text-base font-normal font-['Inter']"
                   >
                     {category.name}
                   </button>
@@ -216,7 +216,7 @@ export default function Header() {
                 }}
               >
                 <button
-                  className="cursor-pointer whitespace-nowrap hover:text-[#8C7461] text-lg font-normal font-['Inter']"
+                  className="cursor-pointer whitespace-nowrap hover:text-[#8C7461] text-base font-normal font-['Inter']"
                   disabled
                   onClick={() =>
                     (window.location.href = `/catalog?category=${encodeURIComponent(
@@ -255,7 +255,7 @@ export default function Header() {
                   }, 200); // delay in ms
                 }}
               >
-                <span className="cursor-default whitespace-nowrap hover:text-[#8C7461] text-lg font-normal font-['Inter']">
+                <span className="cursor-default whitespace-nowrap hover:text-[#8C7461] text-base font-normal font-['Inter']">
                   Інформація
                 </span>
 

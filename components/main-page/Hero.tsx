@@ -52,7 +52,7 @@ export default function Hero() {
             <video
               ref={videoRef}
               className="absolute inset-0 w-full h-full object-cover object-center"
-              src="/images/IMG_5831.webm"
+              src="/images/CHARS02.webm"
               autoPlay
               loop
               muted
