@@ -8,6 +8,7 @@ import "swiper/css/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { getProductImageSrc } from "@/lib/getFirstProductImage";
+import AutoPlayVideo from "@/components/shared/AutoPlayVideo";
 
 interface Product {
   id: number;
@@ -50,14 +51,9 @@ export default function TopSaleClient({ products }: TopSaleClientProps) {
           >
             <div className="aspect-[2/3] w-full overflow-hidden relative">
               {product.first_media?.type === "video" ? (
-                <video
+                <AutoPlayVideo
                   src={`/api/images/${product.first_media.url}`}
                   className="object-cover group-hover:brightness-90 transition duration-300 w-full h-full"
-                  loop
-                  muted
-                  playsInline
-                  autoPlay
-                  preload="metadata"
                 />
               ) : (
                 <Image
@@ -103,14 +99,9 @@ export default function TopSaleClient({ products }: TopSaleClientProps) {
               >
                 <div className="relative w-full h-[350px]">
                   {product.first_media?.type === "video" ? (
-                    <video
+                    <AutoPlayVideo
                       src={`/api/images/${product.first_media.url}`}
                       className="object-cover group-hover:brightness-90 transition duration-300 w-full h-full"
-                      loop
-                      muted
-                      playsInline
-                      autoPlay
-                      preload="metadata"
                     />
                   ) : (
                     <Image

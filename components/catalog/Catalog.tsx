@@ -9,6 +9,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getProductImageSrc, getFirstMedia } from "@/lib/getFirstProductImage";
 import { cachedFetch, CACHE_KEYS } from "@/lib/cache";
+import AutoPlayVideo from "@/components/shared/AutoPlayVideo";
 
 interface Product {
   id: number;
@@ -172,14 +173,9 @@ export default function Catalog() {
               {/* Image or Video */}
               <div className="relative w-full aspect-[2/3] bg-gray-200 group-hover:filter group-hover:brightness-90 transition duration-300 overflow-hidden">
                 {product.first_media?.type === "video" ? (
-                  <video
+                  <AutoPlayVideo
                     src={`/api/images/${product.first_media.url}`}
                     className="object-cover transition-all duration-300 group-hover:brightness-90 w-full h-full"
-                    loop
-                    muted
-                    playsInline
-                    autoPlay
-                    preload="metadata"
                   />
                 ) : (
                   <Image
