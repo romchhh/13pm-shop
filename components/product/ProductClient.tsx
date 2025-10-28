@@ -356,8 +356,7 @@ export default function ProductClient({ product: initialProduct }: ProductClient
               <button
                 onClick={handlePrev}
                 aria-label="Previous image"
-                className="absolute left-2 md:left-4 inset-y-0 my-auto h-8 w-8 z-10 hidden lg:flex items-center justify-center border border-gray-300 dark:border-gray-600 rounded-full bg-white/80 dark:bg-black/80 backdrop-blur-sm hover:bg-white dark:hover:bg-black transition-all"
-                style={{ top: '50%', transform: 'translateY(-50%)' }}
+                className="absolute left-2 top-[42.5vh] -translate-y-1/2 z-10 hidden lg:flex items-center justify-center w-8 h-8 border border-gray-300 dark:border-gray-600 rounded-full bg-white/80 dark:bg-black/80 backdrop-blur-sm hover:bg-white dark:hover:bg-black transition-all"
               >
                 <svg 
                   className="w-4 h-4 text-gray-700 dark:text-gray-300" 
@@ -372,8 +371,7 @@ export default function ProductClient({ product: initialProduct }: ProductClient
               <button
                 onClick={handleNext}
                 aria-label="Next image"
-                className="absolute right-2 md:right-4 inset-y-0 my-auto h-8 w-8 z-10 hidden lg:flex items-center justify-center border border-gray-300 dark:border-gray-600 rounded-full bg-white/80 dark:bg-black/80 backdrop-blur-sm hover:bg-white dark:hover:bg-black transition-all"
-                style={{ top: '50%', transform: 'translateY(-50%)' }}
+                className="absolute right-2 top-[42.5vh] -translate-y-1/2 z-10 hidden lg:flex items-center justify-center w-8 h-8 border border-gray-300 dark:border-gray-600 rounded-full bg-white/80 dark:bg-black/80 backdrop-blur-sm hover:bg-white dark:hover:bg-black transition-all"
               >
                 <svg 
                   className="w-4 h-4 text-gray-700 dark:text-gray-300" 

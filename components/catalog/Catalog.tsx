@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useSearchParams } from "next/navigation"; // Next.js 13+ client hook for reading query params
 import SidebarFilter from "../layout/SidebarFilter";
 import { useAppContext } from "@/lib/GeneralProvider";
@@ -9,7 +9,58 @@ import Link from "next/link";
 import Image from "next/image";
 import { getProductImageSrc, getFirstMedia } from "@/lib/getFirstProductImage";
 import { cachedFetch, CACHE_KEYS } from "@/lib/cache";
-import AutoPlayVideo from "@/components/shared/AutoPlayVideo";
+
+// Video component with proper mobile autoplay
+function VideoWithAutoplay({ src, className }: { src: string; className?: string }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video) {
+      video.muted = true;
+      video.playsInline = true;
+      video.setAttribute('muted', '');
+      video.setAttribute('playsinline', '');
+      video.setAttribute('webkit-playsinline', '');
+      
+      const playVideo = async () => {
+        try {
+          await video.play();
+        } catch (error) {
+          // Retry after delay for mobile
+          setTimeout(async () => {
+            try {
+              await video.play();
+            } catch (e) {
+              console.log("Video autoplay failed:", e);
+            }
+          }, 200);
+        }
+      };
+      
+      if (video.readyState >= 2) {
+        playVideo();
+      } else {
+        video.addEventListener('loadeddata', playVideo, { once: true });
+        video.addEventListener('canplay', playVideo, { once: true });
+        video.load();
+      }
+    }
+  }, []);
+
+  return (
+    <video
+      ref={videoRef}
+      src={src}
+      className={className}
+      loop
+      muted
+      playsInline
+      autoPlay
+      preload="metadata"
+    />
+  );
+}
 
 interface Product {
   id: number;
@@ -173,7 +224,7 @@ export default function Catalog() {
               {/* Image or Video */}
               <div className="relative w-full aspect-[2/3] bg-gray-200 group-hover:filter group-hover:brightness-90 transition duration-300 overflow-hidden">
                 {product.first_media?.type === "video" ? (
-                  <AutoPlayVideo
+                  <VideoWithAutoplay
                     src={`/api/images/${product.first_media.url}`}
                     className="object-cover transition-all duration-300 group-hover:brightness-90 w-full h-full"
                   />

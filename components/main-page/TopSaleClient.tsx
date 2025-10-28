@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
 import "swiper/css";
@@ -8,7 +8,58 @@ import "swiper/css/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { getProductImageSrc } from "@/lib/getFirstProductImage";
-import AutoPlayVideo from "@/components/shared/AutoPlayVideo";
+
+// Video component with proper mobile autoplay
+function VideoWithAutoplay({ src, className }: { src: string; className?: string }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video) {
+      video.muted = true;
+      video.playsInline = true;
+      video.setAttribute('muted', '');
+      video.setAttribute('playsinline', '');
+      video.setAttribute('webkit-playsinline', '');
+      
+      const playVideo = async () => {
+        try {
+          await video.play();
+        } catch (error) {
+          // Retry after delay for mobile
+          setTimeout(async () => {
+            try {
+              await video.play();
+            } catch (e) {
+              console.log("Video autoplay failed:", e);
+            }
+          }, 200);
+        }
+      };
+      
+      if (video.readyState >= 2) {
+        playVideo();
+      } else {
+        video.addEventListener('loadeddata', playVideo, { once: true });
+        video.addEventListener('canplay', playVideo, { once: true });
+        video.load();
+      }
+    }
+  }, []);
+
+  return (
+    <video
+      ref={videoRef}
+      src={src}
+      className={className}
+      loop
+      muted
+      playsInline
+      autoPlay
+      preload="metadata"
+    />
+  );
+}
 
 interface Product {
   id: number;
@@ -51,7 +102,7 @@ export default function TopSaleClient({ products }: TopSaleClientProps) {
           >
             <div className="aspect-[2/3] w-full overflow-hidden relative">
               {product.first_media?.type === "video" ? (
-                <AutoPlayVideo
+                <VideoWithAutoplay
                   src={`/api/images/${product.first_media.url}`}
                   className="object-cover group-hover:brightness-90 transition duration-300 w-full h-full"
                 />
@@ -99,7 +150,7 @@ export default function TopSaleClient({ products }: TopSaleClientProps) {
               >
                 <div className="relative w-full h-[350px]">
                   {product.first_media?.type === "video" ? (
-                    <AutoPlayVideo
+                    <VideoWithAutoplay
                       src={`/api/images/${product.first_media.url}`}
                       className="object-cover group-hover:brightness-90 transition duration-300 w-full h-full"
                     />

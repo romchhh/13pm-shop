@@ -100,9 +100,11 @@ export default function Header() {
       try {
         const res = await fetch("/api/categories");
         const data = await res.json();
-        setCategories(data);
+        // Ensure data is always an array
+        setCategories(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Failed to load categories", err);
+        setCategories([]); // Set empty array on error
       }
     }
     fetchCategories();
@@ -178,7 +180,7 @@ export default function Header() {
 
             <div className="flex items-center gap-10 text-xl font-normal font-['Inter']">
               {/* Product Categories shown directly in top nav */}
-              {categories.map((category) => (
+              {Array.isArray(categories) && categories.map((category) => (
                 <div
                   key={category.id}
                   className="relative group"
