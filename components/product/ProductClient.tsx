@@ -146,6 +146,11 @@ export default function ProductClient({ product: initialProduct }: ProductClient
     setIsLoading(true);
     setActiveImageIndex(0);
     
+    // Scroll to top on mobile when changing color variant
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    
     try {
       const response = await fetch(`/api/products/${productId}`);
       if (response.ok) {
@@ -351,35 +356,31 @@ export default function ProductClient({ product: initialProduct }: ProductClient
               <button
                 onClick={handlePrev}
                 aria-label="Previous image"
-                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-white/70 dark:bg-black/50 rounded-full shadow-md hover:scale-110 transition"
+                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 hidden lg:flex items-center justify-center w-8 h-8 border border-gray-300 dark:border-gray-600 rounded-full bg-white/80 dark:bg-black/80 backdrop-blur-sm hover:bg-white dark:hover:bg-black transition-all"
               >
-                <Image
-                  src={
-                    isDark
-                      ? "/images/dark-theme/slider-button-left.svg"
-                      : "/images/light-theme/slider-button-left.svg"
-                  }
-                  alt="Previous"
-                  width={28}
-                  height={28}
-                />
+                <svg 
+                  className="w-4 h-4 text-gray-700 dark:text-gray-300" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
               </button>
 
               <button
                 onClick={handleNext}
                 aria-label="Next image"
-                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-white/70 dark:bg-black/50 rounded-full shadow-md hover:scale-110 transition"
+                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 hidden lg:flex items-center justify-center w-8 h-8 border border-gray-300 dark:border-gray-600 rounded-full bg-white/80 dark:bg-black/80 backdrop-blur-sm hover:bg-white dark:hover:bg-black transition-all"
               >
-                <Image
-                  src={
-                    isDark
-                      ? "/images/dark-theme/slider-button-right.svg"
-                      : "/images/light-theme/slider-button-right.svg"
-                  }
-                  alt="Next"
-                  width={28}
-                  height={28}
-                />
+                <svg 
+                  className="w-4 h-4 text-gray-700 dark:text-gray-300" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
               </button>
             </>
           )}
@@ -503,7 +504,7 @@ export default function ProductClient({ product: initialProduct }: ProductClient
                       type="button"
                       onClick={() => handleColorVariantChange(relatedProduct.id)}
                       disabled={isLoading}
-                      className={`relative w-10 h-10 md:w-11 md:h-11 rounded-full border border-dashed border-gray-300 dark:border-gray-600 transition-all duration-200 hover:border-gray-500 dark:hover:border-gray-400 cursor-pointer ${
+                      className={`relative w-10 h-10 md:w-11 md:h-11 rounded-full border border-gray-300 dark:border-gray-600 transition-all duration-200 hover:border-gray-500 dark:hover:border-gray-400 cursor-pointer ${
                         isLoading ? 'opacity-50 cursor-wait' : ''
                       }`}
                       aria-label={`Переглянути ${color.label}`}
