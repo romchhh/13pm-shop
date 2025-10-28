@@ -10,6 +10,7 @@ import { BasketProvider } from "@/lib/BasketProvider";
 import { registerServiceWorker } from "@/lib/registerSW";
 import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
 import { WebVitals } from "@/components/shared/WebVitals";
+import MainContent from "@/components/shared/MainContent";
 
 const inter = Inter({
   subsets: ["latin", "cyrillic"],
@@ -102,7 +103,7 @@ export default function RootLayout({
           <AppProvider>
             <BasketProvider>
               <Header />
-              <main className="mt-16 lg:mt-20">{children}</main>
+              <MainContent>{children}</MainContent>
               <Footer />
             </BasketProvider>
           </AppProvider>

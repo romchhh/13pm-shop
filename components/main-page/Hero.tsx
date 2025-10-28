@@ -51,17 +51,22 @@ export default function Hero() {
           <>
             <video
               ref={videoRef}
-              className="absolute inset-0 w-full h-full object-cover object-center"
+              className="absolute inset-0 w-full h-full object-cover object-center bg-black"
               src="/images/CHARS02.webm"
               autoPlay
               loop
               muted
               playsInline
-              preload="metadata"
+              preload="auto"
               style={{ zIndex: 1 }}
-              poster="/images/hero-bg.png"
               onLoadedData={() => {
                 videoRef.current?.play().catch(() => setShowPlayButton(true));
+              }}
+              onLoadStart={() => {
+                // Hide black background once video starts loading
+                if (videoRef.current) {
+                  videoRef.current.style.backgroundColor = "transparent";
+                }
               }}
               webkit-playsinline="true"
               x5-playsinline="true"
@@ -97,12 +102,6 @@ export default function Hero() {
           </>
         
         <div className="relative z-10 flex flex-col justify-evenly p-10 md:p-35 gap-55 md:gap-70 h-full" style={{ zIndex: 2 }}>
-          <div className="mx-auto relative lg:w-[1046px] h-52 flex items-center justify-center">
-            <div className="text-white opacity-40 text-3xl md:text-7xl font-medium font-['Montserrat'] uppercase text-center">
-              Тиша у формі <br /> CHARS
-            </div>
-          </div>
-
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className="cursor-pointer mx-auto w-40 sm:w-52 md:w-60 lg:w-72 h-12 sm:h-14 md:h-16 lg:h-16 p-2 bg-white inline-flex justify-center items-center gap-2 hover:opacity-50 transition-opacity duration-300 font-['Inter']"

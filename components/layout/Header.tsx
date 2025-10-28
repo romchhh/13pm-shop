@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { useAppContext } from "@/lib/GeneralProvider";
 import { useBasket } from "@/lib/BasketProvider";
 import SidebarBasket from "./SidebarBasket";
@@ -35,6 +36,27 @@ export default function Header() {
   const { items } = useBasket();
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const toggleTheme = () => setIsDark((prev) => !prev);
+  const pathname = usePathname();
+  
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+  const isHomePage = pathname === '/';
+
+  // Ensure component is mounted before using scroll state (prevents hydration mismatch)
+  useEffect(() => {
+    setIsMounted(true);
+    
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      setIsScrolled(scrollY > 20);
+    };
+
+    // Initial check after mount
+    handleScroll();
+    
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
@@ -119,8 +141,12 @@ export default function Header() {
   return (
     <>
       <header
-        className={`max-w-[1920px] mx-auto fixed top-0 left-1/2 transform -translate-x-1/2 w-full z-50 ${
-          isDark ? "bg-[#1e1e1e] text-white" : "bg-stone-100 text-black"
+        className={`max-w-[1920px] mx-auto fixed top-0 left-1/2 transform -translate-x-1/2 w-full z-50 transition-all duration-300 ${
+          isMounted && isHomePage && !isScrolled
+            ? "bg-transparent text-white" 
+            : isDark 
+              ? "bg-[#1e1e1e] text-white shadow-md" 
+              : "bg-stone-100 text-black shadow-md"
         }`}
         onMouseLeave={() => {
           if (!pinnedCatalog) {
@@ -132,7 +158,9 @@ export default function Header() {
         }}
       >
         {/* === WRAPPER: everything inside shares same bg and styles === */}
-        <div className="w-full shadow-md transition-all duration-300">
+        <div className={`w-full transition-all duration-300 ${
+          isMounted && isHomePage && !isScrolled ? '' : 'shadow-md'
+        }`}>
           {/* Top nav */}
           <div className="hidden lg:flex justify-between items-center h-20 px-10">
             <Link href="/">
@@ -182,7 +210,9 @@ export default function Header() {
                   {/* Subcategories dropdown */}
                   {hoveredCategoryId === category.id &&
                     subcategories.length > 0 && (
-                      <div className="absolute top-full left-0 mt-2 bg-white shadow-md rounded px-4 py-2 flex flex-col min-w-[200px] z-50">
+                      <div className={`absolute top-full left-0 mt-2 shadow-md rounded px-4 py-2 flex flex-col min-w-[200px] z-50 ${
+                        isMounted && isHomePage && !isScrolled ? 'bg-white/95 backdrop-blur-sm' : 'bg-white'
+                      }`}>
                         {subcategories.map((subcat) => (
                           <Link
                             key={subcat.id}
@@ -227,7 +257,9 @@ export default function Header() {
                   {customSeasonCategory.name}
                 </button>
                 {hoveredCategoryId === customSeasonCategory.id && (
-                  <div className="absolute top-full left-0 mt-2 bg-white shadow-md rounded px-4 py-2 flex flex-col min-w-[200px] z-50">
+                  <div className={`absolute top-full left-0 mt-2 shadow-md rounded px-4 py-2 flex flex-col min-w-[200px] z-50 ${
+                    isMounted && isHomePage && !isScrolled ? 'bg-white/95 backdrop-blur-sm' : 'bg-white'
+                  }`}>
                     {customSeasonCategory.subcategories.map((subcat) => (
                       <Link
                         key={subcat.id}
@@ -260,7 +292,9 @@ export default function Header() {
                 </span>
 
                 <div
-                  className={`absolute top-full left-0 mt-2 bg-white shadow-md rounded px-4 py-2 flex flex-col min-w-[200px] z-50 transition-opacity duration-200 ${
+                  className={`absolute top-full left-0 mt-2 shadow-md rounded px-4 py-2 flex flex-col min-w-[200px] z-50 transition-opacity duration-200 ${
+                    isMounted && isHomePage && !isScrolled ? 'bg-white/95 backdrop-blur-sm' : 'bg-white'
+                  } ${
                     infoMenuOpen
                       ? "opacity-100 pointer-events-auto"
                       : "opacity-0 pointer-events-none"
@@ -345,8 +379,14 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Mobile Header (Unchanged) */}
-        <div className="lg:hidden w-full h-16 relative overflow-hidden px-4 flex items-center justify-between">
+        {/* Mobile Header */}
+        <div className={`lg:hidden w-full h-16 relative overflow-hidden px-4 flex items-center justify-between transition-all duration-300 ${
+          isMounted && isHomePage && !isScrolled
+            ? "bg-transparent text-white"
+            : isDark 
+              ? "bg-[#1e1e1e] text-white" 
+              : "bg-stone-100 text-black"
+        }`}>
           <div className="flex gap-4">
             <button
               onClick={() => setIsSidebarOpen(true)}
