@@ -125,6 +125,27 @@ export async function sqlGetProduct(id: number) {
   `;
 }
 
+// =========================
+// Get related color variants by product name
+// =========================
+export async function sqlGetRelatedColorsByName(name: string) {
+  return await sql`
+    SELECT
+      p.id,
+      p.name,
+      COALESCE(pc.colors, '[]') AS colors
+    FROM products p
+    LEFT JOIN LATERAL (
+      SELECT JSON_AGG(
+        JSONB_BUILD_OBJECT('label', pc.label, 'hex', pc.hex)
+      ) AS colors
+      FROM product_colors pc
+      WHERE pc.product_id = p.id
+    ) pc ON true
+    WHERE p.name = ${name};
+  `;
+}
+
 export async function sqlGetProductsByCategory(categoryName: string) {
   return await sql`
     SELECT

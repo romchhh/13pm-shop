@@ -59,7 +59,7 @@ export default function ProductClient({ product }: ProductClientProps) {
 
   // Inject custom styles for smoother transitions
   useEffect(() => {
-    const style = document.createElement('style');
+    const style = document.createElement("style");
     style.textContent = swiperStyles;
     document.head.appendChild(style);
     return () => {
@@ -67,7 +67,6 @@ export default function ProductClient({ product }: ProductClientProps) {
     };
   }, [swiperStyles]);
 
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [showToast, setShowToast] = useState(false);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [alertType, setAlertType] = useState<
@@ -82,24 +81,6 @@ export default function ProductClient({ product }: ProductClientProps) {
       setSelectedColor(product.colors[0].label);
     }
   }, [product, selectedColor]);
-
-  const handleNext = () => {
-    if (!swiperInstance) return;
-    if (swiperInstance.isEnd) {
-      swiperInstance.slideToLoop(0); // 👈 jump to first "looped" slide
-    } else {
-      swiperInstance.slideNext();
-    }
-  };
-
-  const handlePrev = () => {
-    if (!swiperInstance) return;
-    if (swiperInstance.isBeginning) {
-      swiperInstance.slideToLoop(media.length - 1); // 👈 jump to last "looped" slide
-    } else {
-      swiperInstance.slidePrev();
-    }
-  };
 
   const handleAddToCart = () => {
     if (!selectedSize) {
@@ -144,74 +125,73 @@ export default function ProductClient({ product }: ProductClientProps) {
     "xl",
   ];
 
-  const [swiperInstance, setSwiperInstance] = useState<SwiperType | null>(null);
-  // Use this callback to store the swiper instance
-  const onSwiper = (swiper: SwiperType) => {
-    setSwiperInstance(swiper);
+  // SWIPER
+  const [swiper, setSwiper] = useState<SwiperType | null>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Avoid SSR hydration flicker
+  useEffect(() => setIsMounted(true), []);
+  if (!isMounted || !media?.length) return null;
+
+  // Manual next/prev handling (to avoid loop flickers)
+  const handleNext = () => {
+    if (!swiper) return;
+    if (activeIndex >= media.length - 1) {
+      swiper.slideTo(0);
+    } else {
+      swiper.slideTo(activeIndex + 1);
+    }
   };
 
-  useEffect(() => {
-    if (swiperInstance) {
-      swiperInstance.slideToLoop(activeImageIndex, 0);
+  const handlePrev = () => {
+    if (!swiper) return;
+    if (activeIndex === 0) {
+      swiper.slideTo(media.length - 1);
+    } else {
+      swiper.slideTo(activeIndex - 1);
     }
-  }, [swiperInstance]);
+  };
+
+  // COLORS
 
   return (
     <section className="max-w-[1920px] w-full mx-auto">
       <div className="flex flex-col lg:flex-row justify-around p-4 md:p-10 gap-10">
-        <div className="relative flex justify-center w-full lg:w-1/2">
-          {/* Swiper component */}
+        <div className="relative w-full lg:w-1/2 flex justify-center">
           <Swiper
-            onSwiper={onSwiper} // Store the swiper instance here
             modules={[Navigation]}
-            spaceBetween={16}
+            onSwiper={setSwiper}
             slidesPerView={1}
-            centeredSlides
-            grabCursor
-            loop
-            touchRatio={1}
-            touchAngle={45}
-            longSwipesRatio={0.5}
-            longSwipesMs={300}
-            swipeHandler=".swiper-slide"
-            simulateTouch={true}
-            followFinger={true}
-            resistance={true}
-            resistanceRatio={0.85}
+            spaceBetween={10}
             speed={500}
-            onSlideChange={(swiper) => setActiveImageIndex(swiper.realIndex)} // Sync slide change with state
-            initialSlide={activeImageIndex} // Set the initial slide to activeImageIndex
+            allowTouchMove
+            centeredSlides
+            onSlideChange={(s) => setActiveIndex(s.activeIndex)}
+            className="product-swiper w-full max-w-[800px]"
           >
-            {media.map((item, index) => (
-              <SwiperSlide key={index}>
-                <div className="w-full max-w-[800px] max-h-[85vh] flex items-center justify-center overflow-hidden">
-                  {item?.type === "video" ? (
+            {media.map((item, i) => (
+              <SwiperSlide key={i}>
+                <div className="flex justify-center items-center max-h-[85vh] overflow-hidden">
+                  {item.type === "video" ? (
                     <video
-                      className="w-full h-auto max-h-[85vh] object-contain"
-                      src={`/api/images/${item?.url}`}
+                      className="object-contain w-full max-h-[85vh]"
+                      src={`/api/images/${item.url}`}
                       autoPlay
                       loop
                       muted
                       playsInline
-                      preload="metadata"
                     />
                   ) : (
                     <Image
-                      className="object-contain"
-                      src={`/api/images/${item?.url}`}
-                      alt={`Media ${index}`}
+                      src={`/api/images/${item.url}`}
+                      alt={`Product media ${i}`}
                       width={800}
                       height={1160}
-                      style={{
-                        maxHeight: "85vh",
-                        width: "auto",
-                        height: "auto",
-                      }}
-                      priority={activeImageIndex === index}
-                      quality={activeImageIndex === index ? 90 : 80}
-                      sizes="(max-width: 420px) 100vw, (max-width: 768px) 90vw, (max-width: 1024px) 50vw, 800px"
-                      placeholder="blur"
-                      blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+                      priority={i === activeIndex}
+                      quality={i === activeIndex ? 90 : 80}
+                      className="object-contain w-auto h-auto"
+                      style={{ maxHeight: "85vh" }}
                     />
                   )}
                 </div>
@@ -219,13 +199,12 @@ export default function ProductClient({ product }: ProductClientProps) {
             ))}
           </Swiper>
 
-          {/* Navigation buttons */}
           {media.length > 1 && (
             <>
-              {/* Prev button */}
               <button
-                className="absolute top-[10%] -translate-y-1/2 left-2 md:left-4 rounded-full cursor-pointer z-10 opacity-60 hover:opacity-100 transition"
-                onClick={handlePrev} // Use swiperInstance to call slidePrev
+                onClick={handlePrev}
+                aria-label="Previous image"
+                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-white/70 dark:bg-black/50 rounded-full shadow-md hover:scale-110 transition"
               >
                 <Image
                   src={
@@ -234,16 +213,15 @@ export default function ProductClient({ product }: ProductClientProps) {
                       : "/images/light-theme/slider-button-left.svg"
                   }
                   alt="Previous"
-                  width={32}
-                  height={32}
-                  className="w-6 h-6 md:w-8 md:h-8"
+                  width={28}
+                  height={28}
                 />
               </button>
 
-              {/* Next button */}
               <button
-                className="absolute top-[10%] -translate-y-1/2 right-2 md:right-4 rounded-full cursor-pointer z-10 opacity-60 hover:opacity-100 transition"
-                onClick={handleNext} // Use swiperInstance to call slideNext
+                onClick={handleNext}
+                aria-label="Next image"
+                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-white/70 dark:bg-black/50 rounded-full shadow-md hover:scale-110 transition"
               >
                 <Image
                   src={
@@ -252,9 +230,8 @@ export default function ProductClient({ product }: ProductClientProps) {
                       : "/images/light-theme/slider-button-right.svg"
                   }
                   alt="Next"
-                  width={32}
-                  height={32}
-                  className="w-6 h-6 md:w-8 md:h-8"
+                  width={28}
+                  height={28}
                 />
               </button>
             </>

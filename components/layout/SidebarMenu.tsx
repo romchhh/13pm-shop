@@ -12,6 +12,12 @@ interface SidebarMenuProps {
 interface Category {
   id: number;
   name: string;
+  subcategories?: Subcategory[];
+}
+
+interface Subcategory {
+  id: number;
+  name: string;
 }
 
 export default function SidebarMenu({
@@ -25,6 +31,7 @@ export default function SidebarMenu({
 
   // "menu" = main menu with categories, "season" = season sidebar
   const [view, setView] = useState<"menu" | "season">("menu");
+  const [openCategoryId, setOpenCategoryId] = useState<number | null>(null);
 
   useEffect(() => {
     async function fetchCategories() {
@@ -32,8 +39,24 @@ export default function SidebarMenu({
         setLoading(true);
         const res = await fetch("/api/categories");
         if (!res.ok) throw new Error("Failed to fetch categories");
-        const data = await res.json();
-        setCategories(data);
+        const data: Category[] = await res.json();
+
+        // Fetch subcategories for each category
+        const categoriesWithSubcats = await Promise.all(
+          data.map(async (cat) => {
+            try {
+              const subRes = await fetch(
+                `/api/subcategories?parent_category_id=${cat.id}`
+              );
+              const subData: Subcategory[] = await subRes.json();
+              return { ...cat, subcategories: subData };
+            } catch {
+              return { ...cat, subcategories: [] };
+            }
+          })
+        );
+
+        setCategories(categoriesWithSubcats);
       } catch (err) {
         setError((err as Error).message);
       } finally {
@@ -90,51 +113,72 @@ export default function SidebarMenu({
         } overflow-y-auto`}
       >
         {view === "menu" && (
-          <nav className="flex flex-col px-4 py-6 space-y-4 text-xl sm:text-2xl md:text-3xl">
-            {/* Header with close */}
-            <div className="flex justify-between items-center mb-2">
-              <Link
-                href="/catalog"
-                className="hover:text-[#8C7461]"
-                onClick={() => setIsOpen(false)}
-              >
-                Усі
-              </Link>
+          <nav className="flex flex-col px-4 py-6 space-y-2 text-xl sm:text-2xl md:text-3xl">
+            <div className="flex justify-between items-center mb-4">
+              <h2>Меню</h2>
               <button
                 className="text-2xl sm:text-3xl cursor-pointer hover:text-[#8C7461]"
-                onClick={() => {
-                  setIsOpen(false);
-                  setView("menu");
-                }}
+                onClick={() => setIsOpen(false)}
               >
                 ×
               </button>
             </div>
 
+            {loading && <p>Loading categories...</p>}
+            {error && <p className="text-red-500">Error: {error}</p>}
+
+            {!loading &&
+              !error &&
+              categories.map((cat) => (
+                <div key={cat.id} className="flex flex-col">
+                  <div className="flex justify-between items-center">
+                    <Link
+                      href={`/catalog?category=${encodeURIComponent(cat.name)}`}
+                      className="hover:text-[#8C7461]"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      {cat.name}
+                    </Link>
+
+                    {cat.subcategories && cat.subcategories.length > 0 && (
+                      <button
+                        className="ml-2 text-xl sm:text-2xl font-bold"
+                        onClick={() =>
+                          setOpenCategoryId(
+                            openCategoryId === cat.id ? null : cat.id
+                          )
+                        }
+                      >
+                        {openCategoryId === cat.id ? "−" : "+"}
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Subcategories dropdown */}
+                  {openCategoryId === cat.id && cat.subcategories && (
+                    <div className="flex flex-col pl-6 mt-1 space-y-1">
+                      {cat.subcategories.map((sub) => (
+                        <Link
+                          key={sub.id}
+                          href={`/catalog?subcategory=${encodeURIComponent(
+                            sub.name
+                          )}`}
+                          className="hover:text-[#8C7461]"
+                          onClick={() => setIsOpen(false)}
+                        >
+                          {sub.name}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
             <button
-              className="text-2xl text-start sm:text-3xl cursor-pointer hover:text-[#8C7461]"
+              className="text-start cursor-pointer hover:text-[#8C7461]"
               onClick={() => setView("season")}
             >
               Сезон -{">"}
             </button>
-
-            {/* Render loading, error, or category links */}
-            {loading && <p>Loading categories...</p>}
-            {error && <p className="text-red-500">Error: {error}</p>}
-            {!loading &&
-              !error &&
-              categories.map((category) => (
-                <Link
-                  href={`/catalog?category=${encodeURIComponent(
-                    category.name
-                  )}`}
-                  key={category.id}
-                  className="hover:text-[#8C7461]"
-                  onClick={() => setIsOpen(false)}
-                >
-                  {category.name}
-                </Link>
-              ))}
           </nav>
         )}
 
