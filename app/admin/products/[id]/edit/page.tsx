@@ -404,7 +404,7 @@ export default function EditProductPage() {
                   label="Розміри"
                   options={multiOptions}
                   defaultSelected={formData.sizes}
-                  onChange={(values) => {
+                  onChange={(values: string[]) => {
                     // Update selected sizes
                     handleChange("sizes", values);
                     // Ensure stocks exist for any newly added size
@@ -415,7 +415,7 @@ export default function EditProductPage() {
                       });
                       // Remove stocks for sizes no longer selected
                       Object.keys(next).forEach((sz) => {
-                        if (!values.includes(sz)) delete (next as any)[sz];
+                        if (!values.includes(sz)) delete (next as Record<string, number>)[sz];
                       });
                       return next;
                     });

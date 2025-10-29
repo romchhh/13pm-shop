@@ -224,8 +224,8 @@ export default function ProductClient({ product: initialProduct }: ProductClient
   };
 
   const media = product.media || [];
-  const sizes = product.sizes
-    ?.filter((s) => Number((s as any).stock ?? 0) > 0)
+  const sizes = (product.sizes as { size: string; stock?: number | string }[] | undefined)
+    ?.filter((s) => Number(s.stock ?? 0) > 0)
     .map((s) => s.size) || [
     "xs",
     "s",

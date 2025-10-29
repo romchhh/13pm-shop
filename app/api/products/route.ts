@@ -118,7 +118,7 @@ export async function POST(req: Request) {
         discount_percentage,
         priority,
         sizes: Array.isArray(sizes)
-          ? (sizes as any[]).map((s) =>
+          ? (sizes as (string | { size: string; stock?: number | string })[]).map((s) =>
               typeof s === "string" ? { size: s, stock: 0 } : { size: s.size, stock: Number(s.stock ?? 0) }
             )
           : [],
