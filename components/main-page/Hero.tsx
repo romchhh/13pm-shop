@@ -155,12 +155,12 @@ export default function Hero() {
             )}
           </>
         
-        <div className="relative z-10 flex flex-col justify-evenly p-10 md:p-35 gap-55 md:gap-70 h-full" style={{ zIndex: 2 }}>
+        <div className="relative z-10 flex flex-col justify-end md:justify-evenly p-10 md:p-35 pb-16 md:pb-0 gap-55 md:gap-70 h-full" style={{ zIndex: 2 }}>
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="cursor-pointer mx-auto w-40 sm:w-52 md:w-60 lg:w-72 h-12 sm:h-14 md:h-16 lg:h-16 p-2 bg-white inline-flex justify-center items-center gap-2 hover:opacity-50 transition-opacity duration-300 font-['Inter']"
+            className="cursor-pointer mx-auto w-40 sm:w-52 md:w-60 lg:w-72 h-12 sm:h-14 md:h-16 lg:h-16 p-2 bg-transparent border border-white text-white inline-flex justify-center items-center gap-2 hover:opacity-80 transition-opacity duration-300 font-['Inter']"
           >
-            <div className="text-center justify-center text-stone-900 text-base sm:text-lg md:text-xl lg:text-2xl font-normal capitalize leading-none tracking-tight">
+            <div className="text-center justify-center text-white text-base sm:text-lg md:text-xl lg:text-2xl font-normal capitalize leading-none tracking-tight">
               Каталог
             </div>
           </button>

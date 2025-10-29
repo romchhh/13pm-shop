@@ -94,10 +94,12 @@ export async function PUT(
       category_id: categoryId,
       subcategory_id: subcategoryId,
       sizes: Array.isArray(body.sizes)
-        ? body.sizes.map((size: string) => ({
-            size,
-            stock: 5,
-          }))
+        ? body.sizes.map(
+            (s: string | { size: string; stock?: number }) =>
+              typeof s === "string"
+                ? { size: s, stock: 0 }
+                : { size: s.size, stock: Number(s.stock ?? 0) }
+          )
         : [],
       media: Array.isArray(body.media) ? body.media : [],
       colors: Array.isArray(body.colors)

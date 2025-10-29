@@ -80,6 +80,7 @@ export default function EditProductPage() {
   const [customColorLabel, setCustomColorLabel] = useState("");
   const [customColorHex, setCustomColorHex] = useState("#000000");
   const [colors, setColors] = useState<{ label: string; hex?: string }[]>([]);
+  const [sizeStocks, setSizeStocks] = useState<Record<string, number>>({});
 
   useEffect(() => {
     async function fetchData() {
@@ -118,6 +119,15 @@ export default function EditProductPage() {
           hasLining: productData.has_lining || false,
           liningDescription: productData.lining_description || "",
         });
+
+        // Initialize sizeStocks from productData.sizes
+        const initialStocks: Record<string, number> = {};
+        (productData.sizes || []).forEach(
+          (s: { size: string; stock?: number }) => {
+            initialStocks[s.size] = typeof s.stock === "number" ? s.stock : 0;
+          }
+        );
+        setSizeStocks(initialStocks);
 
         setCategoryOptions(categoryData);
         setColors(productData.colors || []);
@@ -304,7 +314,7 @@ export default function EditProductPage() {
             ? Number(formData.discountPercentage)
             : null,
           priority: Number(formData.priority),
-          sizes: formData.sizes,
+          sizes: formData.sizes.map((s) => ({ size: s, stock: sizeStocks[s] ?? 0 })),
           media: updatedMedia,
           top_sale: formData.topSale,
           limited_edition: formData.limitedEdition,
@@ -394,8 +404,47 @@ export default function EditProductPage() {
                   label="Розміри"
                   options={multiOptions}
                   defaultSelected={formData.sizes}
-                  onChange={(values) => handleChange("sizes", values)}
+                  onChange={(values) => {
+                    // Update selected sizes
+                    handleChange("sizes", values);
+                    // Ensure stocks exist for any newly added size
+                    setSizeStocks((prev) => {
+                      const next = { ...prev };
+                      values.forEach((sz: string) => {
+                        if (next[sz] === undefined) next[sz] = 0;
+                      });
+                      // Remove stocks for sizes no longer selected
+                      Object.keys(next).forEach((sz) => {
+                        if (!values.includes(sz)) delete (next as any)[sz];
+                      });
+                      return next;
+                    });
+                  }}
                 />
+
+                {/* Per-size stock editor */}
+                {formData.sizes?.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    <Label>Кількість по розмірах</Label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {formData.sizes.map((sz) => (
+                        <div key={sz} className="flex items-center gap-2 border rounded px-2 py-1">
+                          <span className="min-w-10 text-sm font-medium">{sz}</span>
+                          <input
+                            type="number"
+                            min={0}
+                            value={sizeStocks[sz] ?? 0}
+                            onChange={(e) => {
+                              const val = Math.max(0, Number(e.target.value) || 0);
+                              setSizeStocks((prev) => ({ ...prev, [sz]: val }));
+                            }}
+                            className="w-20 border rounded px-2 py-1 text-sm dark:bg-gray-800 dark:text-white"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <Label>Категорія</Label>
                 <select

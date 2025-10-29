@@ -589,39 +589,64 @@ type OrderInput = {
 };
 
 export async function sqlPostOrder(order: OrderInput) {
-  // ⬇️ Insert into "orders" table
-  const inserted = await sql`
-    INSERT INTO orders (
-      customer_name, phone_number, email,
-      delivery_method, city, post_office,
-      comment, payment_type, invoice_id, payment_status
-    )
-    VALUES (
-      ${order.customer_name}, ${order.phone_number}, ${order.email || null},
-      ${order.delivery_method}, ${order.city}, ${order.post_office},
-      ${order.comment || null}, ${order.payment_type}, ${order.invoice_id}, ${
-    order.payment_status
-  }
-    )
-    RETURNING id;
-  `;
+  // Transaction: create order, insert items, decrement stock atomically
+  try {
+    await sql`BEGIN`;
 
-  const orderId = inserted[0].id;
-
-  // ⬇️ Insert each item into "order_items"
-  for (const item of order.items) {
-    await sql`
-      INSERT INTO order_items (
-        order_id, product_id, size, quantity, price, color
-      ) VALUES (
-        ${orderId}, ${item.product_id}, ${item.size}, ${item.quantity}, ${
-      item.price
-    }, ${item.color || null}
-      );
+    const inserted = await sql`
+      INSERT INTO orders (
+        customer_name, phone_number, email,
+        delivery_method, city, post_office,
+        comment, payment_type, invoice_id, payment_status
+      )
+      VALUES (
+        ${order.customer_name}, ${order.phone_number}, ${order.email || null},
+        ${order.delivery_method}, ${order.city}, ${order.post_office},
+        ${order.comment || null}, ${order.payment_type}, ${order.invoice_id}, ${
+      order.payment_status
+    }
+      )
+      RETURNING id;
     `;
-  }
 
-  return { orderId };
+    const orderId = inserted[0].id;
+
+    for (const item of order.items) {
+      // 1) Insert order item
+      await sql`
+        INSERT INTO order_items (
+          order_id, product_id, size, quantity, price, color
+        ) VALUES (
+          ${orderId}, ${item.product_id}, ${item.size}, ${item.quantity}, ${
+        item.price
+      }, ${item.color || null}
+        );
+      `;
+
+      // 2) Decrement stock for the specific size (guard non-negative)
+      const updated = await sql`
+        UPDATE product_sizes
+        SET stock = stock - ${item.quantity}
+        WHERE product_id = ${item.product_id}
+          AND size = ${item.size}
+          AND stock >= ${item.quantity}
+        RETURNING id;
+      `;
+
+      if (!updated || updated.length === 0) {
+        // Not enough stock or size doesn't exist
+        throw new Error(
+          `Insufficient stock for product ${item.product_id} size ${item.size}`
+        );
+      }
+    }
+
+    await sql`COMMIT`;
+    return { orderId };
+  } catch (err) {
+    await sql`ROLLBACK`;
+    throw err;
+  }
 }
 
 // Update an order (e.g., status change)

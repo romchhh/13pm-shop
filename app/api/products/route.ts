@@ -117,7 +117,11 @@ export async function POST(req: Request) {
         old_price,
         discount_percentage,
         priority,
-        sizes: (sizes as string[]).map((size) => ({ size, stock: 5 })),
+        sizes: Array.isArray(sizes)
+          ? (sizes as any[]).map((s) =>
+              typeof s === "string" ? { size: s, stock: 0 } : { size: s.size, stock: Number(s.stock ?? 0) }
+            )
+          : [],
         media,
         top_sale,
         limited_edition:

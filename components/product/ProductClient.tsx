@@ -224,13 +224,16 @@ export default function ProductClient({ product: initialProduct }: ProductClient
   };
 
   const media = product.media || [];
-  const sizes = product.sizes?.map((s) => s.size) || [
+  const sizes = product.sizes
+    ?.filter((s) => Number((s as any).stock ?? 0) > 0)
+    .map((s) => s.size) || [
     "xs",
     "s",
     "m",
     "l",
     "xl",
   ];
+  const outOfStock = sizes.length === 0;
 
   // SWIPER
   const [swiper, setSwiper] = useState<SwiperType | null>(null);
@@ -440,21 +443,27 @@ export default function ProductClient({ product: initialProduct }: ProductClient
           </div>
 
           {/* Size Options */}
-          <div className="flex flex-wrap gap-2 md:gap-3">
-            {sizes.map((size) => (
-              <div
-                key={size}
-                onClick={() => setSelectedSize(size)}
-                className={`w-19 sm:w-19 md:w-22 p-2 sm:p-3 border-2 flex justify-center text-base md:text-lg font-['Inter'] uppercase cursor-pointer transition-all duration-200 ${
-                  selectedSize === size
-                    ? "border-black dark:border-white font-bold scale-105 shadow-md"
-                    : "border-gray-300 dark:border-gray-600 hover:border-gray-600 dark:hover:border-gray-400 hover:scale-105 hover:shadow-md"
-                }`}
-              >
-                {SIZE_MAP[size] || size}
-              </div>
-            ))}
-          </div>
+          {sizes.length === 0 ? (
+            <div className="inline-flex items-center gap-2 px-3 py-2 rounded border text-sm uppercase tracking-wide bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800 w-fit">
+              out of stock
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2 md:gap-3">
+              {sizes.map((size) => (
+                <div
+                  key={size}
+                  onClick={() => setSelectedSize(size)}
+                  className={`w-19 sm:w-19 md:w-22 p-2 sm:p-3 border-2 flex justify-center text-base md:text-lg font-['Inter'] uppercase cursor-pointer transition-all duration-200 ${
+                    selectedSize === size
+                      ? "border-black dark:border-white font-bold scale-105 shadow-md"
+                      : "border-gray-300 dark:border-gray-600 hover:border-gray-600 dark:hover:border-gray-400 hover:scale-105 hover:shadow-md"
+                  }`}
+                >
+                  {SIZE_MAP[size] || size}
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Color Picker */}
           {(product.colors && product.colors.length > 0) || relatedProducts.length > 0 ? (
@@ -528,12 +537,16 @@ export default function ProductClient({ product: initialProduct }: ProductClient
 
           {/* Add to Cart Button */}
           <div
-            onClick={handleAddToCart}
+            onClick={outOfStock ? undefined : handleAddToCart}
             className={`w-full text-center ${
               isDark
                 ? "bg-white text-black hover:bg-gray-100"
                 : "bg-black text-white hover:bg-gray-800"
-            } p-3 text-lg md:text-xl font-medium font-['Inter'] uppercase tracking-tight cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]`}
+            } p-3 text-lg md:text-xl font-medium font-['Inter'] uppercase tracking-tight transition-all duration-200 ${
+              outOfStock
+                ? "opacity-50 cursor-not-allowed"
+                : "cursor-pointer hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
+            }`}
           >
             в кошик
           </div>

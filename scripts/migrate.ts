@@ -30,6 +30,55 @@ const migrations: Migration[] = [
       ADD COLUMN IF NOT EXISTS priority INT DEFAULT 0;
     `,
   },
+  {
+    id: "2025-10-29_add_product_sizes_stock",
+    description: "Ensure product_sizes table with stock tracking and constraints",
+    sql: `
+      -- 1) Create table if it doesn't exist
+      CREATE TABLE IF NOT EXISTS product_sizes (
+        id SERIAL PRIMARY KEY,
+        product_id INT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+        size TEXT NOT NULL,
+        stock INT NOT NULL DEFAULT 0,
+        UNIQUE (product_id, size)
+      );
+
+      -- 2) Add stock column if it's missing (for older schemas)
+      ALTER TABLE product_sizes
+      ADD COLUMN IF NOT EXISTS stock INT NOT NULL DEFAULT 0;
+
+      -- 3) Ensure unique constraint (product_id, size) exists
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1
+          FROM pg_constraint
+          WHERE conname = 'product_sizes_product_id_size_key'
+        ) THEN
+          ALTER TABLE product_sizes
+          ADD CONSTRAINT product_sizes_product_id_size_key UNIQUE (product_id, size);
+        END IF;
+      END
+      $$;
+
+      -- 4) Ensure non-negative stock constraint exists
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1
+          FROM pg_constraint
+          WHERE conname = 'product_sizes_stock_nonneg'
+        ) THEN
+          ALTER TABLE product_sizes
+          ADD CONSTRAINT product_sizes_stock_nonneg CHECK (stock >= 0);
+        END IF;
+      END
+      $$;
+
+      -- 5) Helpful index for lookups by product
+      CREATE INDEX IF NOT EXISTS idx_product_sizes_product_id ON product_sizes(product_id);
+    `,
+  },
 ];
 
 async function ensureMigrationsTable(pool: Pool) {
