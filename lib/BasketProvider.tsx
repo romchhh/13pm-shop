@@ -56,6 +56,21 @@ export function BasketProvider({ children }: { children: ReactNode }) {
   }, [items]);
 
   function addItem(newItem: BasketItem) {
+    const trackAddToCart = () => {
+      if (typeof window !== "undefined" && window.fbq) {
+        const value = (newItem.discount_percentage
+          ? newItem.price * (1 - newItem.discount_percentage / 100)
+          : newItem.price) * newItem.quantity;
+        window.fbq("track", "AddToCart", {
+          content_name: newItem.name,
+          content_ids: [String(newItem.id)],
+          content_type: "product",
+          value,
+          currency: "UAH",
+        });
+      }
+    };
+
     setItems((prevItems) => {
       const existingIndex = prevItems.findIndex(
         (i) =>
@@ -66,8 +81,10 @@ export function BasketProvider({ children }: { children: ReactNode }) {
       if (existingIndex !== -1) {
         const updated = [...prevItems];
         updated[existingIndex].quantity += newItem.quantity;
+        trackAddToCart();
         return updated;
       }
+      trackAddToCart();
       return [...prevItems, newItem];
     });
   }

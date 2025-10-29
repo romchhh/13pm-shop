@@ -155,7 +155,7 @@ export default function Hero() {
             )}
           </>
         
-        <div className="relative z-10 flex flex-col justify-end md:justify-evenly p-10 md:p-35 pb-16 md:pb-0 gap-55 md:gap-70 h-full" style={{ zIndex: 2 }}>
+        <div className="relative z-10 flex flex-col justify-end md:justify-evenly p-10 md:p-35 pb-20 md:pb-0 gap-55 md:gap-70 h-full" style={{ zIndex: 2 }}>
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className="cursor-pointer mx-auto w-40 sm:w-52 md:w-60 lg:w-72 h-12 sm:h-14 md:h-16 lg:h-16 p-2 bg-transparent border border-white text-white inline-flex justify-center items-center gap-2 hover:opacity-80 transition-opacity duration-300 font-['Inter']"

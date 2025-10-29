@@ -48,6 +48,28 @@ export default function FinalCard() {
     }
   }, [deliveryMethod]);
 
+  // Track InitiateCheckout event for Meta Pixel when component mounts with items
+  useEffect(() => {
+    if (items.length > 0 && typeof window !== 'undefined' && window.fbq) {
+      const totalValue = items.reduce((total, item) => {
+        const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+        const discount = item.discount_percentage 
+          ? (typeof item.discount_percentage === 'string' ? parseFloat(item.discount_percentage) : item.discount_percentage)
+          : 0;
+        const price = discount > 0 ? itemPrice * (1 - discount / 100) : itemPrice;
+        return total + price * item.quantity;
+      }, 0);
+
+      window.fbq('track', 'InitiateCheckout', {
+        content_ids: items.map(item => String(item.id)),
+        content_type: 'product',
+        value: totalValue,
+        currency: 'UAH',
+        num_items: items.reduce((sum, item) => sum + item.quantity, 0)
+      });
+    }
+  }, [items]); // Track when basket changes
+
   const [comment, setComment] = useState("");
   const [paymentType, setPaymentType] = useState("");
   const [submittedOrder, setSubmittedOrder] = useState<{
@@ -167,6 +189,27 @@ export default function FinalCard() {
           console.error("[FinalCard] No invoice URL received!");
           setError("Не вдалося отримати посилання на оплату.");
           return;
+        }
+
+
+        // Track Purchase event for Meta Pixel
+        if (typeof window !== 'undefined' && window.fbq) {
+          const totalValue = items.reduce((total, item) => {
+            const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+            const discount = item.discount_percentage 
+              ? (typeof item.discount_percentage === 'string' ? parseFloat(item.discount_percentage) : item.discount_percentage)
+              : 0;
+            const price = discount > 0 ? itemPrice * (1 - discount / 100) : itemPrice;
+            return total + price * item.quantity;
+          }, 0);
+
+          window.fbq('track', 'Purchase', {
+            content_ids: items.map(item => String(item.id)),
+            content_type: 'product',
+            value: totalValue,
+            currency: 'UAH',
+            num_items: items.reduce((sum, item) => sum + item.quantity, 0)
+          });
         }
 
         localStorage.setItem(
