@@ -379,13 +379,17 @@ export default function Footer() {
           Telebots | Розробка сайтів
         </Link>
         
-        {/* Designer credit - less prominent */}
+        {/* Designer credit - same style as dev credit */}
         <Link
           href="https://www.instagram.com/sviat_design?igsh=NzloNjMycWk5b2M3&utm_source=qr"
           target="_blank"
-          className="text-xs opacity-40 hover:opacity-60 transition-opacity duration-300"
+          className={`px-6 py-3 rounded-full border-2 transition-all duration-300 text-sm md:text-base tracking-wide hover:scale-105 ${
+            isDark
+              ? "border-white/20 text-white/70 hover:border-white/40 hover:text-white hover:bg-white/5"
+              : "border-black/20 text-black/70 hover:border-black/40 hover:text-black hover:bg-black/5"
+          }`}
         >
-          Дизайн сайту — sviat_design
+          Sviat | Дизайн сайту
         </Link>
       </div>
     </footer>
