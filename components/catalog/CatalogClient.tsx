@@ -121,12 +121,11 @@ export default function CatalogClient({
               className="flex flex-col gap-2 sm:gap-4 group"
             >
               {/* Image or Video */}
-              <div className="relative w-full aspect-[2/3] bg-gray-200 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:200%_100%] animate-shimmer pointer-events-none z-0" />
+              <div className="relative w-full aspect-[2/3] bg-gray-200 group-hover:filter group-hover:brightness-90 transition duration-300 overflow-hidden">
                 {product.first_media?.type === "video" ? (
                   <video
                     src={`/api/images/${product.first_media.url}`}
-                    className="object-cover transition-all duration-300 group-hover:brightness-90 w-full h-full relative z-10"
+                    className="object-cover transition-all duration-300 group-hover:brightness-90 w-full h-full"
                     loop
                     muted
                     playsInline
@@ -140,8 +139,9 @@ export default function CatalogClient({
                     className="object-cover transition-all duration-300 group-hover:brightness-90"
                     fill
                     sizes="(max-width: 420px) 45vw, (max-width: 640px) 45vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 20vw"
-                    priority={index < 8}
-                    quality={85}
+                    loading={index < 6 ? "eager" : "lazy"} // First 6 images load immediately
+                    priority={index < 4} // First 4 get priority
+                    quality={index < 8 ? 80 : 70} // Progressive quality
                     placeholder="blur"
                     blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
                   />

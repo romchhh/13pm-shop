@@ -80,8 +80,6 @@ const products = useMemo(() => {
                       alt={product.name}
                       fill
                       sizes="90vw"
-                      priority={i < 3}
-                      quality={85}
                     />
                   </div>
                   <div>
@@ -124,7 +122,6 @@ const products = useMemo(() => {
                       alt={product.name}
                       fill
                       sizes="90vw"
-                      quality={85}
                     />
                   </div>
                   <div>
@@ -150,11 +147,10 @@ const products = useMemo(() => {
               className="group space-y-4 sm:space-y-5 w-full"
             >
               <div className="aspect-[2/3] w-full overflow-hidden relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:200%_100%] animate-shimmer pointer-events-none z-0" />
                 {product.first_media?.type === "video" ? (
                   <video
                     src={`/api/images/${product.first_media.url}`}
-                    className="object-cover group-hover:brightness-90 transition duration-300 w-full h-full relative z-10"
+                    className="object-cover group-hover:brightness-90 transition duration-300 w-full h-full"
                     loop
                     muted
                     playsInline
@@ -168,8 +164,6 @@ const products = useMemo(() => {
                     alt={product.name}
                     fill
                     sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
-                    priority={i < 8}
-                    quality={85}
                   />
                 )}
               </div>

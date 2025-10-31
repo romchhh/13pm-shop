@@ -57,7 +57,7 @@ function VideoWithAutoplay({ src, className }: { src: string; className?: string
       muted
       playsInline
       autoPlay
-      preload="auto"
+      preload="metadata"
     />
   );
 }
@@ -222,7 +222,7 @@ export default function Catalog() {
               className="flex flex-col gap-4 group"
             >
               {/* Image or Video */}
-              <div className="relative w-full aspect-[2/3] bg-gray-200 overflow-hidden">
+              <div className="relative w-full aspect-[2/3] bg-gray-200 group-hover:filter group-hover:brightness-90 transition duration-300 overflow-hidden">
                 {product.first_media?.type === "video" ? (
                   <VideoWithAutoplay
                     src={`/api/images/${product.first_media.url}`}
