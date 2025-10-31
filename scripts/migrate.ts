@@ -79,6 +79,27 @@ const migrations: Migration[] = [
       CREATE INDEX IF NOT EXISTS idx_product_sizes_product_id ON product_sizes(product_id);
     `,
   },
+  {
+    id: "2025-01-31_add_performance_indexes",
+    description: "Add database indexes for faster queries",
+    sql: `
+      -- Indexes for products table to speed up common queries
+      CREATE INDEX IF NOT EXISTS idx_products_category_id ON products(category_id);
+      CREATE INDEX IF NOT EXISTS idx_products_subcategory_id ON products(subcategory_id);
+      CREATE INDEX IF NOT EXISTS idx_products_top_sale ON products(top_sale) WHERE top_sale = true;
+      CREATE INDEX IF NOT EXISTS idx_products_limited_edition ON products(limited_edition) WHERE limited_edition = true;
+      CREATE INDEX IF NOT EXISTS idx_products_season ON products USING GIN(season);
+      
+      -- Indexes for media queries
+      CREATE INDEX IF NOT EXISTS idx_product_media_product_id ON product_media(product_id);
+      
+      -- Indexes for colors queries
+      CREATE INDEX IF NOT EXISTS idx_product_colors_product_id ON product_colors(product_id);
+      
+      -- Composite index for category + top_sale (common filter combo)
+      CREATE INDEX IF NOT EXISTS idx_products_category_top_sale ON products(category_id, top_sale) WHERE top_sale = true;
+    `,
+  },
 ];
 
 async function ensureMigrationsTable(pool: Pool) {

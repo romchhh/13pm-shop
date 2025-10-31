@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sqlGetAllCategories, sqlPostCategory } from "@/lib/sql";
 
+// Enable revalidation every 15 minutes (categories change very rarely)
+export const revalidate = 900;
+
 // ========================
 // GET /api/categories
 // ========================

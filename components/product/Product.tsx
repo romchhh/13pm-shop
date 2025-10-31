@@ -115,6 +115,8 @@ export default function Product() {
                 alt={product.name}
                 width={800}
                 height={1160}
+                priority
+                quality={85}
                 style={{ maxHeight: "85vh", width: "auto", height: "auto" }}
               />
             )}

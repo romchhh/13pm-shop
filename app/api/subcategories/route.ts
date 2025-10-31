@@ -2,6 +2,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sqlGetSubcategoriesByCategory, sqlPostSubcategory } from "@/lib/sql";
 
+// Enable revalidation every 15 minutes (subcategories change very rarely)
+export const revalidate = 900;
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const categoryIdParam = searchParams.get("parent_category_id");

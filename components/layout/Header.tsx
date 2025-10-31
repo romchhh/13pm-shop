@@ -71,6 +71,9 @@ export default function Header() {
   const hoverTimeout = useRef<NodeJS.Timeout | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const [justUnpinned] = useState(false);
+  
+  // Cache for subcategories to avoid redundant API calls
+  const subcategoryCache = useRef<Map<number, Subcategory[]>>(new Map());
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -112,11 +115,19 @@ export default function Header() {
 
   useEffect(() => {
     async function fetchSubcategories(categoryId: number) {
+      // Check cache first
+      if (subcategoryCache.current.has(categoryId)) {
+        setSubcategories(subcategoryCache.current.get(categoryId)!);
+        return;
+      }
+      
       try {
         const res = await fetch(
           `/api/subcategories?parent_category_id=${categoryId}`
         );
         const data = await res.json();
+        // Cache the result
+        subcategoryCache.current.set(categoryId, data);
         setSubcategories(data);
       } catch (err) {
         console.error("Failed to load subcategories", err);

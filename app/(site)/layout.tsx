@@ -83,6 +83,7 @@ export default function RootLayout({
         {/* DNS prefetch and preconnect */}
         <link rel="dns-prefetch" href="//placehold.co" />
         <link rel="preconnect" href="https://placehold.co" crossOrigin="anonymous" />
+        <link rel="preconnect" href="/api/images" />
         
         {/* Resource hints for better performance */}
         <link rel="modulepreload" href="/_next/static/chunks/webpack.js" />

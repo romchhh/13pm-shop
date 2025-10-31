@@ -122,6 +122,7 @@ export default function CatalogClient({
             >
               {/* Image or Video */}
               <div className="relative w-full aspect-[2/3] bg-gray-200 group-hover:filter group-hover:brightness-90 transition duration-300 overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:200%_100%] animate-shimmer pointer-events-none" />
                 {product.first_media?.type === "video" ? (
                   <video
                     src={`/api/images/${product.first_media.url}`}

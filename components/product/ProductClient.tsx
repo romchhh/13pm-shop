@@ -337,8 +337,8 @@ export default function ProductClient({ product: initialProduct }: ProductClient
                       alt={`Product media ${i}`}
                       width={800}
                       height={1160}
-                      priority={i === activeImageIndex}
-                      quality={i === activeImageIndex ? 90 : 80}
+                      priority={i === 0}
+                      quality={i === activeImageIndex ? 85 : 75}
                       className="object-contain w-auto h-auto"
                       style={{ 
                         maxHeight: "85vh",

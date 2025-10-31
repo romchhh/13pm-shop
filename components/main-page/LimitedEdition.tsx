@@ -40,7 +40,7 @@ const products = useMemo(() => {
   }
 
   return (
-    <section className="max-w-[1920px] w-full mx-auto h-[3067px] relative overflow-hidden m-10">
+    <section className="max-w-[1920px] w-full mx-auto relative m-10">
       <div className="flex flex-col m-10 gap-10">
         <div className="flex flex-col gap-4 md:gap-0 md:flex-row justify-between border-b-2 py-10">
           <div className="text-left justify-center text-5xl font-normal font-['Inter'] uppercase">
@@ -147,6 +147,7 @@ const products = useMemo(() => {
               className="group space-y-4 sm:space-y-5 w-full"
             >
               <div className="aspect-[2/3] w-full overflow-hidden relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:200%_100%] animate-shimmer pointer-events-none" />
                 {product.first_media?.type === "video" ? (
                   <video
                     src={`/api/images/${product.first_media.url}`}
@@ -180,46 +181,6 @@ const products = useMemo(() => {
           ))}
         </div>
 
-        {/* Call to action for more products */}
-        <div className="flex flex-col lg:flex-row justify-between gap-10">
-          <div className="relative w-full sm:w-[600px] md:w-[700px] lg:w-[894px] h-[600px] sm:h-[800px] md:h-[1000px] lg:h-[1279px]">
-            <Image
-              src="https://placehold.co/894x1279"
-              className="object-cover"
-              alt="Product Background"
-              fill
-            />
-            <div className="absolute bottom-1/12 left-1/2 transform -translate-x-1/2">
-              <div className="px-6 py-3 bg-white flex justify-center items-center">
-                <Link
-                  href="/catalog"
-                  className="whitespace-nowrap text-black text-base sm:text-lg md:text-xl lg:text-2xl font-normal font-['Inter'] uppercase tracking-tight"
-                >
-                  більше товарів
-                </Link>
-              </div>
-            </div>
-          </div>
-
-          <div className="relative w-full sm:w-[600px] md:w-[700px] lg:w-[894px] h-[600px] sm:h-[800px] md:h-[1000px] lg:h-[1279px]">
-            <Image
-              src="https://placehold.co/894x1279"
-              className="object-cover"
-              alt="Product Background"
-              fill
-            />
-            <div className="absolute bottom-1/12 left-1/2 transform -translate-x-1/2">
-              <div className="px-6 py-3 bg-white flex justify-center items-center">
-                <Link
-                  href="/catalog"
-                  className="whitespace-nowrap text-black text-base sm:text-lg md:text-xl lg:text-2xl font-normal font-['Inter'] uppercase tracking-tight"
-                >
-                  більше товарів
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </section>
   );

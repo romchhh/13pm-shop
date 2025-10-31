@@ -366,7 +366,7 @@ export default function Footer() {
       </div>
 
       {/* Centered developer credit */}
-      <div className="mt-8 mb-6 flex flex-col items-center gap-3">
+      <div className="mt-8 mb-6 flex flex-col lg:flex-row items-center gap-3 lg:gap-6 justify-center">
         <Link
           href="https://telebots.site/"
           target="_blank"

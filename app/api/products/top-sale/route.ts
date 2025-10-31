@@ -6,7 +6,7 @@ export async function GET() {
     const products = await sqlGetTopSaleProducts();
     return NextResponse.json(products, {
       headers: {
-        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+        "Cache-Control": "public, s-maxage=600, stale-while-revalidate=1200",
       },
     });
   } catch {
@@ -17,6 +17,6 @@ export async function GET() {
   }
 }
 
-// Enable revalidation every 5 minutes
-export const revalidate = 300;
+// Enable revalidation every 10 minutes (top sale changes rarely)
+export const revalidate = 600;
 
