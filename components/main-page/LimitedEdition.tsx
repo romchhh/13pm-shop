@@ -80,6 +80,8 @@ const products = useMemo(() => {
                       alt={product.name}
                       fill
                       sizes="90vw"
+                      priority={i < 3}
+                      quality={85}
                     />
                   </div>
                   <div>
@@ -122,6 +124,7 @@ const products = useMemo(() => {
                       alt={product.name}
                       fill
                       sizes="90vw"
+                      quality={85}
                     />
                   </div>
                   <div>
@@ -165,6 +168,8 @@ const products = useMemo(() => {
                     alt={product.name}
                     fill
                     sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+                    priority={i < 8}
+                    quality={85}
                   />
                 )}
               </div>
