@@ -448,21 +448,21 @@ export default function ProductClient({ product: initialProduct }: ProductClient
               out of stock
             </div>
           ) : (
-            <div className="flex flex-wrap gap-2 md:gap-3">
-              {sizes.map((size) => (
-                <div
-                  key={size}
-                  onClick={() => setSelectedSize(size)}
-                  className={`w-19 sm:w-19 md:w-22 p-2 sm:p-3 border-2 flex justify-center text-base md:text-lg font-['Inter'] uppercase cursor-pointer transition-all duration-200 ${
-                    selectedSize === size
-                      ? "border-black dark:border-white font-bold scale-105 shadow-md"
-                      : "border-gray-300 dark:border-gray-600 hover:border-gray-600 dark:hover:border-gray-400 hover:scale-105 hover:shadow-md"
-                  }`}
-                >
-                  {SIZE_MAP[size] || size}
-                </div>
-              ))}
-            </div>
+          <div className="flex flex-wrap gap-2 md:gap-3">
+            {sizes.map((size) => (
+              <div
+                key={size}
+                onClick={() => setSelectedSize(size)}
+                className={`w-19 sm:w-19 md:w-22 p-2 sm:p-3 border-2 flex justify-center text-base md:text-lg font-['Inter'] uppercase cursor-pointer transition-all duration-200 ${
+                  selectedSize === size
+                    ? "border-black dark:border-white font-bold scale-105 shadow-md"
+                    : "border-gray-300 dark:border-gray-600 hover:border-gray-600 dark:hover:border-gray-400 hover:scale-105 hover:shadow-md"
+                }`}
+              >
+                {SIZE_MAP[size] || size}
+              </div>
+            ))}
+          </div>
           )}
 
           {/* Color Picker */}

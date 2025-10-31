@@ -593,35 +593,35 @@ export async function sqlPostOrder(order: OrderInput) {
   try {
     await sql`BEGIN`;
 
-    const inserted = await sql`
-      INSERT INTO orders (
-        customer_name, phone_number, email,
-        delivery_method, city, post_office,
-        comment, payment_type, invoice_id, payment_status
-      )
-      VALUES (
-        ${order.customer_name}, ${order.phone_number}, ${order.email || null},
-        ${order.delivery_method}, ${order.city}, ${order.post_office},
-        ${order.comment || null}, ${order.payment_type}, ${order.invoice_id}, ${
-      order.payment_status
-    }
-      )
-      RETURNING id;
-    `;
+  const inserted = await sql`
+    INSERT INTO orders (
+      customer_name, phone_number, email,
+      delivery_method, city, post_office,
+      comment, payment_type, invoice_id, payment_status
+    )
+    VALUES (
+      ${order.customer_name}, ${order.phone_number}, ${order.email || null},
+      ${order.delivery_method}, ${order.city}, ${order.post_office},
+      ${order.comment || null}, ${order.payment_type}, ${order.invoice_id}, ${
+    order.payment_status
+  }
+    )
+    RETURNING id;
+  `;
 
-    const orderId = inserted[0].id;
+  const orderId = inserted[0].id;
 
-    for (const item of order.items) {
+  for (const item of order.items) {
       // 1) Insert order item
-      await sql`
-        INSERT INTO order_items (
-          order_id, product_id, size, quantity, price, color
-        ) VALUES (
-          ${orderId}, ${item.product_id}, ${item.size}, ${item.quantity}, ${
-        item.price
-      }, ${item.color || null}
-        );
-      `;
+    await sql`
+      INSERT INTO order_items (
+        order_id, product_id, size, quantity, price, color
+      ) VALUES (
+        ${orderId}, ${item.product_id}, ${item.size}, ${item.quantity}, ${
+      item.price
+    }, ${item.color || null}
+      );
+    `;
 
       // 2) Decrement stock for the specific size (guard non-negative)
       const updated = await sql`
@@ -639,10 +639,10 @@ export async function sqlPostOrder(order: OrderInput) {
           `Insufficient stock for product ${item.product_id} size ${item.size}`
         );
       }
-    }
+  }
 
     await sql`COMMIT`;
-    return { orderId };
+  return { orderId };
   } catch (err) {
     await sql`ROLLBACK`;
     throw err;

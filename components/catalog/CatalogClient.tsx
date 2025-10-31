@@ -121,12 +121,12 @@ export default function CatalogClient({
               className="flex flex-col gap-2 sm:gap-4 group"
             >
               {/* Image or Video */}
-              <div className="relative w-full aspect-[2/3] bg-gray-200 group-hover:filter group-hover:brightness-90 transition duration-300 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:200%_100%] animate-shimmer pointer-events-none" />
+              <div className="relative w-full aspect-[2/3] bg-gray-200 overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:200%_100%] animate-shimmer pointer-events-none z-0" />
                 {product.first_media?.type === "video" ? (
                   <video
                     src={`/api/images/${product.first_media.url}`}
-                    className="object-cover transition-all duration-300 group-hover:brightness-90 w-full h-full"
+                    className="object-cover transition-all duration-300 group-hover:brightness-90 w-full h-full relative z-10"
                     loop
                     muted
                     playsInline

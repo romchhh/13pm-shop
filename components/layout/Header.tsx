@@ -71,7 +71,7 @@ export default function Header() {
   const hoverTimeout = useRef<NodeJS.Timeout | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const [justUnpinned] = useState(false);
-  
+
   // Cache for subcategories to avoid redundant API calls
   const subcategoryCache = useRef<Map<number, Subcategory[]>>(new Map());
 

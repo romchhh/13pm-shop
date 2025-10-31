@@ -74,15 +74,15 @@ export async function GET(request: NextRequest, context: RouteParams) {
     // Check if it's a video - serve directly without optimization
     const videoExtensions = [".mp4", ".webm", ".ogg", ".mov"];
     if (videoExtensions.includes(ext)) {
-      const fileStats = await stat(filePath);
-      const nodeStream = fs.createReadStream(filePath);
-      const webStream = nodeToWebStream(nodeStream);
+    const fileStats = await stat(filePath);
+    const nodeStream = fs.createReadStream(filePath);
+    const webStream = nodeToWebStream(nodeStream);
 
-      return new NextResponse(webStream, {
-        headers: {
-          "Content-Type": contentType,
-          "Content-Length": fileStats.size.toString(),
-          "Cache-Control": "public, max-age=31536000, immutable",
+    return new NextResponse(webStream, {
+      headers: {
+        "Content-Type": contentType,
+        "Content-Length": fileStats.size.toString(),
+        "Cache-Control": "public, max-age=31536000, immutable",
         },
       });
     }

@@ -56,7 +56,7 @@ function VideoWithAutoplay({ src, className }: { src: string; className?: string
       muted
       playsInline
       autoPlay
-      preload="metadata"
+      preload="auto"
     />
   );
 }
@@ -101,11 +101,11 @@ export default function TopSaleClient({ products }: TopSaleClientProps) {
             className="flex flex-col gap-3 group w-full"
           >
             <div className="aspect-[2/3] w-full overflow-hidden relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:200%_100%] animate-shimmer pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:200%_100%] animate-shimmer pointer-events-none z-0" />
               {product.first_media?.type === "video" ? (
                 <VideoWithAutoplay
                   src={`/api/images/${product.first_media.url}`}
-                  className="object-cover group-hover:brightness-90 transition duration-300 w-full h-full"
+                  className="object-cover group-hover:brightness-90 transition duration-300 w-full h-full relative z-10"
                 />
               ) : (
                 <Image
@@ -152,7 +152,7 @@ export default function TopSaleClient({ products }: TopSaleClientProps) {
                   {product.first_media?.type === "video" ? (
                     <VideoWithAutoplay
                       src={`/api/images/${product.first_media.url}`}
-                      className="object-cover group-hover:brightness-90 transition duration-300 w-full h-full"
+                      className="object-cover group-hover:brightness-90 transition duration-300 w-full h-full relative z-10"
                     />
                   ) : (
                     <Image
