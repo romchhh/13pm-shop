@@ -2,6 +2,26 @@ import { NextRequest, NextResponse } from "next/server";
 import { sqlGetAllOrders, sqlPostOrder } from "@/lib/sql";
 import crypto from "crypto";
 
+type IncomingOrderItem = {
+  product_id?: number | string;
+  productId?: number | string;
+  price: number | string;
+  quantity: number | string;
+  product_name?: string;
+  name?: string;
+  size: string | number;
+  color?: string | null;
+};
+
+type NormalizedOrderItem = {
+  product_id: number;
+  product_name: string;
+  size: string;
+  quantity: number;
+  price: number;
+  color: string | null;
+};
+
 // ==========================
 // GET /api/orders
 // ==========================
@@ -76,19 +96,47 @@ export async function POST(req: NextRequest) {
     }
     console.log("[POST /api/orders] Validation passed");
 
-    const normalizedItems = (items || []).map((item: any) => {
-      const productId = Number(item.product_id ?? item.productId);
-      const price = Number(item.price);
-      const quantity = Number(item.quantity);
-      return {
-        product_id: productId,
-        product_name: item.product_name || item.name || `Товар #${productId || ""}`,
-        size: String(item.size),
-        quantity,
-        price,
-        color: item.color ?? null,
-      };
-    });
+    const normalizedItems: NormalizedOrderItem[] = (items || []).map(
+      (item: IncomingOrderItem, index: number) => {
+        const productIdRaw = item.product_id ?? item.productId;
+        const productId = Number(productIdRaw);
+        if (!Number.isFinite(productId)) {
+          throw new Error(
+            `[POST /api/orders] Invalid product_id for item index ${index}`
+          );
+        }
+
+        const price =
+          typeof item.price === "string" ? Number(item.price) : item.price;
+        if (!Number.isFinite(price)) {
+          throw new Error(
+            `[POST /api/orders] Invalid price for item index ${index}`
+          );
+        }
+
+        const quantity =
+          typeof item.quantity === "string"
+            ? Number(item.quantity)
+            : item.quantity;
+        if (!Number.isFinite(quantity)) {
+          throw new Error(
+            `[POST /api/orders] Invalid quantity for item index ${index}`
+          );
+        }
+
+        return {
+          product_id: productId,
+          product_name:
+            item.product_name ||
+            item.name ||
+            `Товар #${productId}`,
+          size: String(item.size),
+          quantity,
+          price,
+          color: item.color ?? null,
+        };
+      }
+    );
 
     const fullAmount = normalizedItems.reduce(
       (total: number, item) => total + item.price * item.quantity,
