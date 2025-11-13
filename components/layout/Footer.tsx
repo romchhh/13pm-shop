@@ -42,7 +42,7 @@ export default function Footer() {
               />
             </div>
             <Link
-              href="https://maps.google.com/?q=Київ, вул. Костянтинівська, 21"
+              href="https://maps.app.goo.gl/jJS3JdddMq6njJvb8?g_st=it"
               target="_blank"
               className="w-48 h-8 md:w-56 md:h-11 text-sm md:text-xl flex justify-start my-3 transition-all duration-300 hover:text-stone-500 dark:hover:text-stone-400"
             >
@@ -263,7 +263,7 @@ export default function Footer() {
                 />
               </div>
               <Link
-                href="https://maps.google.com/?q=Київ, вул. Костянтинівська, 21"
+                href="https://maps.app.goo.gl/jJS3JdddMq6njJvb8?g_st=it"
                 target="_blank"
                 className="w-48 h-8 md:w-56 md:h-11 text-sm md:text-xl flex justify-start my-3 hover:underline"
               >

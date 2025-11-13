@@ -553,7 +553,7 @@ export default function ProductClient({ product: initialProduct }: ProductClient
 
           {/* Telegram Manager Link */}
           <a
-            href="https://t.me/Nikita_Dom_A"
+            href="https://t.me/chars_ua"
             target="_blank"
             rel="noopener noreferrer"
             className={`w-full text-center border ${

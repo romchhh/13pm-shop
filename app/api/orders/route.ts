@@ -76,9 +76,22 @@ export async function POST(req: NextRequest) {
     }
     console.log("[POST /api/orders] Validation passed");
 
-    const fullAmount = items.reduce(
-      (total: number, item: { price: number; quantity: number }) =>
-        total + item.price * item.quantity,
+    const normalizedItems = (items || []).map((item: any) => {
+      const productId = Number(item.product_id ?? item.productId);
+      const price = Number(item.price);
+      const quantity = Number(item.quantity);
+      return {
+        product_id: productId,
+        product_name: item.product_name || item.name || `Товар #${productId || ""}`,
+        size: String(item.size),
+        quantity,
+        price,
+        color: item.color ?? null,
+      };
+    });
+
+    const fullAmount = normalizedItems.reduce(
+      (total: number, item) => total + item.price * item.quantity,
       0
     );
 
@@ -92,22 +105,16 @@ export async function POST(req: NextRequest) {
       payment_type,
     });
 
-    const basketOrder = items.map(
-      (item: {
-        name: string;
-        quantity: number;
-        price: number;
-        product_id: number;
-        size: number;
-      }) => ({
-        name: item.name,
-        qty: item.quantity,
-        sum: Math.round(item.price * item.quantity * 100),
-        total: Math.round(item.price * item.quantity * 100),
-        unit: "шт.",
-        code: `${item.product_id}-${item.size}`,
-      })
-    );
+    const basketOrder = normalizedItems.map((item) => ({
+      name: item.color ? `${item.product_name} (${item.color})` : item.product_name,
+      qty: item.quantity,
+      sum: Math.round(item.price * item.quantity * 100),
+      total: Math.round(item.price * item.quantity * 100),
+      unit: "шт.",
+      code: item.color
+        ? `${item.product_id}-${item.size}-${item.color}`
+        : `${item.product_id}-${item.size}`,
+    }));
 
     const reference = crypto.randomUUID();
     console.log("[POST /api/orders] Generated reference:", reference);
@@ -191,7 +198,15 @@ export async function POST(req: NextRequest) {
       payment_type,
       invoice_id: invoiceId,
       payment_status: "pending", // замовлення створено, але ще не оплачено
-      items,
+      items: normalizedItems.map(
+        ({ product_id, size, quantity, price, color }) => ({
+          product_id,
+          size,
+          quantity,
+          price,
+          color,
+        })
+      ),
     });
     console.log("[POST /api/orders] Order saved to database successfully");
 

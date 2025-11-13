@@ -103,6 +103,14 @@ export default function FinalCard() {
       return;
     }
 
+    const trimmedName = customerName.trim();
+    const nameParts = trimmedName.split(/\s+/);
+    if (nameParts.length < 2) {
+      setError("Введіть ім’я та прізвище повністю.");
+      setLoading(false);
+      return;
+    }
+
     if (items.length === 0) {
       setError("Ваш кошик порожній.");
       setLoading(false);
@@ -129,6 +137,7 @@ export default function FinalCard() {
         price: discountedPrice.toFixed(2), // передаємо кінцеву ціну
         original_price: itemPrice, // можна залишити для запису, якщо треба
         discount_percentage: discount || null,
+        color: item.color || null,
       };
     });
 
@@ -537,6 +546,11 @@ export default function FinalCard() {
                       <div className="text-base  font-['Helvetica']">
                         {item.size}
                       </div>
+                      {item.color && (
+                        <div className="text-base font-['Helvetica']">
+                          Колір: {item.color}
+                        </div>
+                      )}
                       <div className="text-base  font-['Helvetica']">
                         Кількість: {item.quantity}x
                       </div>
@@ -674,12 +688,12 @@ export default function FinalCard() {
                 htmlFor="name"
                 className="text-xl sm:text-2xl font-normal font-['Arial']"
               >
-                Ім’я *
+                Ім’я та прізвище *
               </label>
               <input
                 type="text"
                 id="name"
-                placeholder="Ваше імʼя"
+                placeholder="Ваше імʼя та прізвище"
                 className="border p-3 sm:p-5 text-lg sm:text-xl font-normal font-['Arial'] rounded"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
@@ -970,6 +984,11 @@ export default function FinalCard() {
                       <div className="text-base font-normal font-['Helvetica'] leading-relaxed tracking-wide">
                         {item.size}
                       </div>
+                      {item.color && (
+                        <div className="text-base font-normal font-['Helvetica'] leading-relaxed tracking-wide">
+                          Колір: {item.color}
+                        </div>
+                      )}
 
                       <div className="flex justify-start items-center gap-3 mt-auto">
                         <div className="w-20 h-9 border border-neutral-400/60 flex justify-around items-center rounded">

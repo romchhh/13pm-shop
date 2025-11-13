@@ -211,6 +211,9 @@ export default function EditOrderPage() {
                       Розмір
                     </th>
                     <th className="px-4 py-3 text-left font-semibold">
+                      Колір
+                    </th>
+                    <th className="px-4 py-3 text-left font-semibold">
                       Кількість
                     </th>
                     <th className="px-4 py-3 text-left font-semibold">
@@ -225,7 +228,8 @@ export default function EditOrderPage() {
                   {formData.items.map(
                     (item: {
                       id: number;
-                      product_name: string
+                      product_name: string;
+                      color?: string | null;
                       size: string;
                       quantity: number;
                       price: string;
@@ -239,6 +243,9 @@ export default function EditOrderPage() {
                         </td>
                         <td className="px-4 py-3 text-gray-600 dark:text-gray-300">
                           {item.size}
+                        </td>
+                        <td className="px-4 py-3 text-gray-600 dark:text-gray-300">
+                          {item.color || "—"}
                         </td>
                         <td className="px-4 py-3 text-gray-600 dark:text-gray-300">
                           {item.quantity}
@@ -256,7 +263,7 @@ export default function EditOrderPage() {
                 <tfoot>
                   <tr className="bg-gray-50 dark:bg-gray-900">
                     <td
-                      colSpan={4}
+                      colSpan={5}
                       className="px-4 py-3 text-right font-semibold text-gray-800 dark:text-gray-200"
                     >
                       Загальна сума:
@@ -268,7 +275,7 @@ export default function EditOrderPage() {
                   {formData.payment_type && (
                     <tr className="bg-gray-100 dark:bg-gray-800">
                       <td
-                        colSpan={4}
+                        colSpan={5}
                         className="px-4 py-3 text-right font-semibold text-gray-800 dark:text-gray-200"
                       >
                         Залишок до оплати:
