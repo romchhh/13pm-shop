@@ -70,7 +70,12 @@ export default async function CatalogSlugPage({ params }: PageProps) {
         </section>
       }
     >
-      <CatalogServer category={category.name} subcategory={null} />
+      <CatalogServer
+        category={category.name}
+        subcategory={null}
+        categoryId={category.id}
+        categoryDescription={(category as any).description ?? null}
+      />
     </Suspense>
   );
 }

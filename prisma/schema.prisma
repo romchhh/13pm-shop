@@ -90,6 +90,7 @@ model Category {
   id          Int       @id @default(autoincrement())
   name        String
   slug        String?   @unique // ЧПУ: англ. транскрипція назви (nullable для існуючих записів до backfill)
+  description String?   @db.Text
   priority    Int       @default(0)
   mediaType   String?   @map("media_type") // "photo" or "video"
   mediaUrl    String?   @map("media_url")
@@ -137,6 +138,12 @@ model Product {
   topSale              Boolean        @default(false) @map("top_sale")
   inStock              Boolean        @default(true) @map("in_stock")
   limitedEdition       Boolean        @default(false) @map("limited_edition")
+  isHit                Boolean        @default(false) @map("is_hit")
+  dietitianApproved    Boolean        @default(false) @map("dietitian_approved")
+  isPromo              Boolean        @default(false) @map("is_promo")
+  giftProductId        Int?           @map("gift_product_id")
+  boughtTogetherIds    Int[]          @default([]) @map("bought_together_ids")
+  pairTogetherIds      Int[]          @default([]) @map("pair_together_ids")
   season               String[]       @default([])
   stock                Int            @default(0)
   categoryId           Int?           @map("category_id")
@@ -148,6 +155,8 @@ model Product {
 
   category             Category?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   subcategory          Subcategory?   @relation(fields: [subcategoryId], references: [id], onDelete: SetNull)
+  giftProduct          Product?       @relation("ProductGift", fields: [giftProductId], references: [id], onDelete: SetNull)
+  giftedByProducts     Product[]      @relation("ProductGift")
   media                ProductMedia[]
   orderItems           OrderItem[]
   wishlistedBy         Wishlist[]

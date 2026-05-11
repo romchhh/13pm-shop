@@ -21,6 +21,7 @@ import {
   LABEL_PRODUCT_PACKAGE,
   SITE_STORE_NAME,
 } from "@/lib/siteBrand";
+import CategoryDescriptionMarkdown from "@/components/shared/CategoryDescriptionMarkdown";
 
 interface Product {
   id: number;
@@ -30,6 +31,10 @@ interface Product {
   description?: string | null;
   first_media?: { url: string; type: string } | null;
   discount_percentage?: number | null;
+  is_hit?: boolean;
+  dietitian_approved?: boolean;
+  is_promo?: boolean;
+  gift_product_id?: number | null;
   category_id?: number | null;
   category_ids?: number[] | null;
    subcategory_id?: number | null;
@@ -45,23 +50,31 @@ interface Product {
 interface Category {
   id: number;
   name: string;
+  description?: string | null;
 }
 
 interface CatalogClientProps {
   initialProducts: Product[];
   categories: Category[];
+  initialSelectedCategoryIds?: number[];
+  selectedCategoryDescription?: string | null;
 }
 
 export default function CatalogClient({
   initialProducts,
   categories,
+  initialSelectedCategoryIds,
+  selectedCategoryDescription,
 }: CatalogClientProps) {
   const { isSidebarOpen, setIsSidebarOpen } = useAppContext();
   const { addItem } = useBasket();
 
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [sortOrder, setSortOrder] = useState<"recommended" | "newest" | "asc" | "desc" | "sale">("recommended");
-  const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
+  const [promoOnly, setPromoOnly] = useState(false);
+  const [selectedCategories, setSelectedCategories] = useState<number[]>(
+    initialSelectedCategoryIds ?? []
+  );
   const [subcategories, setSubcategories] = useState<
     { id: number; name: string; category_id: number }[]
   >([]);
@@ -140,6 +153,14 @@ export default function CatalogClient({
     setMaxPriceInput("");
   }, [searchParams, categories]);
 
+  // Init/override promo tab when приходимо з хедера/меню акцій (?promo=1)
+  useEffect(() => {
+    const promoParam = searchParams.get("promo");
+    if (promoParam === "1" || promoParam === "true") {
+      setPromoOnly(true);
+    }
+  }, [searchParams]);
+
   const priceRange = useMemo(() => {
     if (initialProducts.length === 0) return { min: 0, max: 10000 };
     const prices = initialProducts.map((p) => p.price);
@@ -173,17 +194,31 @@ export default function CatalogClient({
         productSubcategoryIds.some((id) => selectedSubcategories.includes(id));
       const matchesMinPrice = minPrice === null || product.price >= minPrice;
       const matchesMaxPrice = maxPrice === null || product.price <= maxPrice;
+      const matchesPromo = !promoOnly || product.is_promo === true || (product.discount_percentage != null && product.discount_percentage > 0);
       return (
-        matchesCategory && matchesSubcategory && matchesMinPrice && matchesMaxPrice
+        matchesCategory && matchesSubcategory && matchesMinPrice && matchesMaxPrice && matchesPromo
       );
     });
-  }, [initialProducts, minPrice, maxPrice, selectedCategories, selectedSubcategories]);
+  }, [initialProducts, minPrice, maxPrice, selectedCategories, selectedSubcategories, promoOnly]);
 
   useEffect(() => {
     setIsFiltering(true);
     const timer = setTimeout(() => setIsFiltering(false), 200);
     return () => clearTimeout(timer);
-  }, [selectedCategories, selectedSubcategories, minPrice, maxPrice, sortOrder]);
+  }, [selectedCategories, selectedSubcategories, minPrice, maxPrice, sortOrder, promoOnly]);
+
+  const hasPromoProducts = useMemo(() => {
+    return initialProducts.some(
+      (p) => p.is_promo === true || (p.discount_percentage != null && p.discount_percentage > 0)
+    );
+  }, [initialProducts]);
+
+  const singleSelectedCategoryDescription = useMemo(() => {
+    if (selectedCategoryDescription) return selectedCategoryDescription;
+    if (selectedCategories.length !== 1) return null;
+    const cat = categories.find((c) => c.id === selectedCategories[0]);
+    return cat?.description ?? null;
+  }, [categories, selectedCategories, selectedCategoryDescription]);
 
   const sortedProducts = useMemo(() => {
     const sorted = [...filteredProducts];
@@ -671,6 +706,32 @@ export default function CatalogClient({
                 <span className="font-semibold text-[#3D1A00]">{filteredProducts.length}</span>{" "}
                 {filteredProducts.length === 1 ? "товар" : "товарів"}
               </p>
+              {hasPromoProducts && (
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPromoOnly(false)}
+                    className={`px-3 py-2 rounded-full text-sm font-['Montserrat'] border transition-colors ${
+                      !promoOnly
+                        ? "bg-[#3D1A00] text-white border-[#3D1A00]"
+                        : "bg-white text-[#3D1A00] border-gray-200 hover:border-[#3D1A00]/40"
+                    }`}
+                  >
+                    Всі
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPromoOnly(true)}
+                    className={`px-3 py-2 rounded-full text-sm font-['Montserrat'] border transition-colors ${
+                      promoOnly
+                        ? "bg-[#D7D799] text-[#3D1A00] border-[#D7D799]"
+                        : "bg-white text-[#3D1A00] border-gray-200 hover:border-[#3D1A00]/40"
+                    }`}
+                  >
+                    Акції
+                  </button>
+                </div>
+              )}
               <label className="flex items-center gap-2">
                 <span className="text-sm font-['Montserrat'] text-gray-500">Сортування:</span>
                 <select
@@ -739,7 +800,7 @@ export default function CatalogClient({
                         {product.first_media?.type === "video" ? (
                           <video
                             src={`/api/images/${product.first_media.url}`}
-                            className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-[1.03]"
+                            className="absolute inset-0 z-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                             loop
                             muted
                             playsInline
@@ -750,7 +811,7 @@ export default function CatalogClient({
                           <Image
                             src={getProductImageSrc(product.first_media)}
                             alt={`${product.name} — ${SITE_STORE_NAME}`}
-                            className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                            className="z-0 object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                             fill
                             sizes="(max-width: 640px) 45vw, (max-width: 1024px) 33vw, 25vw"
                             loading={index < 9 ? "eager" : "lazy"}
@@ -762,9 +823,41 @@ export default function CatalogClient({
                         )}
                         {/* Бейдж знижки */}
                         {product.discount_percentage && (
-                          <span className="absolute top-2 left-2 text-[10px] font-semibold font-['Montserrat'] text-amber-800/95 bg-amber-100/90 px-1.5 py-0.5 rounded">
+                          <span className="absolute left-2 top-2 z-20 text-[10px] font-semibold font-['Montserrat'] text-amber-800/95 bg-amber-100/90 px-1.5 py-0.5 rounded">
                             −{product.discount_percentage}%
                           </span>
+                        )}
+
+                        {/* Подарунок — зверху справа, щоб не перетинав плашки знизу */}
+                        {product.gift_product_id != null && product.gift_product_id > 0 && (
+                          <span className="absolute right-2 top-2 z-20 text-[10px] font-semibold font-['Montserrat'] text-[#3D1A00] bg-white/90 border border-[#3D1A00]/15 px-1.5 py-0.5 rounded shadow-sm">
+                            + Подарунок
+                          </span>
+                        )}
+
+                        {/* Плашки на фото, знизу — ширина за текстом */}
+                        {(product.is_promo === true ||
+                          product.is_hit === true ||
+                          product.dietitian_approved === true) && (
+                          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/45 via-black/15 to-transparent px-2 pb-2 pt-8 sm:px-2.5 sm:pb-2.5 sm:pt-10">
+                            <div className="flex flex-wrap gap-2">
+                              {product.is_promo === true && (
+                                <span className="inline-flex w-fit max-w-full shrink-0 items-center rounded-lg border border-[#3D1A00]/12 bg-[#D7D799] px-2.5 py-1.5 text-[11px] font-bold font-['Montserrat'] uppercase tracking-wide text-[#3D1A00] shadow-md shadow-black/20">
+                                  Акція
+                                </span>
+                              )}
+                              {product.is_hit === true && (
+                                <span className="inline-flex w-fit max-w-full shrink-0 items-center rounded-lg bg-[#3D1A00] px-2.5 py-1.5 text-[11px] font-bold font-['Montserrat'] uppercase tracking-wide text-white shadow-md shadow-black/25">
+                                  Хіт
+                                </span>
+                              )}
+                              {product.dietitian_approved === true && (
+                                <span className="inline-flex w-fit max-w-full shrink-0 items-center rounded-lg border-2 border-[#3D1A00]/20 bg-white px-2.5 py-1.5 text-left text-[10px] font-bold font-['Montserrat'] leading-snug tracking-tight text-[#3D1A00] shadow-md shadow-black/15 sm:text-[11px]">
+                                  Схвалено асоціацією дієтологів
+                                </span>
+                              )}
+                            </div>
+                          </div>
                         )}
                       </div>
 
@@ -828,6 +921,18 @@ export default function CatalogClient({
                 })
               )}
             </div>
+
+            {/* Опис категорії — тільки коли обрана одна категорія (Markdown, без фону) */}
+            {singleSelectedCategoryDescription && (
+              <div className="mt-10 border-t border-[#3D1A00]/10 pt-8">
+                <p className="text-xs uppercase tracking-wider text-[#3D1A00]/60 font-['Montserrat'] font-semibold">
+                  Про категорію
+                </p>
+                <div className="mt-3 max-w-3xl">
+                  <CategoryDescriptionMarkdown content={singleSelectedCategoryDescription} />
+                </div>
+              </div>
+            )}
 
             {/* Пагінація / показати ще */}
             {visibleCount < sortedProducts.length && (

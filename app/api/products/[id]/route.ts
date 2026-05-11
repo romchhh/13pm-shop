@@ -72,6 +72,13 @@ export async function PUT(
     const topSale = body.top_sale === true;
     const inStock = body.in_stock !== false;
     const limitedEdition = body.limited_edition === true;
+    const isHit = body.is_hit === true;
+    const dietitianApproved = body.dietitian_approved === true;
+    const isPromo = body.is_promo === true;
+    const giftProductId =
+      body.gift_product_id === null || body.gift_product_id === undefined || body.gift_product_id === ""
+        ? null
+        : Number(body.gift_product_id);
     const categoryId = body.category_id ? Number(body.category_id) : null;
     const subcategoryId = body.subcategory_id
       ? Number(body.subcategory_id)
@@ -102,6 +109,18 @@ export async function PUT(
           .filter((id: number) => Number.isInteger(id) && id > 0)
       : [];
 
+    const boughtTogetherIds: number[] = Array.isArray(body.bought_together_ids)
+      ? body.bought_together_ids
+          .map((x: unknown) => Number(x))
+          .filter((n: number) => Number.isInteger(n) && n > 0)
+      : [];
+
+    const pairTogetherIds: number[] = Array.isArray(body.pair_together_ids)
+      ? body.pair_together_ids
+          .map((x: unknown) => Number(x))
+          .filter((n: number) => Number.isInteger(n) && n > 0)
+      : [];
+
     await sqlPutProduct(id, {
       name: body.name,
       subtitle: body.subtitle ?? undefined,
@@ -125,6 +144,12 @@ export async function PUT(
       top_sale: topSale,
       in_stock: inStock,
       limited_edition: limitedEdition,
+      is_hit: isHit,
+      dietitian_approved: dietitianApproved,
+      is_promo: isPromo,
+      gift_product_id: giftProductId,
+      bought_together_ids: boughtTogetherIds,
+      pair_together_ids: pairTogetherIds,
       stock,
       category_id: categoryId,
       subcategory_id: subcategoryId,

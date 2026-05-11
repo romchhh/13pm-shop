@@ -18,9 +18,10 @@ export type YouMightLikeProduct = {
 interface YouMightLikeProps {
   /** Якщо передано — використовуються ці товари (напр. з сервера на сторінці товару). Інакше — клієнтський useProducts(). */
   suggestedProducts?: YouMightLikeProduct[];
+  title?: string;
 }
 
-export default function YouMightLike({ suggestedProducts }: YouMightLikeProps = {}) {
+export default function YouMightLike({ suggestedProducts, title }: YouMightLikeProps = {}) {
   const { products: clientProducts, loading } = useProducts();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -63,7 +64,7 @@ export default function YouMightLike({ suggestedProducts }: YouMightLikeProps = 
         {/* Заголовок та стрілки — як у Наші бестселери */}
         <div className="flex items-center justify-between gap-4 mb-8 lg:mb-10">
           <h2 className="text-2xl lg:text-3xl font-bold font-['Montserrat'] uppercase tracking-tight text-[#3D1A00]">
-            Схожі товари
+            {title || "Схожі товари"}
           </h2>
           <div className="flex items-center gap-2">
             <button

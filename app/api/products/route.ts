@@ -114,6 +114,12 @@ export async function POST(req: Request) {
         lining_description,
         category_ids = [],
         subcategory_ids = [],
+        is_hit = false,
+        dietitian_approved = false,
+        is_promo = false,
+        gift_product_id = null,
+        bought_together_ids = [],
+        pair_together_ids = [],
       } = body || {};
 
       if (!name || typeof price !== "number") {
@@ -149,6 +155,21 @@ export async function POST(req: Request) {
         in_stock: in_stock !== false,
         limited_edition:
           typeof limited_ition === "boolean" ? limited_ition : limited_edition,
+        is_hit: is_hit === true,
+        dietitian_approved: dietitian_approved === true,
+        is_promo: is_promo === true,
+        gift_product_id:
+          gift_product_id === "" || gift_product_id == null ? null : Number(gift_product_id),
+        bought_together_ids: Array.isArray(bought_together_ids)
+          ? bought_together_ids
+              .map((x: unknown) => Number(x))
+              .filter((n: number) => Number.isInteger(n) && n > 0)
+          : [],
+        pair_together_ids: Array.isArray(pair_together_ids)
+          ? pair_together_ids
+              .map((x: unknown) => Number(x))
+              .filter((n: number) => Number.isInteger(n) && n > 0)
+          : [],
         category_id,
         subcategory_id,
         fabric_composition: fabric_composition ?? null,

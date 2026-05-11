@@ -110,6 +110,14 @@ export default async function Page({ params }: PageProps) {
     notFound();
   }
 
+  const boughtTogetherIds = Array.isArray((product as any).bought_together_ids)
+    ? ((product as any).bought_together_ids as number[])
+    : [];
+
+  const pairTogetherIds = Array.isArray((product as any).pair_together_ids)
+    ? ((product as any).pair_together_ids as number[])
+    : [];
+
   // Схожі товари — спочатку з тієї ж підкатегорії, потім з тієї ж категорії, потім інші випадкові
   const allProducts = await sqlGetAllProducts();
   const others = allProducts.filter((p) => p.id !== product.id);
@@ -185,12 +193,46 @@ export default async function Page({ params }: PageProps) {
     first_media: p.first_media ?? null,
   }));
 
+  const boughtTogetherProducts = boughtTogetherIds.length
+    ? allProducts
+        .filter((p) => boughtTogetherIds.includes(p.id))
+        .slice(0, 12)
+        .map((p) => ({
+          id: p.id,
+          name: p.name,
+          slug: p.slug ?? null,
+          price: p.price,
+          first_media: p.first_media ?? null,
+          description: (p as any).description ?? null,
+        }))
+    : [];
+
+  const pairProducts = pairTogetherIds.length
+    ? allProducts
+        .filter((p) => pairTogetherIds.includes(p.id))
+        .slice(0, 12)
+        .map((p) => ({
+          id: p.id,
+          name: p.name,
+          slug: p.slug ?? null,
+          price: p.price,
+          first_media: p.first_media ?? null,
+          description: (p as any).description ?? null,
+        }))
+    : [];
+
+  // Прокидаємо на клієнт (ProductClient) для блоку "Купують разом"
+  (product as any).bought_together_products = boughtTogetherProducts;
+
   return (
     <main className="min-h-screen bg-[#FFFFFF]">
       <Suspense fallback={<div className="text-center py-20 text-lg">Завантаження товару...</div>}>
         <ProductServer product={product} />
       </Suspense>
-      <YouMightLike suggestedProducts={suggestedProducts} />
+      <YouMightLike title="Схожі товари" suggestedProducts={suggestedProducts} />
+      {pairProducts.length > 0 && (
+        <YouMightLike title="Купуй разом" suggestedProducts={pairProducts} />
+      )}
     </main>
   );
 }

@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, priority, mediaType, mediaUrl } = body;
+    const { name, priority, mediaType, mediaUrl, description } = body;
 
     if (!name) {
       return NextResponse.json(
@@ -52,7 +52,8 @@ export async function POST(req: NextRequest) {
       name, 
       priority ?? 0,
       mediaType || null,
-      mediaUrl || null
+      mediaUrl || null,
+      typeof description === "string" ? description : description == null ? null : String(description)
     );
     
     // Revalidate cache after creating new category

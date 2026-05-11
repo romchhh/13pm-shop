@@ -76,6 +76,10 @@ async function _sqlGetAllProducts() {
     description: p.description,
     old_price: p.oldPrice ? Number(p.oldPrice) : null,
     discount_percentage: p.discountPercentage,
+    is_hit: p.isHit ?? false,
+    dietitian_approved: p.dietitianApproved ?? false,
+    is_promo: p.isPromo ?? false,
+    gift_product_id: p.giftProductId ?? null,
     category_id: p.categoryId,
     category_ids: Array.from(
       new Set([
@@ -122,11 +126,22 @@ export async function sqlGetProduct(id: number) {
       const product = await prisma.product.findUnique({
         where: { id },
         include: {
-          category: { select: { name: true, slug: true } },
+          category: { select: { name: true, slug: true, description: true } },
           subcategory: { select: { name: true } },
           media: { orderBy: { id: "asc" }, select: { type: true, url: true } },
           categoryLinks: { select: { categoryId: true } },
           subcategoryLinks: { select: { subcategoryId: true } },
+          giftProduct: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              price: true,
+              oldPrice: true,
+              discountPercentage: true,
+              media: { take: 1, orderBy: { id: "asc" }, select: { type: true, url: true } },
+            },
+          },
         } as any,
       });
 
@@ -157,6 +172,9 @@ export async function sqlGetProduct(id: number) {
         top_sale: product.topSale,
         in_stock: product.inStock,
         limited_edition: product.limitedEdition,
+        is_hit: (product as any).isHit ?? false,
+        dietitian_approved: (product as any).dietitianApproved ?? false,
+        is_promo: (product as any).isPromo ?? false,
         stock: product.stock,
         category_id: product.categoryId,
         category_ids: Array.from(
@@ -181,10 +199,26 @@ export async function sqlGetProduct(id: number) {
         lining_description: (product as any).liningDescription ?? null,
         category_name: (product as any).category?.name || null,
         category_slug: (product as any).category?.slug ?? null,
+        category_description: (product as any).category?.description ?? null,
         subcategory_name: (product as any).subcategory?.name || null,
         media: ((product as any).media as { type: string; url: string }[]).map(
           (m) => ({ type: m.type, url: m.url })
         ),
+        gift_product: (product as any).giftProduct
+          ? {
+              id: (product as any).giftProduct.id,
+              name: (product as any).giftProduct.name,
+              slug: (product as any).giftProduct.slug ?? null,
+              price: Number((product as any).giftProduct.price),
+              old_price: (product as any).giftProduct.oldPrice ? Number((product as any).giftProduct.oldPrice) : null,
+              discount_percentage: (product as any).giftProduct.discountPercentage ?? null,
+              first_media: (product as any).giftProduct.media?.[0]
+                ? { type: (product as any).giftProduct.media[0].type, url: (product as any).giftProduct.media[0].url }
+                : null,
+            }
+          : null,
+        bought_together_ids: (product as any).boughtTogetherIds ?? [],
+        pair_together_ids: (product as any).pairTogetherIds ?? [],
       };
     },
     [`product-${id}`],
@@ -197,11 +231,22 @@ export async function sqlGetProductBySlug(slug: string) {
   const product = (await prisma.product.findUnique({
     where: { slug: slug || undefined },
     include: {
-      category: { select: { name: true, slug: true } },
+      category: { select: { name: true, slug: true, description: true } },
       subcategory: { select: { name: true } },
       media: { orderBy: { id: "asc" }, select: { type: true, url: true } },
       categoryLinks: { select: { categoryId: true } },
       subcategoryLinks: { select: { subcategoryId: true } },
+      giftProduct: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          price: true,
+          oldPrice: true,
+          discountPercentage: true,
+          media: { take: 1, orderBy: { id: "asc" }, select: { type: true, url: true } },
+        },
+      },
     } as any,
   })) as any;
   if (!product) return null;
@@ -230,6 +275,9 @@ export async function sqlGetProductBySlug(slug: string) {
     top_sale: product.topSale,
     in_stock: product.inStock,
     limited_edition: product.limitedEdition,
+    is_hit: product.isHit ?? false,
+    dietitian_approved: product.dietitianApproved ?? false,
+    is_promo: product.isPromo ?? false,
     stock: product.stock,
     category_id: product.categoryId,
     category_ids: Array.from(
@@ -255,7 +303,23 @@ export async function sqlGetProductBySlug(slug: string) {
     category_name: product.category?.name || null,
     subcategory_name: product.subcategory?.name || null,
     category_slug: product.category?.slug ?? null,
+    category_description: product.category?.description ?? null,
     media: product.media.map((m: any) => ({ type: m.type, url: m.url })),
+    gift_product: product.giftProduct
+      ? {
+          id: product.giftProduct.id,
+          name: product.giftProduct.name,
+          slug: product.giftProduct.slug ?? null,
+          price: Number(product.giftProduct.price),
+          old_price: product.giftProduct.oldPrice ? Number(product.giftProduct.oldPrice) : null,
+          discount_percentage: product.giftProduct.discountPercentage ?? null,
+          first_media: product.giftProduct.media?.[0]
+            ? { type: product.giftProduct.media[0].type, url: product.giftProduct.media[0].url }
+            : null,
+        }
+      : null,
+    bought_together_ids: product.boughtTogetherIds ?? [],
+    pair_together_ids: product.pairTogetherIds ?? [],
   };
 }
 
@@ -310,6 +374,10 @@ export async function sqlGetProductsByCategory(categoryName: string) {
         discount_percentage: p.discountPercentage,
         top_sale: p.topSale,
         limited_edition: p.limitedEdition,
+        is_hit: p.isHit ?? false,
+        dietitian_approved: p.dietitianApproved ?? false,
+        is_promo: p.isPromo ?? false,
+        gift_product_id: p.giftProductId ?? null,
         category_id: p.categoryId,
         subcategory_id: p.subcategoryId,
         category_ids: Array.from(
@@ -399,6 +467,10 @@ export async function sqlGetProductsBySubcategoryName(name: string) {
         discount_percentage: p.discountPercentage,
         top_sale: p.topSale,
         limited_edition: p.limitedEdition,
+        is_hit: p.isHit ?? false,
+        dietitian_approved: p.dietitianApproved ?? false,
+        is_promo: p.isPromo ?? false,
+        gift_product_id: p.giftProductId ?? null,
         category_id: p.categoryId,
         subcategory_id: p.subcategoryId,
         category_ids: Array.from(
@@ -538,6 +610,12 @@ export async function sqlPostProduct(product: {
   top_sale?: boolean;
   in_stock?: boolean;
   limited_edition?: boolean;
+  is_hit?: boolean;
+  dietitian_approved?: boolean;
+  is_promo?: boolean;
+  gift_product_id?: number | null;
+  bought_together_ids?: number[];
+  pair_together_ids?: number[];
   stock?: number;
   category_id?: number | null;
   subcategory_id?: number | null;
@@ -578,6 +656,12 @@ export async function sqlPostProduct(product: {
       topSale: product.top_sale ?? false,
       inStock: product.in_stock ?? true,
       limitedEdition: product.limited_edition ?? false,
+      isHit: product.is_hit ?? false,
+      dietitianApproved: product.dietitian_approved ?? false,
+      isPromo: product.is_promo ?? false,
+      giftProductId: product.gift_product_id ?? null,
+      boughtTogetherIds: product.bought_together_ids ?? [],
+      pairTogetherIds: product.pair_together_ids ?? [],
       stock: product.stock ?? 0,
       categoryId: product.category_id ?? null,
       subcategoryId: product.subcategory_id ?? null,
@@ -655,6 +739,12 @@ export async function sqlPutProduct(
     top_sale?: boolean;
     in_stock?: boolean;
     limited_edition?: boolean;
+    is_hit?: boolean;
+    dietitian_approved?: boolean;
+    is_promo?: boolean;
+    gift_product_id?: number | null;
+    bought_together_ids?: number[];
+    pair_together_ids?: number[];
     stock?: number;
     category_id?: number | null;
     subcategory_id?: number | null;
@@ -712,6 +802,12 @@ export async function sqlPutProduct(
         topSale: update.top_sale ?? undefined,
         inStock: update.in_stock ?? undefined,
         limitedEdition: update.limited_edition === true ? true : update.limited_edition === false ? false : undefined,
+        isHit: update.is_hit ?? undefined,
+        dietitianApproved: update.dietitian_approved ?? undefined,
+        isPromo: update.is_promo ?? undefined,
+        giftProductId: update.gift_product_id === undefined ? undefined : update.gift_product_id,
+        boughtTogetherIds: update.bought_together_ids ?? undefined,
+        pairTogetherIds: update.pair_together_ids ?? undefined,
         stock: update.stock ?? undefined,
         // null має явно записуватись у БД; ?? undefined перетворював null на «не змінювати» і лишав старий categoryId
         categoryId:
@@ -1230,7 +1326,7 @@ async function _sqlGetAllCategories() {
     orderBy: { priority: "desc" },
   });
 
-  const result: { id: number; name: string; slug: string | null; priority: number; mediaType: string | null; mediaUrl: string | null }[] = [];
+  const result: { id: number; name: string; slug: string | null; priority: number; mediaType: string | null; mediaUrl: string | null; description: string | null }[] = [];
   for (const c of categories) {
     let slug = c.slug;
     if (!slug) {
@@ -1250,6 +1346,7 @@ async function _sqlGetAllCategories() {
       priority: c.priority,
       mediaType: c.mediaType || null,
       mediaUrl: c.mediaUrl || null,
+      description: (c as any).description ?? null,
     });
   }
   return result;
@@ -1280,6 +1377,7 @@ export async function sqlGetCategory(id: number) {
     priority: category.priority,
     mediaType: category.mediaType || null,
     mediaUrl: category.mediaUrl || null,
+    description: (category as any).description ?? null,
   };
 }
 
@@ -1296,6 +1394,7 @@ export async function sqlGetCategoryBySlug(slug: string) {
     priority: category.priority,
     mediaType: category.mediaType || null,
     mediaUrl: category.mediaUrl || null,
+    description: (category as any).description ?? null,
   };
 }
 
@@ -1314,7 +1413,8 @@ export async function sqlPostCategory(
   name: string, 
   priority: number = 0,
   mediaType?: string | null,
-  mediaUrl?: string | null
+  mediaUrl?: string | null,
+  description?: string | null
 ) {
   const baseSlug = textToSlug(name);
   const slug = await ensureUniqueSlug(baseSlug, (s) =>
@@ -1327,6 +1427,7 @@ export async function sqlPostCategory(
     priority: number;
     mediaType?: string | null;
     mediaUrl?: string | null;
+    description?: string | null;
   } = { 
     name, 
     slug,
@@ -1338,6 +1439,9 @@ export async function sqlPostCategory(
   }
   if (mediaUrl !== undefined) {
     createData.mediaUrl = mediaUrl;
+  }
+  if (description !== undefined) {
+    createData.description = description;
   }
 
   const created = await prisma.category.create({
@@ -1351,6 +1455,7 @@ export async function sqlPostCategory(
     priority: created.priority,
     mediaType: created.mediaType,
     mediaUrl: created.mediaUrl,
+    description: (created as any).description ?? null,
   };
 }
 
@@ -1360,7 +1465,8 @@ export async function sqlPutCategory(
   name: string,
   priority: number = 0,
   mediaType?: string | null,
-  mediaUrl?: string | null
+  mediaUrl?: string | null,
+  description?: string | null
 ) {
   const updateData: {
     name: string;
@@ -1368,6 +1474,7 @@ export async function sqlPutCategory(
     slug?: string;
     mediaType?: string | null;
     mediaUrl?: string | null;
+    description?: string | null;
   } = { name, priority };
 
   const current = await prisma.category.findUnique({ where: { id }, select: { name: true, slug: true } });
@@ -1384,6 +1491,9 @@ export async function sqlPutCategory(
   if (mediaUrl !== undefined) {
     updateData.mediaUrl = mediaUrl;
   }
+  if (description !== undefined) {
+    updateData.description = description;
+  }
 
   const updated = await prisma.category.update({
     where: { id },
@@ -1395,6 +1505,9 @@ export async function sqlPutCategory(
     name: updated.name,
     slug: updated.slug ?? null,
     priority: updated.priority,
+    mediaType: updated.mediaType ?? null,
+    mediaUrl: updated.mediaUrl ?? null,
+    description: (updated as any).description ?? null,
   };
 }
 

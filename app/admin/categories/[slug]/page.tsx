@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import ComponentCard from "@/components/admin/ComponentCard";
 import PageBreadcrumb from "@/components/admin/PageBreadCrumb";
@@ -8,6 +8,7 @@ import Label from "@/components/admin/form/Label";
 import Input from "@/components/admin/form/input/InputField";
 import DropzoneComponent from "@/components/admin/form/form-elements/DropZone";
 import Image from "next/image";
+import CategoryDescriptionMarkdown from "@/components/shared/CategoryDescriptionMarkdown";
 
 type Subcategory = {
   id?: number;
@@ -43,8 +44,77 @@ export default function EditCategoryPage() {
   const [formData, setFormData] = useState({
     name: "",
     priority: 0,
+    description: "",
     subcategories: [] as Subcategory[],
   });
+
+  const categoryDescriptionRef = useRef<HTMLTextAreaElement>(null);
+
+  const wrapMarkdownSelection = (wrap: string) => {
+    const el = categoryDescriptionRef.current;
+    const v = formData.description;
+    if (!el) {
+      const inner = "текст";
+      setFormData((p) => ({ ...p, description: p.description + wrap + inner + wrap }));
+      return;
+    }
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const sel = v.slice(start, end);
+    const inner = sel || "текст";
+    const next = v.slice(0, start) + wrap + inner + wrap + v.slice(end);
+    setFormData((p) => ({ ...p, description: next }));
+    requestAnimationFrame(() => {
+      el.focus();
+      if (!sel) {
+        el.setSelectionRange(start + wrap.length, start + wrap.length + inner.length);
+      } else {
+        const c = start + wrap.length + inner.length + wrap.length;
+        el.setSelectionRange(c, c);
+      }
+    });
+  };
+
+  const insertMarkdownLinePrefix = (prefix: string) => {
+    const el = categoryDescriptionRef.current;
+    const v = formData.description;
+    if (!el) {
+      setFormData((p) => ({ ...p, description: (p.description ? p.description + "\n" : "") + prefix }));
+      return;
+    }
+    const start = el.selectionStart;
+    const lineStart = v.lastIndexOf("\n", start - 1) + 1;
+    const next = v.slice(0, lineStart) + prefix + v.slice(lineStart);
+    setFormData((p) => ({ ...p, description: next }));
+    requestAnimationFrame(() => {
+      el.focus();
+      const pos = lineStart + prefix.length;
+      el.setSelectionRange(pos, pos);
+    });
+  };
+
+  const insertMarkdownLink = () => {
+    const label = window.prompt("Текст посилання", "дізнатися більше");
+    if (label === null) return;
+    const url = window.prompt("URL (https://…)", "https://");
+    if (url === null || !url.trim()) return;
+    const el = categoryDescriptionRef.current;
+    const md = `[${label || "посилання"}](${url.trim()})`;
+    if (!el) {
+      setFormData((p) => ({ ...p, description: p.description + md }));
+      return;
+    }
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const v = formData.description;
+    const next = v.slice(0, start) + md + v.slice(end);
+    setFormData((p) => ({ ...p, description: next }));
+    requestAnimationFrame(() => {
+      el.focus();
+      const c = start + md.length;
+      el.setSelectionRange(c, c);
+    });
+  };
 
   useEffect(() => {
     async function fetchData() {
@@ -80,6 +150,7 @@ export default function EditCategoryPage() {
         setFormData({
           name: category.name || "",
           priority: category.priority ?? 0,
+          description: category.description || "",
           subcategories: subcategories || [],
         });
 
@@ -215,6 +286,7 @@ export default function EditCategoryPage() {
             priority: formData.priority,
             mediaType: finalMediaType,
             mediaUrl: finalMediaUrl,
+            description: formData.description,
           }),
         }
       );
@@ -287,6 +359,76 @@ export default function EditCategoryPage() {
                   value={formData.priority}
                   onChange={(e) => handleChange("priority", e.target.value)}
                 />
+
+                <Label className="mt-4">
+                  Опис категорії (каталог і сторінка товару) — Markdown
+                </Label>
+                <p className="mt-1 text-xs text-gray-500">
+                  Підтримується <strong>Markdown</strong> (жирний <code className="rounded bg-gray-100 px-1">**текст**</code>, курсив{" "}
+                  <code className="rounded bg-gray-100 px-1">*текст*</code>, списки,{" "}
+                  <code className="rounded bg-gray-100 px-1">## Заголовок</code>, посилання{" "}
+                  <code className="rounded bg-gray-100 px-1">[текст](url)</code>) і безпечний{" "}
+                  <strong>HTML</strong> з редактора (<code className="rounded bg-gray-100 px-1">&lt;p&gt;</code>,{" "}
+                  <code className="rounded bg-gray-100 px-1">&lt;br&gt;</code>,{" "}
+                  <code className="rounded bg-gray-100 px-1">&lt;strong&gt;</code> тощо). Новий рядок у тексті
+                  дає перенесення рядка на сайті.
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => wrapMarkdownSelection("**")}
+                    className="rounded border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+                  >
+                    Жирний
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => wrapMarkdownSelection("*")}
+                    className="rounded border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+                  >
+                    Курсив
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => insertMarkdownLinePrefix("- ")}
+                    className="rounded border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+                  >
+                    Список
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => insertMarkdownLinePrefix("## ")}
+                    className="rounded border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+                  >
+                    Заголовок
+                  </button>
+                  <button
+                    type="button"
+                    onClick={insertMarkdownLink}
+                    className="rounded border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+                  >
+                    Посилання
+                  </button>
+                </div>
+                <textarea
+                  ref={categoryDescriptionRef}
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, description: e.target.value }))
+                  }
+                  placeholder="Опис категорії у форматі Markdown…"
+                  className="mt-2 w-full min-h-[140px] rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                />
+                {formData.description.trim() ? (
+                  <div className="mt-3 rounded-lg border border-dashed border-gray-200 bg-gray-50/80 p-3">
+                    <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                      Перегляд
+                    </p>
+                    <div className="rounded-md bg-white p-3 text-gray-900">
+                      <CategoryDescriptionMarkdown content={formData.description} />
+                    </div>
+                  </div>
+                ) : null}
 
                 <Label className="mt-6">Підкатегорії</Label>
                 {formData.subcategories.map((sub, index) => (

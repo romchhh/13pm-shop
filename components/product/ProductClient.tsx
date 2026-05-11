@@ -21,6 +21,8 @@ import {
 } from "@/lib/siteBrand";
 import OneClickOrderModal from "@/components/product/OneClickOrderModal";
 import ProductDeliveryPaymentTab from "@/components/product/ProductDeliveryPaymentTab";
+import YouMightLike from "@/components/product/YouMightLike";
+import CategoryDescriptionMarkdown from "@/components/shared/CategoryDescriptionMarkdown";
 
 const DEFAULT_SIZE = "—";
 
@@ -71,6 +73,28 @@ interface ProductClientProps {
     category_name?: string | null;
     subcategory_name?: string | null;
     category_slug?: string | null;
+    category_description?: string | null;
+    is_hit?: boolean;
+    dietitian_approved?: boolean;
+    is_promo?: boolean;
+    gift_product?: {
+      id: number;
+      name: string;
+      slug?: string | null;
+      price: number;
+      old_price?: number | null;
+      discount_percentage?: number | null;
+      first_media?: { url: string; type: string } | null;
+    } | null;
+    bought_together_ids?: number[];
+    bought_together_products?: {
+      id: number;
+      name: string;
+      slug?: string | null;
+      price: number;
+      first_media?: { url: string; type: string } | null;
+      description?: string | null;
+    }[];
   };
 }
 
@@ -325,7 +349,7 @@ export default function ProductClient({ product }: ProductClientProps) {
               </div>
             )}
             <div
-              className="relative flex-1 min-h-[420px] sm:min-h-[480px] md:min-h-[520px] lg:min-h-[620px] xl:min-h-[700px] bg-[#fafafa] rounded overflow-hidden order-1 lg:order-2 touch-pan-y"
+              className="relative order-1 min-h-[420px] flex-1 touch-pan-y overflow-hidden rounded-lg bg-[#fafafa] sm:min-h-[480px] md:min-h-[520px] lg:order-2 lg:min-h-[620px] xl:min-h-[700px]"
               onTouchStart={(e) => {
                 if (!media.length || media.length < 2) return;
                 touchStartXRef.current = e.touches[0]?.clientX ?? null;
@@ -363,7 +387,7 @@ export default function ProductClient({ product }: ProductClientProps) {
             >
               {media[activeImageIndex]?.type === "video" ? (
                 <video
-                  className="w-full h-full object-contain"
+                  className="absolute inset-0 z-0 h-full w-full object-contain"
                   src={`/api/images/${media[activeImageIndex]?.url}`}
                   autoPlay
                   loop
@@ -375,13 +399,37 @@ export default function ProductClient({ product }: ProductClientProps) {
                   src={`/api/images/${media[activeImageIndex].url}`}
                   alt={product.name}
                   fill
-                  className="object-contain"
+                  className="z-0 object-contain"
                   sizes="(max-width: 1024px) 100vw, 58vw"
                   priority
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-[#3D1A00]/40 font-['Montserrat']">
+                <div className="relative z-0 flex h-full w-full items-center justify-center text-[#3D1A00]/40 font-['Montserrat']">
                   Немає зображення
+                </div>
+              )}
+
+              {(product.is_promo === true ||
+                product.is_hit === true ||
+                product.dietitian_approved === true) && (
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/45 via-black/15 to-transparent px-3 pb-3 pt-12 sm:px-4 sm:pb-4 sm:pt-14">
+                  <div className="flex flex-wrap gap-2.5">
+                    {product.is_promo === true && (
+                      <span className="inline-flex w-fit max-w-full shrink-0 items-center rounded-lg border border-[#3D1A00]/12 bg-[#D7D799] px-3 py-2 text-xs font-bold font-['Montserrat'] uppercase tracking-wide text-[#3D1A00] shadow-md shadow-black/20 sm:text-sm">
+                        Акція
+                      </span>
+                    )}
+                    {product.is_hit === true && (
+                      <span className="inline-flex w-fit max-w-full shrink-0 items-center rounded-lg bg-[#3D1A00] px-3 py-2 text-xs font-bold font-['Montserrat'] uppercase tracking-wide text-white shadow-md shadow-black/30 sm:text-sm">
+                        Хіт
+                      </span>
+                    )}
+                    {product.dietitian_approved === true && (
+                      <span className="inline-flex w-fit max-w-full shrink-0 items-center rounded-lg border-2 border-[#3D1A00]/20 bg-white px-3 py-2 text-left text-[11px] font-bold font-['Montserrat'] leading-snug tracking-tight text-[#3D1A00] shadow-md shadow-black/15 sm:text-sm">
+                        Схвалено асоціацією дієтологів
+                      </span>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -446,6 +494,31 @@ export default function ProductClient({ product }: ProductClientProps) {
               </div>
             </div>
 
+            {/* Gift promo */}
+            {product.gift_product && (
+              <div className="rounded-lg border border-[#3D1A00]/15 bg-[#FFF9F0] p-4">
+                <p className="text-sm font-['Montserrat'] font-semibold text-[#3D1A00]">
+                  Подарунок до цього товару:
+                </p>
+                <div className="mt-2 flex items-center justify-between gap-4 flex-wrap">
+                  <Link
+                    href={`/product/${(product.gift_product.slug && String(product.gift_product.slug).trim()) ? product.gift_product.slug : product.gift_product.id}`}
+                    className="text-sm font-['Montserrat'] text-[#3D1A00] underline hover:opacity-80"
+                  >
+                    {product.gift_product.name}
+                  </Link>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm line-through text-[#3D1A00]/60">
+                      {Math.round(product.gift_product.price).toLocaleString("uk-UA")} грн
+                    </span>
+                    <span className="text-sm font-bold text-[#3D1A00]">
+                      безкоштовно
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <button
                 onClick={outOfStock || isAddingToCart ? undefined : handleAddToCart}
@@ -491,8 +564,27 @@ export default function ProductClient({ product }: ProductClientProps) {
               }}
               quantity={quantity}
             />
+
+            {/* Category description (Markdown) */}
+            {product.category_description && (
+              <div className="border-t border-[#3D1A00]/10 pt-6">
+                <p className="text-xs uppercase tracking-wider text-[#3D1A00]/60 font-['Montserrat'] font-semibold">
+                  Про категорію
+                </p>
+                <div className="mt-2">
+                  <CategoryDescriptionMarkdown content={product.category_description} />
+                </div>
+              </div>
+            )}
           </div>
         </div>
+
+        {/* Купують разом */}
+        {product.bought_together_products && product.bought_together_products.length > 0 && (
+          <div className="mt-10">
+            <YouMightLike title="Купують разом" suggestedProducts={product.bought_together_products} />
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="mt-12 pt-8 border-t border-[#3D1A00]/10">

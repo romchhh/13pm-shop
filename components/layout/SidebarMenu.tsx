@@ -118,7 +118,18 @@ export default function SidebarMenu({
               ) : error ? (
                 <div className="px-4 py-2 text-sm text-red-500 font-['Montserrat']">Помилка: {error}</div>
               ) : (
-                categories.map((cat) => (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsOpen(false);
+                      router.push("/catalog?promo=1");
+                    }}
+                    className="px-5 py-3 rounded-full text-base font-semibold whitespace-nowrap transition-all duration-200 font-['Montserrat'] bg-[#D7D799] text-[#3D1A00] hover:opacity-90"
+                  >
+                    Акції
+                  </button>
+                  {categories.map((cat) => (
                   <button
                     key={cat.id}
                     onClick={() => handleCategorySelect(cat.id)}
@@ -130,7 +141,8 @@ export default function SidebarMenu({
                   >
                     {cat.name}
                   </button>
-                ))
+                  ))}
+                </>
               )}
             </div>
           </div>

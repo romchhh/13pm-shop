@@ -37,7 +37,30 @@ export interface Product {
   lining_description?: string | null;
   category_name?: string | null;
   category_slug?: string | null;
+  category_description?: string | null;
   priority?: number;
   top_sale?: boolean;
   limited_edition?: boolean;
+  is_hit?: boolean;
+  dietitian_approved?: boolean;
+  is_promo?: boolean;
+  gift_product?: {
+    id: number;
+    name: string;
+    slug?: string | null;
+    price: number;
+    old_price?: number | null;
+    discount_percentage?: number | null;
+    first_media?: ProductMedia | null;
+  } | null;
+  bought_together_ids?: number[];
+  pair_together_ids?: number[];
+  bought_together_products?: {
+    id: number;
+    name: string;
+    slug?: string | null;
+    price: number;
+    first_media?: ProductMedia | null;
+    description?: string | null;
+  }[];
 }

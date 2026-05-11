@@ -29,6 +29,8 @@ interface Product {
 interface CatalogServerProps {
   category?: string | null;
   subcategory?: string | null;
+  categoryId?: number | null;
+  categoryDescription?: string | null;
 }
 
 async function getProducts(params: CatalogServerProps): Promise<Product[]> {
@@ -47,10 +49,10 @@ async function getProducts(params: CatalogServerProps): Promise<Product[]> {
   }
 }
 
-async function getCategories(): Promise<{ id: number; name: string }[]> {
+async function getCategories(): Promise<{ id: number; name: string; description?: string | null }[]> {
   try {
     const data = await sqlGetAllCategories();
-    return data.map((c) => ({ id: c.id, name: c.name }));
+    return data.map((c) => ({ id: c.id, name: c.name, description: (c as any).description ?? null }));
   } catch (error) {
     console.error("Error fetching categories:", error);
     return [];
@@ -89,7 +91,12 @@ export default async function CatalogServer(props: CatalogServerProps) {
         category={categoryName || undefined}
       />
       <BreadcrumbStructuredData items={breadcrumbs} />
-      <CatalogClient initialProducts={products} categories={categories} />
+      <CatalogClient
+        initialProducts={products}
+        categories={categories}
+        initialSelectedCategoryIds={props.categoryId ? [props.categoryId] : undefined}
+        selectedCategoryDescription={props.categoryDescription ?? null}
+      />
     </>
   );
 }

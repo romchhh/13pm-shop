@@ -60,7 +60,7 @@ export async function PUT(
     }
 
     const body = await req.json();
-    const { name, priority, mediaType, mediaUrl } = body;
+    const { name, priority, mediaType, mediaUrl, description } = body;
 
     if (!name) {
       return NextResponse.json(
@@ -83,7 +83,8 @@ export async function PUT(
       name,
       priority ?? 0,
       mediaType,
-      mediaUrl
+      mediaUrl,
+      typeof description === "string" ? description : description == null ? null : String(description)
     );
     return NextResponse.json(updated);
   } catch (error) {

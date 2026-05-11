@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import ComponentCard from "@/components/admin/ComponentCard";
 import PageBreadcrumb from "@/components/admin/PageBreadCrumb";
@@ -48,6 +48,9 @@ export default function EditProductPage() {
     media: [] as { type: string; url: string }[],
     topSale: false,
     inStock: true,
+    isHit: false,
+    dietitianApproved: false,
+    isPromo: false,
   });
 
   const [images, setImages] = useState<File[]>([]);
@@ -59,6 +62,25 @@ export default function EditProductPage() {
   const [categoryOptions, setCategoryOptions] = useState<
     { id: number; name: string }[]
   >([]);
+  const [productOptions, setProductOptions] = useState<
+    {
+      id: number;
+      name: string;
+      slug?: string | null;
+      first_media?: { url: string; type: string } | null;
+      category_id?: number | null;
+      category_ids?: number[] | null;
+    }[]
+  >([]);
+  const [giftProductId, setGiftProductId] = useState<number | null>(null);
+  const [boughtTogetherIds, setBoughtTogetherIds] = useState<number[]>([]);
+  const [pairTogetherIds, setPairTogetherIds] = useState<number[]>([]);
+  /** Модальне вікно: «разом» / «пара» / подарунок (один товар) */
+  const [bundleModal, setBundleModal] = useState<null | "bought" | "pair" | "gift">(null);
+  const [modalSearch, setModalSearch] = useState("");
+  const [modalCategoryId, setModalCategoryId] = useState<number | null>(null);
+  const [modalDraftIds, setModalDraftIds] = useState<number[]>([]);
+  const [modalGiftDraftId, setModalGiftDraftId] = useState<number | null>(null);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
   const [subcategoriesByCategory, setSubcategoriesByCategory] = useState<
     Record<number, { id: number; name: string }[]>
@@ -71,14 +93,16 @@ export default function EditProductPage() {
     async function fetchData() {
       setLoadingData(true);
       try {
-        const [productRes, categoriesRes] = await Promise.all([
+        const [productRes, categoriesRes, productsRes] = await Promise.all([
           // Без кешу: інакше можна отримати застарілі category_ids і при наступному збереженні перезаписати БД старими галочками
           fetch(`/api/products/${productId}`, { cache: "no-store" }),
           fetch(`/api/categories`, { cache: "no-store" }),
+          fetch(`/api/products?limit=5000&offset=0`, { cache: "no-store" }),
         ]);
 
         const productData = await productRes.json();
         const categoryData = await categoriesRes.json();
+        const productsData = await productsRes.json();
         
         // Safely handle media data
         const mediaArray = Array.isArray(productData.media) ? productData.media : [];
@@ -137,9 +161,38 @@ export default function EditProductPage() {
           media: mediaArray,
           topSale: productData.top_sale || false,
           inStock: productData.in_stock !== false,
+          isHit: productData.is_hit === true,
+          dietitianApproved: productData.dietitian_approved === true,
+          isPromo: productData.is_promo === true,
         });
 
         setCategoryOptions(categoryData);
+        setProductOptions(
+          Array.isArray(productsData)
+            ? productsData.map((p: any) => ({
+                id: Number(p.id),
+                name: String(p.name ?? ""),
+                slug: p.slug ?? null,
+                first_media: p.first_media ?? null,
+                category_id: p.category_id ?? null,
+                category_ids: Array.isArray(p.category_ids) ? p.category_ids : null,
+              }))
+            : []
+        );
+
+        setGiftProductId(
+          productData.gift_product_id != null ? Number(productData.gift_product_id) : null
+        );
+        setBoughtTogetherIds(
+          Array.isArray(productData.bought_together_ids)
+            ? productData.bought_together_ids.map((x: any) => Number(x)).filter((n: number) => Number.isInteger(n) && n > 0)
+            : []
+        );
+        setPairTogetherIds(
+          Array.isArray(productData.pair_together_ids)
+            ? productData.pair_together_ids.map((x: any) => Number(x)).filter((n: number) => Number.isInteger(n) && n > 0)
+            : []
+        );
 
         // Попередньо завантажимо підкатегорії для всіх категорій товару
         const subMap: Record<number, { id: number; name: string }[]> = {};
@@ -170,6 +223,20 @@ export default function EditProductPage() {
     }
   }, [productId]);
 
+  useEffect(() => {
+    if (!bundleModal) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setBundleModal(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [bundleModal]);
+
   const loadSubcategoriesForCategory = async (categoryId: number) => {
     if (subcategoriesByCategory[categoryId]) return;
 
@@ -192,6 +259,60 @@ export default function EditProductPage() {
   // useEffect(() => {
   //   console.log("formData", formData);
   // }, [formData]);
+
+  const toggleIdInList = (id: number, list: number[], setList: (next: number[]) => void) => {
+    if (list.includes(id)) setList(list.filter((x) => x !== id));
+    else setList([...list, id]);
+  };
+
+  const openBundleModal = (kind: "bought" | "pair") => {
+    setBundleModal(kind);
+    setModalSearch("");
+    setModalCategoryId(null);
+    setModalDraftIds(kind === "bought" ? [...boughtTogetherIds] : [...pairTogetherIds]);
+  };
+
+  const openGiftModal = () => {
+    setBundleModal("gift");
+    setModalSearch("");
+    setModalCategoryId(null);
+    setModalGiftDraftId(giftProductId);
+  };
+
+  const closeBundleModal = () => {
+    setBundleModal(null);
+  };
+
+  const applyBundleModal = () => {
+    if (bundleModal === "bought") setBoughtTogetherIds(modalDraftIds);
+    if (bundleModal === "pair") setPairTogetherIds(modalDraftIds);
+    if (bundleModal === "gift") setGiftProductId(modalGiftDraftId);
+    setBundleModal(null);
+  };
+
+  const modalFilteredProducts = useMemo(() => {
+    if (!bundleModal) return [];
+    const q = modalSearch.trim().toLowerCase();
+    return productOptions.filter((p) => {
+      if (p.id === Number(productId)) return false;
+      if (q && !p.name.toLowerCase().includes(q)) return false;
+      if (modalCategoryId != null) {
+        const ids = new Set<number>([
+          ...(p.category_ids ?? []),
+          ...(p.category_id != null ? [p.category_id] : []),
+        ]);
+        if (!ids.has(modalCategoryId)) return false;
+      }
+      return true;
+    });
+  }, [bundleModal, productOptions, productId, modalSearch, modalCategoryId]);
+
+  const getProductRow = (id: number) => productOptions.find((p) => p.id === id);
+
+  const removeFromBundle = (kind: "bought" | "pair", id: number) => {
+    if (kind === "bought") setBoughtTogetherIds((prev) => prev.filter((x) => x !== id));
+    else setPairTogetherIds((prev) => prev.filter((x) => x !== id));
+  };
 
   const handleDrop = (files: File[]) => {
     console.log('[EditProduct] handleDrop called with files:', files);
@@ -342,6 +463,12 @@ export default function EditProductPage() {
           media: updatedMedia,
           top_sale: formData.topSale,
           in_stock: formData.inStock,
+          is_hit: formData.isHit,
+          dietitian_approved: formData.dietitianApproved,
+          is_promo: formData.isPromo,
+          gift_product_id: giftProductId,
+          bought_together_ids: boughtTogetherIds,
+          pair_together_ids: pairTogetherIds,
           category_id: primaryCategoryId,
           subcategory_id: primarySubcategoryId,
           category_ids: allCategoryIds,
@@ -709,10 +836,238 @@ export default function EditProductPage() {
                   <Label className="mb-0">В наявності</Label>
                   <ToggleSwitch enabled={formData.inStock} setEnabled={(v) => handleChange("inStock", v)} label="В наявності" />
                 </div>
+                <div className="flex items-center justify-between">
+                  <Label className="mb-0">Хіт</Label>
+                  <ToggleSwitch enabled={formData.isHit} setEnabled={(v) => handleChange("isHit", v)} label="Хіт" />
+                </div>
+                <div className="flex items-center justify-between">
+                  <Label className="mb-0">Схвалено асоціацією дієтологів</Label>
+                  <ToggleSwitch
+                    enabled={formData.dietitianApproved}
+                    setEnabled={(v) => handleChange("dietitianApproved", v)}
+                    label="Схвалено"
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <Label className="mb-0">Акція (плашка)</Label>
+                  <ToggleSwitch enabled={formData.isPromo} setEnabled={(v) => handleChange("isPromo", v)} label="Акція" />
+                </div>
                 <Label>Пріоритет показу</Label>
                 <Input type="number" value={formData.priority} onChange={(e) => handleChange("priority", e.target.value)} placeholder="0" />
                 <Label>Кількість на складі</Label>
                 <Input type="number" min="0" value={String(formData.stock)} onChange={(e) => handleChange("stock", e.target.value)} placeholder="0" />
+              </ComponentCard>
+
+              <ComponentCard title="Подарунок та рекомендації" className="mt-4 sm:mt-6">
+                <div className="space-y-4">
+                  <div className="rounded-xl border border-gray-200 bg-gray-50/60 p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <Label className="mb-1">Подарунок до товару</Label>
+                        <p className="text-[11px] text-gray-500">
+                          Обрано:{" "}
+                          <span className="font-semibold text-gray-700">
+                            {giftProductId ? "1" : "0"}
+                          </span>
+                          {giftProductId ? (
+                            <span className="text-gray-600">
+                              {" "}
+                              — {getProductRow(giftProductId)?.name ?? "товар"}
+                            </span>
+                          ) : null}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={openGiftModal}
+                          className="rounded-lg bg-[#3D1A00] px-4 py-2 text-xs font-semibold text-white shadow-sm hover:opacity-90"
+                        >
+                          Додати товар
+                        </button>
+                        {giftProductId != null && (
+                          <button
+                            type="button"
+                            onClick={() => setGiftProductId(null)}
+                            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                          >
+                            Очистити
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    {giftProductId != null && (() => {
+                      const row = getProductRow(giftProductId);
+                      if (!row) return null;
+                      const thumb =
+                        row.first_media?.type === "photo" && row.first_media.url
+                          ? `/api/images/${row.first_media.url}`
+                          : null;
+                      return (
+                        <div className="mt-3 flex max-w-[260px] items-center gap-2 rounded-lg border border-gray-200 bg-white py-1 pl-1 pr-2 shadow-sm">
+                          <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md bg-gray-100">
+                            {thumb ? (
+                              <Image src={thumb} alt="" fill className="object-cover" sizes="40px" />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center text-[10px] text-gray-400">
+                                —
+                              </div>
+                            )}
+                          </div>
+                          <span className="line-clamp-2 text-[11px] font-medium text-gray-800">
+                            {row.name}
+                          </span>
+                          <button
+                            type="button"
+                            title="Прибрати подарунок"
+                            onClick={() => setGiftProductId(null)}
+                            className="ml-auto shrink-0 rounded p-0.5 text-gray-400 hover:bg-red-50 hover:text-red-600"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  <div className="rounded-xl border border-gray-200 bg-gray-50/60 p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <Label className="mb-1">З цим товаром купують / Купують разом</Label>
+                        <p className="text-[11px] text-gray-500">
+                          Обрано товарів:{" "}
+                          <span className="font-semibold text-gray-700">{boughtTogetherIds.length}</span>
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => openBundleModal("bought")}
+                          className="rounded-lg bg-[#3D1A00] px-4 py-2 text-xs font-semibold text-white shadow-sm hover:opacity-90"
+                        >
+                          Додати товари
+                        </button>
+                        {boughtTogetherIds.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setBoughtTogetherIds([])}
+                            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                          >
+                            Очистити
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    {boughtTogetherIds.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {boughtTogetherIds.map((id) => {
+                          const row = getProductRow(id);
+                          if (!row) return null;
+                          const thumb =
+                            row.first_media?.type === "photo" && row.first_media.url
+                              ? `/api/images/${row.first_media.url}`
+                              : null;
+                          return (
+                            <div
+                              key={id}
+                              className="flex max-w-[220px] items-center gap-2 rounded-lg border border-gray-200 bg-white py-1 pl-1 pr-2 shadow-sm"
+                            >
+                              <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md bg-gray-100">
+                                {thumb ? (
+                                  <Image src={thumb} alt="" fill className="object-cover" sizes="40px" />
+                                ) : (
+                                  <div className="flex h-full w-full items-center justify-center text-[10px] text-gray-400">
+                                    —
+                                  </div>
+                                )}
+                              </div>
+                              <span className="line-clamp-2 text-[11px] font-medium text-gray-800">
+                                {row.name}
+                              </span>
+                              <button
+                                type="button"
+                                title="Прибрати"
+                                onClick={() => removeFromBundle("bought", id)}
+                                className="ml-auto shrink-0 rounded p-0.5 text-gray-400 hover:bg-red-50 hover:text-red-600"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="rounded-xl border border-gray-200 bg-gray-50/60 p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <Label className="mb-1">Обирай у парі / Купуй разом (після «Схожі товари»)</Label>
+                        <p className="text-[11px] text-gray-500">
+                          Обрано товарів:{" "}
+                          <span className="font-semibold text-gray-700">{pairTogetherIds.length}</span>
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => openBundleModal("pair")}
+                          className="rounded-lg bg-[#3D1A00] px-4 py-2 text-xs font-semibold text-white shadow-sm hover:opacity-90"
+                        >
+                          Додати товари
+                        </button>
+                        {pairTogetherIds.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setPairTogetherIds([])}
+                            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                          >
+                            Очистити
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    {pairTogetherIds.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {pairTogetherIds.map((id) => {
+                          const row = getProductRow(id);
+                          if (!row) return null;
+                          const thumb =
+                            row.first_media?.type === "photo" && row.first_media.url
+                              ? `/api/images/${row.first_media.url}`
+                              : null;
+                          return (
+                            <div
+                              key={id}
+                              className="flex max-w-[220px] items-center gap-2 rounded-lg border border-gray-200 bg-white py-1 pl-1 pr-2 shadow-sm"
+                            >
+                              <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md bg-gray-100">
+                                {thumb ? (
+                                  <Image src={thumb} alt="" fill className="object-cover" sizes="40px" />
+                                ) : (
+                                  <div className="flex h-full w-full items-center justify-center text-[10px] text-gray-400">
+                                    —
+                                  </div>
+                                )}
+                              </div>
+                              <span className="line-clamp-2 text-[11px] font-medium text-gray-800">
+                                {row.name}
+                              </span>
+                              <button
+                                type="button"
+                                title="Прибрати"
+                                onClick={() => removeFromBundle("pair", id)}
+                                className="ml-auto shrink-0 rounded p-0.5 text-gray-400 hover:bg-red-50 hover:text-red-600"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </ComponentCard>
             </div>
 
@@ -852,6 +1207,226 @@ export default function EditProductPage() {
             )}
           </div>
         </form>
+      )}
+
+      {bundleModal && (
+        <div
+          className="fixed inset-0 z-[200] flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="bundle-modal-title"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) closeBundleModal();
+          }}
+        >
+          <div
+            className="flex max-h-[min(92vh,900px)] w-full max-w-5xl flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:rounded-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex shrink-0 items-start justify-between gap-3 border-b border-gray-100 px-4 py-4 sm:px-6">
+              <div>
+                <h2
+                  id="bundle-modal-title"
+                  className="text-base font-semibold text-gray-900 sm:text-lg"
+                >
+                  {bundleModal === "bought"
+                    ? "Додати товари — купують разом"
+                    : bundleModal === "pair"
+                    ? "Додати товари — купуй разом"
+                    : "Обрати подарунок"}
+                </h2>
+                <p className="mt-1 text-xs text-gray-500">
+                  {bundleModal === "gift"
+                    ? "Категорії, пошук і картки з фото. Можна обрати один товар або «Без подарунка»."
+                    : "Фільтр за категорією, пошук за назвою, клік по картці — вибір кількох товарів."}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeBundleModal}
+                className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+                aria-label="Закрити"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="shrink-0 space-y-3 border-b border-gray-100 bg-gray-50/80 px-4 py-3 sm:px-6">
+              <Input
+                type="text"
+                value={modalSearch}
+                onChange={(e) => setModalSearch(e.target.value)}
+                placeholder="Пошук за назвою…"
+              />
+              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                <button
+                  type="button"
+                  onClick={() => setModalCategoryId(null)}
+                  className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    modalCategoryId === null
+                      ? "bg-[#3D1A00] text-white"
+                      : "bg-white text-gray-700 ring-1 ring-gray-200 hover:bg-gray-50"
+                  }`}
+                >
+                  Усі категорії
+                </button>
+                {categoryOptions.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setModalCategoryId(c.id)}
+                    className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                      modalCategoryId === c.id
+                        ? "bg-[#8B9A47] text-white"
+                        : "bg-white text-gray-700 ring-1 ring-gray-200 hover:bg-gray-50"
+                    }`}
+                  >
+                    {c.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
+              {bundleModal === "gift" && (
+                <button
+                  type="button"
+                  onClick={() => setModalGiftDraftId(null)}
+                  className={`mb-4 w-full rounded-xl border-2 px-4 py-3 text-left transition-all ${
+                    modalGiftDraftId === null
+                      ? "border-[#8B9A47] bg-[#8B9A47]/10 ring-2 ring-[#8B9A47]/25"
+                      : "border-gray-200 bg-white hover:border-gray-300"
+                  }`}
+                >
+                  <span className="block text-sm font-semibold text-gray-900">Без подарунка</span>
+                  <span className="mt-0.5 block text-xs font-normal text-gray-500">
+                    Подарунок не показуватиметься для цього товару
+                  </span>
+                </button>
+              )}
+
+              {modalFilteredProducts.length === 0 ? (
+                <p className="py-12 text-center text-sm text-gray-500">
+                  Нічого не знайдено. Спробуйте змінити пошук або категорію.
+                </p>
+              ) : (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                  {modalFilteredProducts.map((p) => {
+                    const selected =
+                      bundleModal === "gift"
+                        ? modalGiftDraftId === p.id
+                        : modalDraftIds.includes(p.id);
+                    const isPhoto = p.first_media?.type === "photo" && p.first_media.url;
+                    const src = isPhoto ? `/api/images/${p.first_media!.url}` : null;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => {
+                          if (bundleModal === "gift") {
+                            setModalGiftDraftId((prev) => (prev === p.id ? null : p.id));
+                          } else {
+                            toggleIdInList(p.id, modalDraftIds, setModalDraftIds);
+                          }
+                        }}
+                        className={`group relative flex flex-col overflow-hidden rounded-xl border-2 bg-white text-left shadow-sm transition-all ${
+                          selected
+                            ? "border-[#8B9A47] ring-2 ring-[#8B9A47]/30"
+                            : "border-gray-100 hover:border-gray-300 hover:shadow-md"
+                        }`}
+                      >
+                        <div className="relative aspect-square w-full bg-gray-100">
+                          {src ? (
+                            <Image
+                              src={src}
+                              alt=""
+                              fill
+                              className="object-cover"
+                              sizes="(max-width: 640px) 45vw, 20vw"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center px-2 text-center text-[10px] font-medium text-gray-400">
+                              {p.first_media?.type === "video" ? "Відео" : "Немає фото"}
+                            </div>
+                          )}
+                          <span
+                            className={`absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold shadow ${
+                              selected
+                                ? "bg-[#8B9A47] text-white"
+                                : "bg-white/90 text-gray-400 ring-1 ring-gray-200"
+                            }`}
+                            aria-hidden
+                          >
+                            {selected ? "✓" : ""}
+                          </span>
+                        </div>
+                        <div className="border-t border-gray-100 p-2">
+                          <p className="line-clamp-2 text-[11px] font-semibold leading-snug text-gray-900">
+                            {p.name}
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-gray-100 bg-white px-4 py-4 sm:px-6">
+              <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 text-sm text-gray-600">
+                {bundleModal === "gift" ? (
+                  <>
+                    <span className="min-w-0 truncate">
+                      Подарунок:{" "}
+                      <span className="font-semibold text-gray-900">
+                        {modalGiftDraftId
+                          ? getProductRow(modalGiftDraftId)?.name ?? "—"
+                          : "не обрано"}
+                      </span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setModalGiftDraftId(null)}
+                      className="text-xs font-semibold text-blue-600 hover:text-blue-800"
+                    >
+                      Очистити вибір
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span>
+                      Обрано:{" "}
+                      <span className="font-semibold text-gray-900">{modalDraftIds.length}</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setModalDraftIds([])}
+                      className="text-xs font-semibold text-blue-600 hover:text-blue-800"
+                    >
+                      Очистити вибір
+                    </button>
+                  </>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={closeBundleModal}
+                  className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  Скасувати
+                </button>
+                <button
+                  type="button"
+                  onClick={applyBundleModal}
+                  className="rounded-lg bg-[#3D1A00] px-5 py-2 text-sm font-semibold text-white hover:opacity-90"
+                >
+                  Готово
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
