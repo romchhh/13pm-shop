@@ -75,6 +75,7 @@ export async function PUT(
     const isHit = body.is_hit === true;
     const dietitianApproved = body.dietitian_approved === true;
     const isPromo = body.is_promo === true;
+    const freeDeliveryBadge = body.free_delivery_badge === true;
     const giftProductId =
       body.gift_product_id === null || body.gift_product_id === undefined || body.gift_product_id === ""
         ? null
@@ -147,6 +148,7 @@ export async function PUT(
       is_hit: isHit,
       dietitian_approved: dietitianApproved,
       is_promo: isPromo,
+      free_delivery_badge: freeDeliveryBadge,
       gift_product_id: giftProductId,
       bought_together_ids: boughtTogetherIds,
       pair_together_ids: pairTogetherIds,

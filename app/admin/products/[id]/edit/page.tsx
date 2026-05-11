@@ -51,6 +51,7 @@ export default function EditProductPage() {
     isHit: false,
     dietitianApproved: false,
     isPromo: false,
+    freeDeliveryBadge: false,
   });
 
   const [images, setImages] = useState<File[]>([]);
@@ -164,6 +165,7 @@ export default function EditProductPage() {
           isHit: productData.is_hit === true,
           dietitianApproved: productData.dietitian_approved === true,
           isPromo: productData.is_promo === true,
+          freeDeliveryBadge: productData.free_delivery_badge === true,
         });
 
         setCategoryOptions(categoryData);
@@ -466,6 +468,7 @@ export default function EditProductPage() {
           is_hit: formData.isHit,
           dietitian_approved: formData.dietitianApproved,
           is_promo: formData.isPromo,
+          free_delivery_badge: formData.freeDeliveryBadge,
           gift_product_id: giftProductId,
           bought_together_ids: boughtTogetherIds,
           pair_together_ids: pairTogetherIds,
@@ -851,6 +854,16 @@ export default function EditProductPage() {
                 <div className="flex items-center justify-between">
                   <Label className="mb-0">Акція (плашка)</Label>
                   <ToggleSwitch enabled={formData.isPromo} setEnabled={(v) => handleChange("isPromo", v)} label="Акція" />
+                </div>
+                <div className="flex items-center justify-between">
+                  <Label className="mb-0 max-w-[min(100%,14rem)] text-xs leading-snug sm:max-w-none sm:text-sm">
+                    Безкоштовна доставка від 2&nbsp;000&nbsp;грн (плашка)
+                  </Label>
+                  <ToggleSwitch
+                    enabled={formData.freeDeliveryBadge}
+                    setEnabled={(v) => handleChange("freeDeliveryBadge", v)}
+                    label="Доставка"
+                  />
                 </div>
                 <Label>Пріоритет показу</Label>
                 <Input type="number" value={formData.priority} onChange={(e) => handleChange("priority", e.target.value)} placeholder="0" />

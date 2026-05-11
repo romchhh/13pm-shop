@@ -17,6 +17,7 @@ import {
   pushGA4EcommerceEvent,
 } from "@/lib/ga4Ecommerce";
 import {
+  LABEL_FREE_DELIVERY_FROM_2000,
   LABEL_PRODUCT_COURSE,
   LABEL_PRODUCT_PACKAGE,
   SITE_STORE_NAME,
@@ -35,6 +36,7 @@ interface Product {
   is_hit?: boolean;
   dietitian_approved?: boolean;
   is_promo?: boolean;
+  free_delivery_badge?: boolean;
   gift_product_id?: number | null;
   category_id?: number | null;
   category_ids?: number[] | null;
@@ -946,7 +948,8 @@ export default function CatalogClient({
                         {/* Плашки на фото, знизу — ширина за текстом */}
                         {(product.is_promo === true ||
                           product.is_hit === true ||
-                          product.dietitian_approved === true) && (
+                          product.dietitian_approved === true ||
+                          product.free_delivery_badge === true) && (
                           <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/45 via-black/15 to-transparent px-2 pb-2 pt-8 sm:px-2.5 sm:pb-2.5 sm:pt-10">
                             <div className="flex flex-wrap gap-2">
                               {product.is_promo === true && (
@@ -962,6 +965,11 @@ export default function CatalogClient({
                               {product.dietitian_approved === true && (
                                 <span className="inline-flex w-fit max-w-full shrink-0 items-center rounded-lg border-2 border-[#3D1A00]/20 bg-white px-2.5 py-1.5 text-left text-[10px] font-bold font-['Montserrat'] leading-snug tracking-tight text-[#3D1A00] shadow-md shadow-black/15 sm:text-[11px]">
                                   Схвалено асоціацією дієтологів
+                                </span>
+                              )}
+                              {product.free_delivery_badge === true && (
+                                <span className="inline-flex w-fit max-w-full shrink-0 items-center rounded-lg border border-emerald-800/25 bg-emerald-50/95 px-2.5 py-1.5 text-left text-[9px] font-bold font-['Montserrat'] leading-snug tracking-tight text-emerald-900 shadow-md shadow-black/10 sm:text-[10px]">
+                                  {LABEL_FREE_DELIVERY_FROM_2000}
                                 </span>
                               )}
                             </div>

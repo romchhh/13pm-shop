@@ -79,6 +79,7 @@ async function _sqlGetAllProducts() {
     is_hit: p.isHit ?? false,
     dietitian_approved: p.dietitianApproved ?? false,
     is_promo: p.isPromo ?? false,
+    free_delivery_badge: (p as any).freeDeliveryBadge ?? false,
     gift_product_id: p.giftProductId ?? null,
     category_id: p.categoryId,
     category_ids: Array.from(
@@ -175,6 +176,7 @@ export async function sqlGetProduct(id: number) {
         is_hit: (product as any).isHit ?? false,
         dietitian_approved: (product as any).dietitianApproved ?? false,
         is_promo: (product as any).isPromo ?? false,
+        free_delivery_badge: (product as any).freeDeliveryBadge ?? false,
         stock: product.stock,
         category_id: product.categoryId,
         category_ids: Array.from(
@@ -278,6 +280,7 @@ export async function sqlGetProductBySlug(slug: string) {
     is_hit: product.isHit ?? false,
     dietitian_approved: product.dietitianApproved ?? false,
     is_promo: product.isPromo ?? false,
+    free_delivery_badge: (product as any).freeDeliveryBadge ?? false,
     stock: product.stock,
     category_id: product.categoryId,
     category_ids: Array.from(
@@ -377,6 +380,7 @@ export async function sqlGetProductsByCategory(categoryName: string) {
         is_hit: p.isHit ?? false,
         dietitian_approved: p.dietitianApproved ?? false,
         is_promo: p.isPromo ?? false,
+        free_delivery_badge: (p as any).freeDeliveryBadge ?? false,
         gift_product_id: p.giftProductId ?? null,
         category_id: p.categoryId,
         subcategory_id: p.subcategoryId,
@@ -470,6 +474,7 @@ export async function sqlGetProductsBySubcategoryName(name: string) {
         is_hit: p.isHit ?? false,
         dietitian_approved: p.dietitianApproved ?? false,
         is_promo: p.isPromo ?? false,
+        free_delivery_badge: (p as any).freeDeliveryBadge ?? false,
         gift_product_id: p.giftProductId ?? null,
         category_id: p.categoryId,
         subcategory_id: p.subcategoryId,
@@ -613,6 +618,7 @@ export async function sqlPostProduct(product: {
   is_hit?: boolean;
   dietitian_approved?: boolean;
   is_promo?: boolean;
+  free_delivery_badge?: boolean;
   gift_product_id?: number | null;
   bought_together_ids?: number[];
   pair_together_ids?: number[];
@@ -659,6 +665,7 @@ export async function sqlPostProduct(product: {
       isHit: product.is_hit ?? false,
       dietitianApproved: product.dietitian_approved ?? false,
       isPromo: product.is_promo ?? false,
+      freeDeliveryBadge: product.free_delivery_badge ?? false,
       giftProductId: product.gift_product_id ?? null,
       boughtTogetherIds: product.bought_together_ids ?? [],
       pairTogetherIds: product.pair_together_ids ?? [],
@@ -742,6 +749,7 @@ export async function sqlPutProduct(
     is_hit?: boolean;
     dietitian_approved?: boolean;
     is_promo?: boolean;
+    free_delivery_badge?: boolean;
     gift_product_id?: number | null;
     bought_together_ids?: number[];
     pair_together_ids?: number[];
@@ -805,6 +813,7 @@ export async function sqlPutProduct(
         isHit: update.is_hit ?? undefined,
         dietitianApproved: update.dietitian_approved ?? undefined,
         isPromo: update.is_promo ?? undefined,
+        freeDeliveryBadge: update.free_delivery_badge ?? undefined,
         giftProductId: update.gift_product_id === undefined ? undefined : update.gift_product_id,
         boughtTogetherIds: update.bought_together_ids ?? undefined,
         pairTogetherIds: update.pair_together_ids ?? undefined,

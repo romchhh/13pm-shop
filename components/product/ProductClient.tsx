@@ -16,6 +16,7 @@ import {
   pushGA4EcommerceEvent,
 } from "@/lib/ga4Ecommerce";
 import {
+  LABEL_FREE_DELIVERY_FROM_2000,
   LABEL_PRODUCT_COURSE,
   LABEL_PRODUCT_PACKAGE,
 } from "@/lib/siteBrand";
@@ -77,6 +78,7 @@ interface ProductClientProps {
     is_hit?: boolean;
     dietitian_approved?: boolean;
     is_promo?: boolean;
+    free_delivery_badge?: boolean;
     gift_product?: {
       id: number;
       name: string;
@@ -411,7 +413,8 @@ export default function ProductClient({ product }: ProductClientProps) {
 
               {(product.is_promo === true ||
                 product.is_hit === true ||
-                product.dietitian_approved === true) && (
+                product.dietitian_approved === true ||
+                product.free_delivery_badge === true) && (
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/45 via-black/15 to-transparent px-3 pb-3 pt-12 sm:px-4 sm:pb-4 sm:pt-14">
                   <div className="flex flex-wrap gap-2.5">
                     {product.is_promo === true && (
@@ -427,6 +430,11 @@ export default function ProductClient({ product }: ProductClientProps) {
                     {product.dietitian_approved === true && (
                       <span className="inline-flex w-fit max-w-full shrink-0 items-center rounded-lg border-2 border-[#3D1A00]/20 bg-white px-3 py-2 text-left text-[11px] font-bold font-['Montserrat'] leading-snug tracking-tight text-[#3D1A00] shadow-md shadow-black/15 sm:text-sm">
                         Схвалено асоціацією дієтологів
+                      </span>
+                    )}
+                    {product.free_delivery_badge === true && (
+                      <span className="inline-flex w-fit max-w-full shrink-0 items-center rounded-lg border border-emerald-800/25 bg-emerald-50 px-3 py-2 text-left text-[10px] font-bold font-['Montserrat'] leading-snug tracking-tight text-emerald-900 shadow-md shadow-black/15 sm:text-xs">
+                        {LABEL_FREE_DELIVERY_FROM_2000}
                       </span>
                     )}
                   </div>

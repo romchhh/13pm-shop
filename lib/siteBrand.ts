@@ -16,3 +16,6 @@ export const siteFooterLegalNote = `Інтернет-магазин ${SITE_STORE
 /** Підпис до поля «курс» на картках і сторінці товару. */
 export const LABEL_PRODUCT_COURSE = "Рекомендований термін курсу";
 export const LABEL_PRODUCT_PACKAGE = "Фасування / вага";
+
+/** Текст плашки «безкоштовна доставка від суми замовлення» (хедер сайту — та сама умова). */
+export const LABEL_FREE_DELIVERY_FROM_2000 = "Безкоштовна доставка від 2 000 грн";

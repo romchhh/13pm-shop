@@ -44,6 +44,8 @@ export interface Product {
   is_hit?: boolean;
   dietitian_approved?: boolean;
   is_promo?: boolean;
+  /** Плашка «безкоштовна доставка від 2000 грн» на картці / сторінці товару */
+  free_delivery_badge?: boolean;
   gift_product?: {
     id: number;
     name: string;
