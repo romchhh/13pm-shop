@@ -28,6 +28,7 @@ interface Product {
   name: string;
   slug?: string | null;
   price: number;
+  old_price?: number | null;
   description?: string | null;
   first_media?: { url: string; type: string } | null;
   discount_percentage?: number | null;
@@ -58,6 +59,14 @@ interface CatalogClientProps {
   categories: Category[];
   initialSelectedCategoryIds?: number[];
   selectedCategoryDescription?: string | null;
+}
+
+/** Товар у блоці «Акції» / ?promo=1: плашка акції, % знижки або знижка через стару ціну. */
+function isCatalogPromoProduct(p: Product): boolean {
+  if (p.is_promo === true) return true;
+  if (p.discount_percentage != null && Number(p.discount_percentage) > 0) return true;
+  if (p.old_price != null && Number(p.old_price) > Number(p.price)) return true;
+  return false;
 }
 
 export default function CatalogClient({
@@ -194,7 +203,7 @@ export default function CatalogClient({
         productSubcategoryIds.some((id) => selectedSubcategories.includes(id));
       const matchesMinPrice = minPrice === null || product.price >= minPrice;
       const matchesMaxPrice = maxPrice === null || product.price <= maxPrice;
-      const matchesPromo = !promoOnly || product.is_promo === true || (product.discount_percentage != null && product.discount_percentage > 0);
+      const matchesPromo = !promoOnly || isCatalogPromoProduct(product);
       return (
         matchesCategory && matchesSubcategory && matchesMinPrice && matchesMaxPrice && matchesPromo
       );
@@ -208,9 +217,7 @@ export default function CatalogClient({
   }, [selectedCategories, selectedSubcategories, minPrice, maxPrice, sortOrder, promoOnly]);
 
   const hasPromoProducts = useMemo(() => {
-    return initialProducts.some(
-      (p) => p.is_promo === true || (p.discount_percentage != null && p.discount_percentage > 0)
-    );
+    return initialProducts.some((p) => isCatalogPromoProduct(p));
   }, [initialProducts]);
 
   const singleSelectedCategoryDescription = useMemo(() => {
@@ -231,8 +238,8 @@ export default function CatalogClient({
         return sorted.sort((a, b) => b.id - a.id);
       case "sale":
         return sorted.sort((a, b) => {
-          const aHasSale = a.discount_percentage ? 1 : 0;
-          const bHasSale = b.discount_percentage ? 1 : 0;
+          const aHasSale = isCatalogPromoProduct(a) ? 1 : 0;
+          const bHasSale = isCatalogPromoProduct(b) ? 1 : 0;
           return bHasSale - aHasSale;
         });
       default:
@@ -318,6 +325,7 @@ export default function CatalogClient({
     setMaxPrice(null);
     setMinPriceInput("");
     setMaxPriceInput("");
+    setPromoOnly(false);
   };
 
   const toggleCategory = (id: number) => {
@@ -432,6 +440,46 @@ export default function CatalogClient({
                     </div>
                   </div>
                 </div>
+                {/* Акції — у тому ж фільтрі, що ціна та категорії */}
+                {hasPromoProducts && (
+                  <div>
+                    <h3 className="text-base font-extrabold font-['Montserrat'] uppercase tracking-widest text-[#3D1A00] mb-3">
+                      Акції
+                    </h3>
+                    <label className="flex items-center gap-3 cursor-pointer group">
+                      <span
+                        className={`w-4 h-4 flex-shrink-0 border rounded-sm transition-colors ${
+                          promoOnly
+                            ? "bg-[#D7D799] border-[#b8b87a]"
+                            : "border-gray-300 group-hover:border-gray-500"
+                        }`}
+                        onClick={() => setPromoOnly((v) => !v)}
+                      >
+                        {promoOnly && (
+                          <svg
+                            viewBox="0 0 12 10"
+                            fill="none"
+                            className="w-full h-full p-0.5"
+                          >
+                            <path
+                              d="M1 5l3 3 7-7"
+                              stroke="#3D1A00"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        )}
+                      </span>
+                      <span
+                        className="text-sm font-['Montserrat'] text-gray-700 group-hover:text-[#3D1A00] transition-colors"
+                        onClick={() => setPromoOnly((v) => !v)}
+                      >
+                        Лише акційні товари (знижка, стара ціна або плашка «Акція»)
+                      </span>
+                    </label>
+                  </div>
+                )}
                 {/* Категорія товару + підкатегорії під вибраною категорією */}
                 <div>
                   <h3 className="text-base font-extrabold font-['Montserrat'] uppercase tracking-widest text-[#3D1A00] mb-3">
@@ -581,6 +629,47 @@ export default function CatalogClient({
                 </div>
               </div>
             </div>
+
+            {/* Акції — у сайдбарі разом із ціною та категоріями */}
+            {hasPromoProducts && (
+              <div>
+                <h2 className="text-base font-extrabold font-['Montserrat'] uppercase tracking-widest text-[#3D1A00] mb-3">
+                  Акції
+                </h2>
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <span
+                    className={`w-4 h-4 flex-shrink-0 border rounded-sm transition-colors ${
+                      promoOnly
+                        ? "bg-[#D7D799] border-[#b8b87a]"
+                        : "border-gray-300 group-hover:border-gray-500"
+                    }`}
+                    onClick={() => setPromoOnly((v) => !v)}
+                  >
+                    {promoOnly && (
+                      <svg
+                        viewBox="0 0 12 10"
+                        fill="none"
+                        className="w-full h-full p-0.5"
+                      >
+                        <path
+                          d="M1 5l3 3 7-7"
+                          stroke="#3D1A00"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    )}
+                  </span>
+                  <span
+                    className="text-sm font-['Montserrat'] text-gray-700 group-hover:text-[#3D1A00] transition-colors"
+                    onClick={() => setPromoOnly((v) => !v)}
+                  >
+                    Лише акційні товари (знижка, стара ціна або плашка «Акція»)
+                  </span>
+                </label>
+              </div>
+            )}
 
             {/* Категорії + підкатегорії під вибраною категорією */}
             <div>
@@ -774,9 +863,28 @@ export default function CatalogClient({
                   const outOfStock =
                     product.in_stock === false ||
                     (typeof product.stock === "number" && product.stock <= 0);
-                  const displayPrice = product.discount_percentage
-                    ? Math.round(product.price * (1 - product.discount_percentage / 100))
+                  const hasPct =
+                    product.discount_percentage != null && Number(product.discount_percentage) > 0;
+                  const hasOld =
+                    product.old_price != null && Number(product.old_price) > Number(product.price);
+                  const displayPrice = hasPct
+                    ? Math.round(product.price * (1 - Number(product.discount_percentage) / 100))
                     : product.price;
+                  const strikePrice = hasPct
+                    ? product.price
+                    : hasOld
+                    ? Number(product.old_price)
+                    : null;
+                  const discountBadgePct = hasPct
+                    ? Number(product.discount_percentage)
+                    : hasOld
+                    ? Math.max(
+                        1,
+                        Math.round(
+                          (1 - Number(product.price) / Number(product.old_price)) * 100
+                        )
+                      )
+                    : null;
                   const rawDesc = product.description
                     ? product.description.replace(/<[^>]*>/g, "").trim()
                     : "";
@@ -821,10 +929,10 @@ export default function CatalogClient({
                             blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
                           />
                         )}
-                        {/* Бейдж знижки */}
-                        {product.discount_percentage && (
+                        {/* Бейдж знижки (% або через стару ціну) */}
+                        {discountBadgePct != null && (
                           <span className="absolute left-2 top-2 z-20 text-[10px] font-semibold font-['Montserrat'] text-amber-800/95 bg-amber-100/90 px-1.5 py-0.5 rounded">
-                            −{product.discount_percentage}%
+                            −{discountBadgePct}%
                           </span>
                         )}
 
@@ -893,9 +1001,9 @@ export default function CatalogClient({
                         )}
                         <div className="mt-auto pt-3 flex items-center justify-between gap-2">
                           <div className="flex flex-col leading-none space-y-0.5">
-                            {product.discount_percentage && (
+                            {strikePrice != null && (
                               <span className="font-['Montserrat'] font-normal text-sm sm:text-base lg:text-xl leading-none tracking-[-0.02em] text-[#3D1A00]/70 line-through">
-                                {product.price.toLocaleString("uk-UA")} грн
+                                {strikePrice.toLocaleString("uk-UA")} грн
                               </span>
                             )}
                             <span className="font-['Montserrat'] font-normal text-lg sm:text-xl lg:text-3xl leading-none tracking-[-0.02em] text-[#3D1A00] align-middle">

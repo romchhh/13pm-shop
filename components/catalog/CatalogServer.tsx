@@ -13,9 +13,11 @@ interface Product {
   name: string;
   slug?: string | null;
   price: number;
+  old_price?: number | null;
   description?: string | null;
   first_media?: { url: string; type: string } | null;
   discount_percentage?: number | null;
+  is_promo?: boolean;
   category_id?: number | null;
   category_ids?: number[] | null;
   subcategory_id?: number | null;

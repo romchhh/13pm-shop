@@ -331,17 +331,6 @@ export default function Header() {
                 </div>
               ))}
 
-              <Link
-                href="/catalog?promo=1"
-                className={`relative z-10 inline-block cursor-pointer whitespace-nowrap text-xs font-bold font-['Montserrat'] px-3 py-1.5 rounded-full transition-colors duration-200 ${
-                  headerTransparent
-                    ? "text-white hover:bg-white hover:text-[#3D1A00]"
-                    : "text-[#3D1A00] hover:bg-[#3D1A00] hover:text-white"
-                }`}
-              >
-                АКЦІЇ
-              </Link>
-
               {/* Information dropdown */}
               <div className="relative flex items-center self-center min-h-0">
                 <span
@@ -413,6 +402,12 @@ export default function Header() {
                       className="text-gray-600 hover:text-[#3D1A00] text-xs py-2 font-bold font-['Montserrat'] transition-colors duration-200"
                     >
                       Контакти
+                    </Link>
+                    <Link
+                      href="/catalog?promo=1"
+                      className="text-gray-600 hover:text-[#3D1A00] text-xs py-2 font-bold font-['Montserrat'] transition-colors duration-200"
+                    >
+                      Акції
                     </Link>
                   </div>
                 </div>

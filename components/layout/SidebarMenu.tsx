@@ -119,16 +119,6 @@ export default function SidebarMenu({
                 <div className="px-4 py-2 text-sm text-red-500 font-['Montserrat']">Помилка: {error}</div>
               ) : (
                 <>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsOpen(false);
-                      router.push("/catalog?promo=1");
-                    }}
-                    className="px-5 py-3 rounded-full text-base font-semibold whitespace-nowrap transition-all duration-200 font-['Montserrat'] bg-[#D7D799] text-[#3D1A00] hover:opacity-90"
-                  >
-                    Акції
-                  </button>
                   {categories.map((cat) => (
                   <button
                     key={cat.id}
@@ -249,6 +239,13 @@ export default function SidebarMenu({
                 onClick={() => setIsOpen(false)}
               >
                 КОНТАКТИ
+              </Link>
+              <Link
+                href="/catalog?promo=1"
+                className="block py-2 text-base text-[#3D1A00] hover:text-[#3D1A00]/70 transition-colors font-['Montserrat']"
+                onClick={() => setIsOpen(false)}
+              >
+                АКЦІЇ
               </Link>
             </nav>
           </div>
