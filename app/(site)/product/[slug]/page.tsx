@@ -231,7 +231,7 @@ export default async function Page({ params }: PageProps) {
       </Suspense>
       <YouMightLike title="Схожі товари" suggestedProducts={suggestedProducts} />
       {pairProducts.length > 0 && (
-        <YouMightLike title="Купуй разом" suggestedProducts={pairProducts} />
+        <YouMightLike title="Обирай у парі" suggestedProducts={pairProducts} />
       )}
     </main>
   );
