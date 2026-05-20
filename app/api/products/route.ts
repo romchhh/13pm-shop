@@ -1,7 +1,7 @@
 // app/api/products/route.ts
 
 import { NextResponse } from "next/server";
-import { sqlGetAllProducts, sqlPostProduct } from "@/lib/sql";
+import { sqlGetAllProducts, sqlPostProduct, sqlSyncSizeVariantsOrdered } from "@/lib/sql";
 import { revalidateProducts } from "@/lib/revalidate";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
@@ -121,6 +121,10 @@ export async function POST(req: Request) {
         gift_product_id = null,
         bought_together_ids = [],
         pair_together_ids = [],
+        color_options,
+        size_variants,
+        is_new = false,
+        size_group_ordered_ids: sizeGroupOrderedBody = undefined,
       } = body || {};
 
       if (!name || typeof price !== "number") {
@@ -172,6 +176,9 @@ export async function POST(req: Request) {
               .map((x: unknown) => Number(x))
               .filter((n: number) => Number.isInteger(n) && n > 0)
           : [],
+        color_options: color_options ?? [],
+        size_variants: size_variants ?? [],
+        is_new: is_new === true,
         category_id,
         subcategory_id,
         fabric_composition: fabric_composition ?? null,
@@ -188,6 +195,27 @@ export async function POST(req: Request) {
               .filter((id: number) => Number.isInteger(id) && id > 0)
           : [],
       });
+
+      if (Array.isArray(sizeGroupOrderedBody) && sizeGroupOrderedBody.length > 0) {
+        const newId = product.id;
+        const resolved = sizeGroupOrderedBody
+          .map((x: unknown) => {
+            const n = Number(x);
+            if (n === 0) return newId;
+            return n;
+          })
+          .filter((n: number) => Number.isInteger(n) && n > 0);
+        const seen = new Set<number>();
+        const orderedUnique: number[] = [];
+        for (const id of resolved) {
+          if (seen.has(id)) continue;
+          seen.add(id);
+          orderedUnique.push(id);
+        }
+        if (orderedUnique.length > 0) {
+          await sqlSyncSizeVariantsOrdered(orderedUnique);
+        }
+      }
 
       await revalidateProducts();
       return NextResponse.json(product, { status: 201 });

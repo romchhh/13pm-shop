@@ -173,37 +173,37 @@ export async function POST(req: NextRequest) {
       }
     );
 
-    // Check stock availability before creating order (product.stock)
+    // Check stock availability before creating order (inStock + product.stock)
     const { prisma } = await import("@/lib/prisma");
+    const { canFulfillQuantity } = await import("@/lib/productAvailability");
     const stockChecks = await Promise.all(
       normalizedItems.map(async (item) => {
         const product = await prisma.product.findUnique({
           where: { id: item.product_id },
-          select: { stock: true },
+          select: { stock: true, inStock: true },
         });
-        const availableStock = product?.stock ?? 0;
+        const availableStock =
+          product?.inStock === true ? (product?.stock ?? 0) : 0;
         return {
           product_id: item.product_id,
           product_name: item.product_name,
           size: item.size,
           requested: item.quantity,
           available: availableStock,
-          sufficient: availableStock >= item.quantity,
+          sufficient: canFulfillQuantity(
+            { in_stock: product?.inStock, stock: product?.stock },
+            item.quantity
+          ),
         };
       })
     );
 
     const insufficientItems = stockChecks.filter((check) => !check.sufficient);
     if (insufficientItems.length > 0) {
-      const errorMessages = insufficientItems.map(
-        (item) =>
-          `${item.product_name}: доступно ${item.available} шт., запитано ${item.requested} шт.`
-      );
       return NextResponse.json(
         {
-          error: "Недостатньо товару в наявності",
-          details: errorMessages,
-          insufficientItems,
+          error:
+            "Один або кілька товарів зараз недоступні. Оновіть кошик і спробуйте ще раз.",
         },
         { status: 400 }
       );

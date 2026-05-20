@@ -3,7 +3,8 @@ import YouMightLike from "@/components/product/YouMightLike";
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { sqlGetProductBySlug, sqlGetProduct, sqlGetAllProducts } from "@/lib/sql";
-import { SITE_PRODUCT_BRAND, SITE_STORE_NAME } from "@/lib/siteBrand";
+import { SITE_STORE_NAME } from "@/lib/siteBrand";
+import { buildProductMetadata, productCanonicalPath } from "@/lib/seo";
 import { redirect, notFound } from "next/navigation";
 
 interface PageProps {
@@ -40,58 +41,19 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return { title: `Товар не знайдено | ${SITE_STORE_NAME}` };
   }
 
-  const baseUrl = process.env.PUBLIC_URL || process.env.NEXT_PUBLIC_PUBLIC_URL || "http://localhost:3000";
-  const canonicalSlug = product.slug || String(product.id);
   const firstMedia = product.media?.length ? product.media[0] : null;
-  const imageUrl = firstMedia
-    ? `${baseUrl}/api/images/${firstMedia.url}`
-    : `${baseUrl}/images/tg_image_3614117882.png`;
-  const price = product.discount_percentage
-    ? (product.price * (1 - product.discount_percentage / 100)).toFixed(0)
-    : product.price.toFixed(0);
-  const categoryName = product.category_name || "wellness-продукція";
 
-  const baseDescription =
-    product.description ||
-    `${product.name} — оригінальна продукція ${SITE_PRODUCT_BRAND} у каталозі ${SITE_STORE_NAME}, категорія «${categoryName}». Ціна: ${price} ₴.`;
-  const fullDescription = `${baseDescription} Підтримка організму на щодень, натуральний склад та eco-підхід.`;
-
-  const keywordParts = [
-    product.name,
-    SITE_PRODUCT_BRAND,
-    SITE_STORE_NAME,
-    categoryName,
-    "wellness",
-    "фітокомплекс",
-    "натуральний продукт",
-    "eco-продукція",
-    "здоров'я",
-    "детокс",
-    "імунітет",
-    "енергія",
-    "сон",
-  ];
-  const keywords = Array.from(new Set(keywordParts.filter(Boolean))).join(", ");
-
-  return {
-    title: `${product.name} | ${SITE_STORE_NAME}`,
-    description: fullDescription,
-    keywords,
-    openGraph: {
-      title: `${product.name} | ${SITE_STORE_NAME}`,
-      description: fullDescription,
-      type: "website",
-      images: [{ url: imageUrl, width: 1200, height: 630, alt: product.name }],
-      locale: "uk_UA",
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: `${product.name} | ${SITE_STORE_NAME}`,
-      description: baseDescription,
-      images: [imageUrl],
-    },
-    alternates: { canonical: `${baseUrl}/product/${canonicalSlug}` },
-  };
+  return buildProductMetadata({
+    id: product.id,
+    name: product.name,
+    slug: product.slug,
+    description: product.description,
+    subtitle: (product as { subtitle?: string | null }).subtitle,
+    price: Number(product.price),
+    discount_percentage: product.discount_percentage,
+    category_name: product.category_name,
+    first_media: firstMedia ? { url: firstMedia.url, type: firstMedia.type } : null,
+  });
 }
 
 export default async function Page({ params }: PageProps) {
@@ -102,8 +64,8 @@ export default async function Page({ params }: PageProps) {
   let product = await sqlGetProductBySlug(slugStr);
   if (!product && /^\d+$/.test(slugStr)) {
     product = await sqlGetProduct(Number(slugStr));
-    if (product?.slug) {
-      redirect(`/product/${product.slug}`);
+    if (product?.slug && product.slug !== slugStr) {
+      redirect(productCanonicalPath(product.slug, product.id));
     }
   }
   if (!product) {
@@ -190,7 +152,18 @@ export default async function Page({ params }: PageProps) {
     name: p.name,
     slug: p.slug ?? null,
     price: p.price,
+    old_price: (p as { old_price?: number | null }).old_price ?? null,
+    discount_percentage: (p as { discount_percentage?: number | null }).discount_percentage ?? null,
     first_media: p.first_media ?? null,
+    subtitle: (p as { subtitle?: string | null }).subtitle ?? null,
+    subcategory_name: (p as { subcategory_name?: string | null }).subcategory_name ?? null,
+    category_name: (p as { category_name?: string | null }).category_name ?? null,
+    is_new: (p as { is_new?: boolean }).is_new ?? false,
+    is_hit: (p as { is_hit?: boolean }).is_hit ?? false,
+    is_promo: (p as { is_promo?: boolean }).is_promo ?? false,
+    gift_product_id: (p as { gift_product_id?: number | null }).gift_product_id ?? null,
+    in_stock: (p as { in_stock?: boolean }).in_stock,
+    stock: (p as { stock?: number }).stock,
   }));
 
   const boughtTogetherProducts = boughtTogetherIds.length
@@ -202,8 +175,17 @@ export default async function Page({ params }: PageProps) {
           name: p.name,
           slug: p.slug ?? null,
           price: p.price,
+          old_price: (p as { old_price?: number | null }).old_price ?? null,
+          discount_percentage: (p as { discount_percentage?: number | null }).discount_percentage ?? null,
           first_media: p.first_media ?? null,
-          description: (p as any).description ?? null,
+          subtitle: (p as { subtitle?: string | null }).subtitle ?? null,
+          description: (p as { description?: string | null }).description ?? null,
+          is_new: (p as { is_new?: boolean }).is_new ?? false,
+          is_hit: (p as { is_hit?: boolean }).is_hit ?? false,
+          is_promo: (p as { is_promo?: boolean }).is_promo ?? false,
+          gift_product_id: (p as { gift_product_id?: number | null }).gift_product_id ?? null,
+          in_stock: (p as { in_stock?: boolean }).in_stock,
+          stock: (p as { stock?: number }).stock,
         }))
     : [];
 
@@ -216,8 +198,17 @@ export default async function Page({ params }: PageProps) {
           name: p.name,
           slug: p.slug ?? null,
           price: p.price,
+          old_price: (p as { old_price?: number | null }).old_price ?? null,
+          discount_percentage: (p as { discount_percentage?: number | null }).discount_percentage ?? null,
           first_media: p.first_media ?? null,
-          description: (p as any).description ?? null,
+          subtitle: (p as { subtitle?: string | null }).subtitle ?? null,
+          description: (p as { description?: string | null }).description ?? null,
+          is_new: (p as { is_new?: boolean }).is_new ?? false,
+          is_hit: (p as { is_hit?: boolean }).is_hit ?? false,
+          is_promo: (p as { is_promo?: boolean }).is_promo ?? false,
+          gift_product_id: (p as { gift_product_id?: number | null }).gift_product_id ?? null,
+          in_stock: (p as { in_stock?: boolean }).in_stock,
+          stock: (p as { stock?: number }).stock,
         }))
     : [];
 
@@ -229,7 +220,7 @@ export default async function Page({ params }: PageProps) {
       <Suspense fallback={<div className="text-center py-20 text-lg">Завантаження товару...</div>}>
         <ProductServer product={product} />
       </Suspense>
-      <YouMightLike title="Схожі товари" suggestedProducts={suggestedProducts} />
+      <YouMightLike title="Вам також може сподобатися" suggestedProducts={suggestedProducts} showCatalogLink />
       {pairProducts.length > 0 && (
         <YouMightLike title="Обирай у парі" suggestedProducts={pairProducts} />
       )}

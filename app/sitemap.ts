@@ -1,5 +1,6 @@
-import { MetadataRoute } from 'next'
-import { sqlGetAllProducts, sqlGetAllCategories } from '@/lib/sql'
+import { MetadataRoute } from "next";
+import { sqlGetAllProducts, sqlGetAllCategories } from "@/lib/sql";
+import { categoryCanonicalPath, getSiteBaseUrl, productCanonicalPath } from "@/lib/seo";
 
 type CategoryItem = { id: number; name: string; slug?: string | null }
 type ProductItem = { id: number; name: string; slug?: string | null }
@@ -25,7 +26,7 @@ async function getCategories(): Promise<CategoryItem[]> {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.PUBLIC_URL || 'http://localhost:3000';
+  const baseUrl = getSiteBaseUrl();
   const [products, categories] = await Promise.all([
     getProducts(),
     getCategories(),
@@ -46,6 +47,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     },
     {
+      url: `${baseUrl}/cart`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.5,
+    },
+    {
+      url: `${baseUrl}/favorites`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.5,
+    },
+    {
       url: `${baseUrl}/final`,
       lastModified: new Date(),
       changeFrequency: 'weekly' as const,
@@ -53,12 +66,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
     {
       url: `${baseUrl}/contacts`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly' as const,
-      priority: 0.6,
-    },
-    {
-      url: `${baseUrl}/info`,
       lastModified: new Date(),
       changeFrequency: 'monthly' as const,
       priority: 0.6,
@@ -91,15 +98,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Category pages (ЧПУ)
   const categoryPages = categories.map((category: CategoryItem) => ({
-    url: `${baseUrl}/catalog/${category.slug ?? encodeURIComponent(category.name)}`,
+    url: `${baseUrl}${categoryCanonicalPath(category.slug, category.name)}`,
     lastModified: new Date(),
     changeFrequency: 'weekly' as const,
     priority: 0.85,
   }));
 
   // Product pages (ЧПУ)
-  const productPages = products.map((product: ProductItem) => ({
-    url: `${baseUrl}/product/${product.slug ?? product.id}`,
+  const productPages = products
+    .filter((p) => p.slug?.trim() || p.id)
+    .map((product: ProductItem) => ({
+    url: `${baseUrl}${productCanonicalPath(product.slug, product.id)}`,
     lastModified: new Date(),
     changeFrequency: 'weekly' as const,
     priority: 0.8,

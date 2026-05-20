@@ -1,37 +1,22 @@
 import type { Metadata } from "next";
 import React from "react";
-import { EcommerceMetrics } from "@/components/admin/EcommerceMetrics";
+import AdminAnalytics from "@/components/admin/AdminAnalytics";
 import MonthlySalesChart from "@/components/admin/MonthlySalesChart";
 import RecentOrders from "@/components/admin/RecentOrders";
 import ExportDatabaseButton from "@/components/admin/ExportDatabaseButton";
 
 export const metadata: Metadata = {
-  title:
-    "Next.js E-commerce Dashboard | TailAdmin - Next.js Dashboard Template",
-  description: "This is Next.js Home for TailAdmin Dashboard Template",
+  title: "Адмін-панель",
+  description: "Замовлення, товари та аналітика",
 };
 
-export default function Ecommerce() {
+export default function AdminHomePage() {
   return (
     <div className="col-span-12 space-y-6 xl:col-span-7">
       <ExportDatabaseButton />
-      <EcommerceMetrics />
+      <AdminAnalytics />
       <MonthlySalesChart />
       <RecentOrders />
     </div>
   );
-
-  // <div className="grid grid-cols-12 gap-4 md:gap-6">
-  {
-    /* Left Section */
-  }
-
-  {
-    /* Right Section */
-  }
-  //   <div className="col-span-12 space-y-6 xl:col-span-5">
-  //     <MonthlyTarget />
-  //     <StatisticsChart />
-  //   </div>
-  // </div>
 }

@@ -1,13 +1,17 @@
-# 13VPLUS
+# Plywood Present
 
-13VPLUS — український бренд жіночого одягу. Повсякденний одяг, домашній одяг та купальники в мінімалістичному лакшері стилі. Індивідуальний пошив під ваші параметри. Для жінок від 22 до 50 років.
+Plywood Present — український бренд дерев'яного декору та іменних подарунків із березової фанери: фоторамки, дитячі метрики, ключниці, сімейні колажі та інтер'єрний декор. Власне виробництво, лазерне різання та гравіювання.
 
 ## Основні сторінки
 - Головна: /
 - Каталог: /catalog
+- Кошик: /cart
 - Оформлення замовлення: /final
 - Контакти: /contacts
-- Доставка та оплата: /info
+- Доставка та оплата: /delivery-and-payment
+- Повернення та обмін: /returns-and-exchange
+- Публічна оферта: /terms-of-service
+- Політика конфіденційності: /privacy-policy
 
 ## Sitemap
 Sitemap: /sitemap.xml
@@ -15,5 +19,8 @@ Sitemap: /sitemap.xml
 ## Мова
 Мова сайту: українська (uk).
 
-## Контакти
-Instagram: https://www.instagram.com/13vplus
+## Контакти й соцмережі
+Email: plywood_@ukr.net
+Instagram: https://www.instagram.com/plywood_present
+TikTok: https://www.tiktok.com/@plywood_present
+Telegram: https://t.me/+380932595149

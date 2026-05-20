@@ -42,7 +42,7 @@ export default function ForbiddenPage() {
         </div>
 
         <p className="mt-12 text-xs font-['Montserrat'] text-[#3D1A00]/50">
-          {SITE_STORE_NAME} — eco та wellness
+          {SITE_STORE_NAME} — подарунки з фанери
         </p>
       </div>
     </div>

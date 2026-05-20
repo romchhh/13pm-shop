@@ -2,13 +2,11 @@
 
 import { useState, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useAppContext } from "@/lib/GeneralProvider";
 import { useBasket } from "@/lib/BasketProvider";
 import SidebarMenu from "../layout/SidebarMenu";
-import { getProductImageSrc } from "@/lib/getFirstProductImage";
 import ProductSkeleton from "./ProductSkeleton";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, type ReadonlyURLSearchParams } from "next/navigation";
 import { getDiscountedPrice } from "@/lib/pricing";
 import {
   GA4_BRAND,
@@ -16,13 +14,17 @@ import {
   GA4_VERTICAL,
   pushGA4EcommerceEvent,
 } from "@/lib/ga4Ecommerce";
-import {
-  LABEL_FREE_DELIVERY_FROM_2000,
-  LABEL_PRODUCT_COURSE,
-  LABEL_PRODUCT_PACKAGE,
-  SITE_STORE_NAME,
-} from "@/lib/siteBrand";
 import CategoryDescriptionMarkdown from "@/components/shared/CategoryDescriptionMarkdown";
+import CatalogFilters from "@/components/catalog/CatalogFilters";
+import CatalogProductCard from "@/components/catalog/CatalogProductCard";
+import { useBodyScrollLock } from "@/lib/useBodyScrollLock";
+import {
+  catalogHasMoreToShow,
+  catalogInitialVisibleCount,
+  catalogLoadMoreIncrement,
+  getCatalogAlignedVisibleCount,
+} from "@/lib/catalogVisibleCount";
+import { isCatalogPromoProduct } from "@/lib/isCatalogPromoProduct";
 
 interface Product {
   id: number;
@@ -34,6 +36,9 @@ interface Product {
   first_media?: { url: string; type: string } | null;
   discount_percentage?: number | null;
   is_hit?: boolean;
+  is_new?: boolean;
+  top_sale?: boolean;
+  limited_edition?: boolean;
   dietitian_approved?: boolean;
   is_promo?: boolean;
   free_delivery_badge?: boolean;
@@ -44,6 +49,7 @@ interface Product {
    subcategory_ids?: number[] | null;
   category_name?: string | null;
   subcategory_name?: string | null;
+  subtitle?: string | null;
   stock?: number;
   in_stock?: boolean;
   package_weight?: string | null;
@@ -63,12 +69,21 @@ interface CatalogClientProps {
   selectedCategoryDescription?: string | null;
 }
 
-/** Товар у блоці «Акції» / ?promo=1: плашка акції, % знижки або знижка через стару ціну. */
-function isCatalogPromoProduct(p: Product): boolean {
-  if (p.is_promo === true) return true;
-  if (p.discount_percentage != null && Number(p.discount_percentage) > 0) return true;
-  if (p.old_price != null && Number(p.old_price) > Number(p.price)) return true;
-  return false;
+function readCatalogListFlag(params: ReadonlyURLSearchParams, key: string): boolean {
+  const v = params.get(key);
+  return v === "1" || v === "true";
+}
+
+/** Іконка «фільтр» для кнопки на мобільному */
+function FilterIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden>
+      <path strokeLinecap="round" d="M4 6h16M8 12h8M10 18h4" />
+      <circle cx="6" cy="6" r="1.8" fill="currentColor" stroke="none" />
+      <circle cx="18" cy="12" r="1.8" fill="currentColor" stroke="none" />
+      <circle cx="14" cy="18" r="1.8" fill="currentColor" stroke="none" />
+    </svg>
+  );
 }
 
 export default function CatalogClient({
@@ -81,8 +96,14 @@ export default function CatalogClient({
   const { addItem } = useBasket();
 
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+
+  useBodyScrollLock(mobileFiltersOpen);
+  const searchParams = useSearchParams();
+
   const [sortOrder, setSortOrder] = useState<"recommended" | "newest" | "asc" | "desc" | "sale">("recommended");
-  const [promoOnly, setPromoOnly] = useState(false);
+  const [promoOnly, setPromoOnly] = useState(() => readCatalogListFlag(searchParams, "promo"));
+  const [hitsOnly, setHitsOnly] = useState(() => readCatalogListFlag(searchParams, "hits"));
+  const [newOnly, setNewOnly] = useState(() => readCatalogListFlag(searchParams, "new"));
   const [selectedCategories, setSelectedCategories] = useState<number[]>(
     initialSelectedCategoryIds ?? []
   );
@@ -96,7 +117,6 @@ export default function CatalogClient({
   const [maxPriceInput, setMaxPriceInput] = useState("");
   const [isFiltering, setIsFiltering] = useState(false);
   const [basketError, setBasketError] = useState<string | null>(null);
-  const searchParams = useSearchParams();
   const initializedFromQueryRef = useRef(false);
 
   // Load all subcategories for filters
@@ -146,6 +166,8 @@ export default function CatalogClient({
 
   // Init/override selection when приходимо з хедера по категорії (?categoryId=...)
   useEffect(() => {
+    if (initialProducts.length === 0) return;
+
     const catIdParam = searchParams.get("categoryId");
     if (!catIdParam) return;
 
@@ -155,20 +177,48 @@ export default function CatalogClient({
     const exists = categories.some((c) => c.id === idNum);
     if (!exists) return;
 
-    // Клік з хедера по категорії завжди повністю перевизначає вибір
+    const hasProductsInCategory = initialProducts.some((p) => {
+      const ids =
+        p.category_ids && p.category_ids.length > 0
+          ? p.category_ids
+          : p.category_id != null
+            ? [p.category_id]
+            : [];
+      return ids.includes(idNum);
+    });
+
+    // Старі категорії без товарів (напр. з попереднього наповнення БД) — не фільтруємо
+    if (!hasProductsInCategory) {
+      setSelectedCategories([]);
+      setSelectedSubcategories([]);
+      return;
+    }
+
     setSelectedCategories([idNum]);
     setSelectedSubcategories([]);
     setMinPrice(null);
     setMaxPrice(null);
     setMinPriceInput("");
     setMaxPriceInput("");
-  }, [searchParams, categories]);
+  }, [searchParams, categories, initialProducts]);
 
-  // Init/override promo tab when приходимо з хедера/меню акцій (?promo=1)
+  // ?promo=1 | ?hits=1 | ?new=1 — синхронізація з URL і скидання категорій/ціни
   useEffect(() => {
-    const promoParam = searchParams.get("promo");
-    if (promoParam === "1" || promoParam === "true") {
-      setPromoOnly(true);
+    const promo = readCatalogListFlag(searchParams, "promo");
+    const hits = readCatalogListFlag(searchParams, "hits");
+    const isNew = readCatalogListFlag(searchParams, "new");
+
+    setPromoOnly(promo);
+    setHitsOnly(hits);
+    setNewOnly(isNew);
+
+    if (promo || hits || isNew) {
+      setSelectedCategories([]);
+      setSelectedSubcategories([]);
+      setMinPrice(null);
+      setMaxPrice(null);
+      setMinPriceInput("");
+      setMaxPriceInput("");
     }
   }, [searchParams]);
 
@@ -206,17 +256,25 @@ export default function CatalogClient({
       const matchesMinPrice = minPrice === null || product.price >= minPrice;
       const matchesMaxPrice = maxPrice === null || product.price <= maxPrice;
       const matchesPromo = !promoOnly || isCatalogPromoProduct(product);
+      const matchesHits = !hitsOnly || product.is_hit === true;
+      const matchesNew = !newOnly || product.is_new === true;
       return (
-        matchesCategory && matchesSubcategory && matchesMinPrice && matchesMaxPrice && matchesPromo
+        matchesCategory &&
+        matchesSubcategory &&
+        matchesMinPrice &&
+        matchesMaxPrice &&
+        matchesPromo &&
+        matchesHits &&
+        matchesNew
       );
     });
-  }, [initialProducts, minPrice, maxPrice, selectedCategories, selectedSubcategories, promoOnly]);
+  }, [initialProducts, minPrice, maxPrice, selectedCategories, selectedSubcategories, promoOnly, hitsOnly, newOnly]);
 
   useEffect(() => {
     setIsFiltering(true);
     const timer = setTimeout(() => setIsFiltering(false), 200);
     return () => clearTimeout(timer);
-  }, [selectedCategories, selectedSubcategories, minPrice, maxPrice, sortOrder, promoOnly]);
+  }, [selectedCategories, selectedSubcategories, minPrice, maxPrice, sortOrder, promoOnly, hitsOnly, newOnly]);
 
   const hasPromoProducts = useMemo(() => {
     return initialProducts.some((p) => isCatalogPromoProduct(p));
@@ -249,10 +307,70 @@ export default function CatalogClient({
     }
   }, [filteredProducts, sortOrder]);
 
-  const [visibleCount, setVisibleCount] = useState(9);
+  const [isCatalogDesktop, setIsCatalogDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const sync = () => setIsCatalogDesktop(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+
+  const [visibleCount, setVisibleCount] = useState(() =>
+    typeof window !== "undefined"
+      ? catalogInitialVisibleCount(window.matchMedia("(min-width: 1024px)").matches)
+      : 9
+  );
+
+  const filterListSignature = useMemo(
+    () =>
+      JSON.stringify({
+        sortOrder,
+        selectedCategories,
+        selectedSubcategories,
+        minPrice,
+        maxPrice,
+        promoOnly,
+        hitsOnly,
+        newOnly,
+        total: sortedProducts.length,
+      }),
+    [
+      sortOrder,
+      selectedCategories,
+      selectedSubcategories,
+      minPrice,
+      maxPrice,
+      promoOnly,
+      hitsOnly,
+      newOnly,
+      sortedProducts.length,
+    ]
+  );
+
+  useEffect(() => {
+    setVisibleCount(catalogInitialVisibleCount(isCatalogDesktop));
+  }, [filterListSignature, isCatalogDesktop]);
+
+  const alignedVisibleCount = useMemo(
+    () =>
+      getCatalogAlignedVisibleCount(
+        visibleCount,
+        sortedProducts.length,
+        isCatalogDesktop
+      ),
+    [visibleCount, sortedProducts.length, isCatalogDesktop]
+  );
+
   const visibleProducts = useMemo(
-    () => sortedProducts.slice(0, visibleCount),
-    [sortedProducts, visibleCount]
+    () => sortedProducts.slice(0, alignedVisibleCount),
+    [sortedProducts, alignedVisibleCount]
+  );
+
+  const hasMoreProducts = catalogHasMoreToShow(
+    visibleCount,
+    sortedProducts.length,
+    isCatalogDesktop
   );
 
   const lastViewItemListSignatureRef = useRef<string | null>(null);
@@ -328,6 +446,8 @@ export default function CatalogClient({
     setMinPriceInput("");
     setMaxPriceInput("");
     setPromoOnly(false);
+    setHitsOnly(false);
+    setNewOnly(false);
   };
 
   const toggleCategory = (id: number) => {
@@ -353,484 +473,89 @@ export default function CatalogClient({
     );
   };
 
-  const visibleSubcategories = useMemo(() => {
-    if (selectedCategories.length === 1) {
-      return subcategories.filter(
-        (sc) => sc.category_id === selectedCategories[0]
-      );
-    }
-    return subcategories;
-  }, [subcategories, selectedCategories]);
-
   return (
     <>
       <section className="max-w-[1824px] mx-auto px-4 sm:px-6 lg:px-12 pt-4 pb-20 bg-white min-h-screen">
-        {/* Breadcrumbs */}
-        <nav className="mb-4" aria-label="Breadcrumb">
-          <ol className="flex items-center gap-2 text-sm font-['Montserrat'] text-gray-400">
-            <li>
-              <Link href="/" className="hover:text-gray-700 transition-colors">
-                Головна
-              </Link>
-            </li>
-            <li aria-hidden className="text-gray-300">|</li>
-            <li className="text-[#3D1A00]">Каталог товарів</li>
-          </ol>
-        </nav>
+        {/* Breadcrumbs + заголовок (як на макеті) */}
+        <div className="mb-8 flex flex-col gap-4 lg:mb-10">
+          <nav aria-label="Breadcrumb">
+            <ol className="flex items-center gap-2 text-sm font-['Montserrat'] text-black/45">
+              <li>
+                <Link href="/" className="hover:text-black/70 transition-colors">
+                  Головна
+                </Link>
+              </li>
+              <li aria-hidden className="text-black/30">
+                ›
+              </li>
+              <li className="text-black/70">Каталог товарів</li>
+            </ol>
+          </nav>
 
-        {/* Великий заголовок по центру */}
-        <h1 className="text-center text-3xl sm:text-4xl lg:text-5xl font-extrabold font-['Montserrat'] uppercase tracking-widest text-[#3D1A00] mb-10">
-          Каталог товарів
-        </h1>
+          <h1 className="font-['Montserrat'] text-xl font-bold tracking-tight text-black lg:hidden">
+            Каталог товарів
+          </h1>
 
-        {/* Мобільна кнопка фільтрів — відкриває ті самі фільтри, що й на десктопі */}
-        <button
-          onClick={() => setMobileFiltersOpen(true)}
-          className="lg:hidden mb-4 flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg text-sm font-['Montserrat'] text-gray-700 hover:border-gray-400 transition-colors"
-        >
-          <span className="text-lg">≡</span> Фільтри
-        </button>
-
-        {/* Мобільна панель фільтрів — ті самі Ціна, Категорія, Очистити, Застосувати */}
-        {mobileFiltersOpen && (
-          <>
-            <div
-              className="fixed inset-0 bg-black/40 z-40 lg:hidden"
-              onClick={() => setMobileFiltersOpen(false)}
-              aria-hidden
-            />
-            <div className="fixed top-0 right-0 bottom-0 w-full max-w-sm bg-white shadow-xl z-50 flex flex-col overflow-y-auto lg:hidden">
-              <div className="flex items-center justify-between p-4 border-b border-gray-200">
-                <h2 className="text-lg font-extrabold font-['Montserrat'] uppercase tracking-widest text-[#3D1A00]">
-                  Фільтри
-                </h2>
-                <button
-                  type="button"
-                  onClick={() => setMobileFiltersOpen(false)}
-                  className="p-2 text-gray-500 hover:text-gray-800 text-2xl leading-none"
-                  aria-label="Закрити фільтри"
-                >
-                  ×
-                </button>
-              </div>
-              <div className="flex-1 p-4 space-y-6">
-                {/* Ціна */}
-                <div>
-                  <h3 className="text-base font-extrabold font-['Montserrat'] uppercase tracking-widest text-[#3D1A00] mb-3">
-                    Ціна
-                  </h3>
-                  <div className="flex gap-2 items-center">
-                    <div className="flex-1">
-                      <label className="block text-xs font-['Montserrat'] text-gray-500 mb-1">Від</label>
-                      <input
-                        type="number"
-                        value={minPriceInput}
-                        onChange={(e) => setMinPriceInput(e.target.value)}
-                        placeholder="Грн"
-                        className="w-full border border-gray-200 rounded px-3 py-2 text-sm font-['Montserrat'] text-gray-700 placeholder-gray-300 outline-none focus:border-gray-400 transition-colors"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <label className="block text-xs font-['Montserrat'] text-gray-500 mb-1">До</label>
-                      <input
-                        type="number"
-                        value={maxPriceInput}
-                        onChange={(e) => setMaxPriceInput(e.target.value)}
-                        placeholder="Грн"
-                        className="w-full border border-gray-200 rounded px-3 py-2 text-sm font-['Montserrat'] text-gray-700 placeholder-gray-300 outline-none focus:border-gray-400 transition-colors"
-                      />
-                    </div>
-                  </div>
-                </div>
-                {/* Акції — у тому ж фільтрі, що ціна та категорії */}
-                {hasPromoProducts && (
-                  <div>
-                    <h3 className="text-base font-extrabold font-['Montserrat'] uppercase tracking-widest text-[#3D1A00] mb-3">
-                      Акції
-                    </h3>
-                    <label className="flex items-center gap-3 cursor-pointer group">
-                      <span
-                        className={`w-4 h-4 flex-shrink-0 border rounded-sm transition-colors ${
-                          promoOnly
-                            ? "bg-[#D7D799] border-[#b8b87a]"
-                            : "border-gray-300 group-hover:border-gray-500"
-                        }`}
-                        onClick={() => setPromoOnly((v) => !v)}
-                      >
-                        {promoOnly && (
-                          <svg
-                            viewBox="0 0 12 10"
-                            fill="none"
-                            className="w-full h-full p-0.5"
-                          >
-                            <path
-                              d="M1 5l3 3 7-7"
-                              stroke="#3D1A00"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        )}
-                      </span>
-                      <span
-                        className="text-sm font-['Montserrat'] text-gray-700 group-hover:text-[#3D1A00] transition-colors"
-                        onClick={() => setPromoOnly((v) => !v)}
-                      >
-                        Лише акційні товари (знижка, стара ціна або плашка «Акція»)
-                      </span>
-                    </label>
-                  </div>
-                )}
-                {/* Категорія товару + підкатегорії під вибраною категорією */}
-                <div>
-                  <h3 className="text-base font-extrabold font-['Montserrat'] uppercase tracking-widest text-[#3D1A00] mb-3">
-                    Категорія товару
-                  </h3>
-                  <ul className="flex flex-col gap-2">
-                    {categories.map((cat) => {
-                      const isActive = selectedCategories.includes(cat.id);
-                      const catSubcategories = subcategories.filter(
-                        (sc) => sc.category_id === cat.id
-                      );
-                      return (
-                        <li key={cat.id} className="flex flex-col gap-1">
-                          <label className="flex items-center gap-3 cursor-pointer group">
-                            <span
-                              className={`w-4 h-4 flex-shrink-0 border rounded-sm transition-colors ${
-                                isActive
-                                  ? "bg-[#8B9A47] border-[#8B9A47]"
-                                  : "border-gray-300 group-hover:border-gray-500"
-                              }`}
-                              onClick={() => toggleCategory(cat.id)}
-                            >
-                              {isActive && (
-                                <svg
-                                  viewBox="0 0 12 10"
-                                  fill="none"
-                                  className="w-full h-full p-0.5"
-                                >
-                                  <path
-                                    d="M1 5l3 3 7-7"
-                                    stroke="white"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  />
-                                </svg>
-                              )}
-                            </span>
-                            <span
-                              className="text-sm font-['Montserrat'] text-gray-700 group-hover:text-[#3D1A00] transition-colors"
-                              onClick={() => toggleCategory(cat.id)}
-                            >
-                              {cat.name}
-                            </span>
-                          </label>
-
-                          {/* Підкатегорії цієї категорії під вибраною категорією */}
-                          {isActive && catSubcategories.length > 0 && (
-                            <ul className="ml-6 mt-1 flex flex-col gap-1 max-h-40 overflow-y-auto">
-                              {catSubcategories.map((sc) => {
-                                const scActive = selectedSubcategories.includes(
-                                  sc.id
-                                );
-                                return (
-                                  <li key={sc.id}>
-                                    <label className="flex items-center gap-2 cursor-pointer group">
-                                      <span
-                                        className={`w-3.5 h-3.5 flex-shrink-0 border rounded-sm transition-colors ${
-                                          scActive
-                                            ? "bg-[#8B9A47] border-[#8B9A47]"
-                                            : "border-gray-300 group-hover:border-gray-500"
-                                        }`}
-                                        onClick={() => toggleSubcategory(sc.id)}
-                                      >
-                                        {scActive && (
-                                          <svg
-                                            viewBox="0 0 12 10"
-                                            fill="none"
-                                            className="w-full h-full p-[1px]"
-                                          >
-                                            <path
-                                              d="M1 5l3 3 7-7"
-                                              stroke="white"
-                                              strokeWidth="2"
-                                              strokeLinecap="round"
-                                              strokeLinejoin="round"
-                                            />
-                                          </svg>
-                                        )}
-                                      </span>
-                                      <span
-                                        className="text-xs font-['Montserrat'] text-gray-700 group-hover:text-[#3D1A00] transition-colors"
-                                        onClick={() => toggleSubcategory(sc.id)}
-                                      >
-                                        {sc.name}
-                                      </span>
-                                    </label>
-                                  </li>
-                                );
-                              })}
-                            </ul>
-                          )}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-                {/* Кнопки */}
-                <div className="flex gap-3 pt-2">
-                  <button
-                    onClick={handleClearFilters}
-                    className="flex-1 py-2.5 px-4 border border-gray-300 rounded text-sm font-semibold font-['Montserrat'] text-gray-700 hover:border-gray-500 hover:text-[#3D1A00] transition-colors"
-                  >
-                    Очистити
-                  </button>
-                  <button
-                    onClick={handleApplyFilters}
-                    className="flex-1 py-2.5 px-4 bg-[#8B9A47] hover:bg-[#7a8940] text-white rounded text-sm font-semibold font-['Montserrat'] transition-colors"
-                  >
-                    Застосувати
-                  </button>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* Основний контент */}
-        <div className="flex gap-8 lg:gap-10 items-start">
-          {/* Sidebar фільтри — тільки десктоп */}
-          <aside className="hidden lg:flex flex-col gap-6 w-[260px] flex-shrink-0">
-            {/* Ціна */}
-            <div>
-              <h2 className="text-base font-extrabold font-['Montserrat'] uppercase tracking-widest text-[#3D1A00] mb-3">
-                Ціна
-              </h2>
-              <div className="flex gap-2 items-center">
-                <div className="flex-1">
-                  <label className="block text-xs font-['Montserrat'] text-gray-500 mb-1">Від</label>
-                  <input
-                    type="number"
-                    value={minPriceInput}
-                    onChange={(e) => setMinPriceInput(e.target.value)}
-                    placeholder="Грн"
-                    className="w-full border border-gray-200 rounded px-3 py-2 text-sm font-['Montserrat'] text-gray-700 placeholder-gray-300 outline-none focus:border-gray-400 transition-colors"
-                  />
-                </div>
-                <div className="flex-1">
-                  <label className="block text-xs font-['Montserrat'] text-gray-500 mb-1">До</label>
-                  <input
-                    type="number"
-                    value={maxPriceInput}
-                    onChange={(e) => setMaxPriceInput(e.target.value)}
-                    placeholder="Грн"
-                    className="w-full border border-gray-200 rounded px-3 py-2 text-sm font-['Montserrat'] text-gray-700 placeholder-gray-300 outline-none focus:border-gray-400 transition-colors"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Акції — у сайдбарі разом із ціною та категоріями */}
-            {hasPromoProducts && (
-              <div>
-                <h2 className="text-base font-extrabold font-['Montserrat'] uppercase tracking-widest text-[#3D1A00] mb-3">
-                  Акції
-                </h2>
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <span
-                    className={`w-4 h-4 flex-shrink-0 border rounded-sm transition-colors ${
-                      promoOnly
-                        ? "bg-[#D7D799] border-[#b8b87a]"
-                        : "border-gray-300 group-hover:border-gray-500"
-                    }`}
-                    onClick={() => setPromoOnly((v) => !v)}
-                  >
-                    {promoOnly && (
-                      <svg
-                        viewBox="0 0 12 10"
-                        fill="none"
-                        className="w-full h-full p-0.5"
-                      >
-                        <path
-                          d="M1 5l3 3 7-7"
-                          stroke="#3D1A00"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    )}
-                  </span>
-                  <span
-                    className="text-sm font-['Montserrat'] text-gray-700 group-hover:text-[#3D1A00] transition-colors"
-                    onClick={() => setPromoOnly((v) => !v)}
-                  >
-                    Лише акційні товари (знижка, стара ціна або плашка «Акція»)
-                  </span>
-                </label>
-              </div>
-            )}
-
-            {/* Категорії + підкатегорії під вибраною категорією */}
-            <div>
-              <h2 className="text-base font-extrabold font-['Montserrat'] uppercase tracking-widest text-[#3D1A00] mb-3">
-                Категорія товару
-              </h2>
-              <ul className="flex flex-col gap-2">
-                {categories.map((cat) => {
-                  const isActive = selectedCategories.includes(cat.id);
-                  const catSubcategories = subcategories.filter(
-                    (sc) => sc.category_id === cat.id
-                  );
-                  return (
-                    <li key={cat.id} className="flex flex-col gap-1">
-                      <label className="flex items-center gap-3 cursor-pointer group">
-                        <span
-                          className={`w-4 h-4 flex-shrink-0 border rounded-sm transition-colors ${
-                            isActive
-                              ? "bg-[#8B9A47] border-[#8B9A47]"
-                              : "border-gray-300 group-hover:border-gray-500"
-                          }`}
-                          onClick={() => toggleCategory(cat.id)}
-                        >
-                          {isActive && (
-                            <svg
-                              viewBox="0 0 12 10"
-                              fill="none"
-                              className="w-full h-full p-0.5"
-                            >
-                              <path
-                                d="M1 5l3 3 7-7"
-                                stroke="white"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                            </svg>
-                          )}
-                        </span>
-                        <span
-                          className="text-sm font-['Montserrat'] text-gray-700 group-hover:text-[#3D1A00] transition-colors"
-                          onClick={() => toggleCategory(cat.id)}
-                        >
-                          {cat.name}
-                        </span>
-                      </label>
-
-                      {/* Підкатегорії цієї категорії під вибраною категорією */}
-                      {isActive && catSubcategories.length > 0 && (
-                        <ul className="ml-6 mt-1 flex flex-col gap-1 max-h-40 overflow-y-auto">
-                          {catSubcategories.map((sc) => {
-                            const scActive = selectedSubcategories.includes(
-                              sc.id
-                            );
-                            return (
-                              <li key={sc.id}>
-                                <label className="flex items-center gap-2 cursor-pointer group">
-                                  <span
-                                    className={`w-3.5 h-3.5 flex-shrink-0 border rounded-sm transition-colors ${
-                                      scActive
-                                        ? "bg-[#8B9A47] border-[#8B9A47]"
-                                        : "border-gray-300 group-hover:border-gray-500"
-                                    }`}
-                                    onClick={() => toggleSubcategory(sc.id)}
-                                  >
-                                    {scActive && (
-                                      <svg
-                                        viewBox="0 0 12 10"
-                                        fill="none"
-                                        className="w-full h-full p-[1px]"
-                                      >
-                                        <path
-                                          d="M1 5l3 3 7-7"
-                                          stroke="white"
-                                          strokeWidth="2"
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                        />
-                                      </svg>
-                                    )}
-                                  </span>
-                                  <span
-                                    className="text-xs font-['Montserrat'] text-gray-700 group-hover:text-[#3D1A00] transition-colors"
-                                    onClick={() => toggleSubcategory(sc.id)}
-                                  >
-                                    {sc.name}
-                                  </span>
-                                </label>
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-
-            {/* Кнопки фільтрів */}
-            <div className="flex gap-3">
-              <button
-                onClick={handleClearFilters}
-                className="flex-1 py-2.5 px-4 border border-gray-300 rounded text-sm font-semibold font-['Montserrat'] text-gray-700 hover:border-gray-500 hover:text-[#3D1A00] transition-colors"
+          {/* Мобільна панель: фільтр + лічильник + сортування в один ряд */}
+          <div className="flex flex-nowrap items-center gap-2 lg:hidden">
+            <button
+              type="button"
+              onClick={() => setMobileFiltersOpen(true)}
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border border-black/15 bg-white px-4 py-2.5 font-['Montserrat'] text-sm font-semibold text-[#1a1a1a] shadow-sm transition-colors hover:border-black/25 sm:px-5 sm:py-3 sm:text-base"
+            >
+              <FilterIcon className="h-4 w-4 text-black/55 sm:h-5 sm:w-5" />
+              Фільтр
+            </button>
+            <p className="min-w-0 shrink truncate font-['Montserrat'] text-[11px] text-black/50 sm:text-xs">
+              Показ{" "}
+              <span className="font-medium text-black/75">
+                {sortedProducts.length === 0 ? 0 : 1}-{visibleProducts.length}
+              </span>{" "}
+              з{" "}
+              <span className="font-medium text-black/75">{sortedProducts.length}</span>
+            </p>
+            <label className="ml-auto flex min-w-0 shrink-0 items-center gap-1.5">
+              <span className="hidden font-['Montserrat'] text-[11px] text-black/50 sm:inline sm:text-xs">
+                Сортування:
+              </span>
+              <select
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value as typeof sortOrder)}
+                className="max-w-[min(11rem,42vw)] rounded-lg border border-black/10 bg-white py-2 pl-2 pr-6 font-['Montserrat'] text-[11px] text-black focus:border-[#8B5E3F] focus:outline-none focus:ring-1 focus:ring-[#8B5E3F]/30 sm:max-w-[13rem] sm:text-xs"
+                aria-label="Сортування"
               >
-                Очистити
-              </button>
-              <button
-                onClick={handleApplyFilters}
-                className="flex-1 py-2.5 px-4 bg-[#8B9A47] hover:bg-[#7a8940] text-white rounded text-sm font-semibold font-['Montserrat'] transition-colors"
-              >
-                Застосувати
-              </button>
-            </div>
-          </aside>
+                <option value="recommended">Найпопулярніші</option>
+                <option value="newest">За новизною</option>
+                <option value="asc">Ціна: зростання</option>
+                <option value="desc">Ціна: спадання</option>
+                <option value="sale">Спочатку акційні</option>
+              </select>
+            </label>
+          </div>
 
-          {/* Сітка товарів */}
-          <div className="flex-1 min-w-0">
-            {/* Сортування та лічильник */}
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-5">
-              <p className="text-sm font-['Montserrat'] text-gray-500">
-                Знайдено:{" "}
-                <span className="font-semibold text-[#3D1A00]">{filteredProducts.length}</span>{" "}
-                {filteredProducts.length === 1 ? "товар" : "товарів"}
+          {/* Десктоп: заголовок на одному рівні з лічильником і сортуванням */}
+          <div className="hidden lg:flex lg:flex-wrap lg:items-baseline lg:justify-between lg:gap-x-8 lg:gap-y-2">
+            <h1 className="font-['Montserrat'] text-4xl font-bold tracking-tight text-black">
+              Каталог товарів
+            </h1>
+            <div className="flex flex-wrap items-baseline justify-end gap-x-8 gap-y-2">
+              <p className="font-['Montserrat'] text-sm text-black/50">
+                Показ{" "}
+                <span className="font-medium text-black/80">
+                  {sortedProducts.length === 0 ? 0 : 1}-{visibleProducts.length}
+                </span>{" "}
+                з{" "}
+                <span className="font-medium text-black/80">{sortedProducts.length}</span>{" "}
+                продуктів
               </p>
-              {hasPromoProducts && (
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setPromoOnly(false)}
-                    className={`px-3 py-2 rounded-full text-sm font-['Montserrat'] border transition-colors ${
-                      !promoOnly
-                        ? "bg-[#3D1A00] text-white border-[#3D1A00]"
-                        : "bg-white text-[#3D1A00] border-gray-200 hover:border-[#3D1A00]/40"
-                    }`}
-                  >
-                    Всі
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPromoOnly(true)}
-                    className={`px-3 py-2 rounded-full text-sm font-['Montserrat'] border transition-colors ${
-                      promoOnly
-                        ? "bg-[#D7D799] text-[#3D1A00] border-[#D7D799]"
-                        : "bg-white text-[#3D1A00] border-gray-200 hover:border-[#3D1A00]/40"
-                    }`}
-                  >
-                    Акції
-                  </button>
-                </div>
-              )}
-              <label className="flex items-center gap-2">
-                <span className="text-sm font-['Montserrat'] text-gray-500">Сортування:</span>
+              <label className="flex flex-wrap items-baseline gap-2">
+                <span className="font-['Montserrat'] text-sm text-black/55">Сортування:</span>
                 <select
                   value={sortOrder}
                   onChange={(e) => setSortOrder(e.target.value as typeof sortOrder)}
-                  className="text-sm font-['Montserrat'] border border-gray-200 rounded px-3 py-2 bg-white text-[#3D1A00] focus:ring-2 focus:ring-[#8B9A47]/30 focus:border-[#8B9A47] outline-none"
+                  className="min-w-[220px] rounded-lg border border-black/10 bg-white py-2.5 pl-3 pr-8 font-['Montserrat'] text-sm text-black focus:border-[#8B5E3F] focus:outline-none focus:ring-1 focus:ring-[#8B5E3F]/30"
                 >
-                  <option value="recommended">Рекомендовані</option>
+                  <option value="recommended">Найпопулярніші</option>
                   <option value="newest">За новизною</option>
                   <option value="asc">Ціна: за зростанням</option>
                   <option value="desc">Ціна: за спаданням</option>
@@ -838,7 +563,71 @@ export default function CatalogClient({
                 </select>
               </label>
             </div>
+          </div>
+        </div>
 
+        {/* Мобільні фільтри — панель з заокругленням зверху */}
+        {mobileFiltersOpen && (
+          <>
+            <div
+              className="fixed inset-0 z-[var(--z-site-overlay-backdrop)] bg-black/40 lg:hidden"
+              onClick={() => setMobileFiltersOpen(false)}
+              aria-hidden
+            />
+            <div className="fixed inset-x-0 bottom-0 z-[var(--z-site-overlay)] flex max-h-[92vh] flex-col rounded-t-3xl bg-white shadow-[0_-8px_40px_rgba(0,0,0,0.12)] lg:hidden">
+              <CatalogFilters
+                variant="mobile"
+                categories={categories}
+                subcategories={subcategories}
+                selectedCategories={selectedCategories}
+                selectedSubcategories={selectedSubcategories}
+                toggleCategory={toggleCategory}
+                toggleSubcategory={toggleSubcategory}
+                priceRange={priceRange}
+                minPriceInput={minPriceInput}
+                maxPriceInput={maxPriceInput}
+                setMinPriceInput={setMinPriceInput}
+                setMaxPriceInput={setMaxPriceInput}
+                promoOnly={promoOnly}
+                setPromoOnly={setPromoOnly}
+                hasPromoProducts={hasPromoProducts}
+                onClear={handleClearFilters}
+                onSave={handleApplyFilters}
+                onClose={() => setMobileFiltersOpen(false)}
+              />
+            </div>
+          </>
+        )}
+
+        {/* Основний контент */}
+        <div className="flex gap-8 lg:gap-10 xl:gap-12 items-start lg:items-stretch">
+          {/* Сайдбар фільтрів — картка як на макеті; колонка на всю висоту сітки, щоб sticky працював */}
+          <aside className="hidden w-[min(100%,320px)] flex-shrink-0 lg:block">
+            <div className="sticky top-[calc(var(--site-header-offset)+1rem)] overflow-x-hidden rounded-2xl border border-black/[0.06] bg-white p-6 shadow-[0_8px_30px_rgba(0,0,0,0.06)]">
+              <CatalogFilters
+                variant="sidebar"
+                categories={categories}
+                subcategories={subcategories}
+                selectedCategories={selectedCategories}
+                selectedSubcategories={selectedSubcategories}
+                toggleCategory={toggleCategory}
+                toggleSubcategory={toggleSubcategory}
+                priceRange={priceRange}
+                minPriceInput={minPriceInput}
+                maxPriceInput={maxPriceInput}
+                setMinPriceInput={setMinPriceInput}
+                setMaxPriceInput={setMaxPriceInput}
+                promoOnly={promoOnly}
+                setPromoOnly={setPromoOnly}
+                hasPromoProducts={hasPromoProducts}
+                onClear={handleClearFilters}
+                onSave={handleApplyFilters}
+              />
+            </div>
+          </aside>
+
+          {/* Сітка товарів */}
+          <div className="flex-1 min-w-0">
             {basketError && (
               <div className="mb-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm font-['Montserrat'] text-red-700">
                 {basketError}
@@ -861,180 +650,15 @@ export default function CatalogClient({
                   </p>
                 </div>
               ) : (
-                visibleProducts.map((product, index) => {
-                  const outOfStock =
-                    product.in_stock === false ||
-                    (typeof product.stock === "number" && product.stock <= 0);
-                  const hasPct =
-                    product.discount_percentage != null && Number(product.discount_percentage) > 0;
-                  const hasOld =
-                    product.old_price != null && Number(product.old_price) > Number(product.price);
-                  const displayPrice = hasPct
-                    ? Math.round(product.price * (1 - Number(product.discount_percentage) / 100))
-                    : product.price;
-                  const strikePrice = hasPct
-                    ? product.price
-                    : hasOld
-                    ? Number(product.old_price)
-                    : null;
-                  const discountBadgePct = hasPct
-                    ? Number(product.discount_percentage)
-                    : hasOld
-                    ? Math.max(
-                        1,
-                        Math.round(
-                          (1 - Number(product.price) / Number(product.old_price)) * 100
-                        )
-                      )
-                    : null;
-                  const rawDesc = product.description
-                    ? product.description.replace(/<[^>]*>/g, "").trim()
-                    : "";
-                  const shortDesc =
-                    rawDesc.length > 60 ? rawDesc.slice(0, 60).trim() + "…" : rawDesc || null;
-
-                  return (
-                    <Link
-                      href={`/product/${(product.slug && String(product.slug).trim()) ? product.slug : product.id}`}
-                      key={product.id}
-                      scroll={false}
-                      onClick={() => {
-                        if (typeof window !== "undefined") {
-                          window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-                        }
-                      }}
-                      className="group flex flex-col bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
-                    >
-                      {/* Зображення 3:4 */}
-                      <div className="relative w-full aspect-[3/4] bg-gray-50 overflow-hidden">
-                        {product.first_media?.type === "video" ? (
-                          <video
-                            src={`/api/images/${product.first_media.url}`}
-                            className="absolute inset-0 z-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                            loop
-                            muted
-                            playsInline
-                            autoPlay
-                            preload="none"
-                          />
-                        ) : (
-                          <Image
-                            src={getProductImageSrc(product.first_media)}
-                            alt={`${product.name} — ${SITE_STORE_NAME}`}
-                            className="z-0 object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                            fill
-                            sizes="(max-width: 640px) 45vw, (max-width: 1024px) 33vw, 25vw"
-                            loading={index < 9 ? "eager" : "lazy"}
-                            priority={index < 3}
-                            quality={index < 9 ? 85 : 75}
-                            placeholder="blur"
-                            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
-                          />
-                        )}
-                        {/* Бейдж знижки (% або через стару ціну) */}
-                        {discountBadgePct != null && (
-                          <span className="absolute left-2 top-2 z-20 text-[10px] font-semibold font-['Montserrat'] text-amber-800/95 bg-amber-100/90 px-1.5 py-0.5 rounded">
-                            −{discountBadgePct}%
-                          </span>
-                        )}
-
-                        {/* Подарунок — зверху справа, щоб не перетинав плашки знизу */}
-                        {product.gift_product_id != null && product.gift_product_id > 0 && (
-                          <span className="absolute right-2 top-2 z-20 text-[10px] font-semibold font-['Montserrat'] text-[#3D1A00] bg-white/90 border border-[#3D1A00]/15 px-1.5 py-0.5 rounded shadow-sm">
-                            + Подарунок
-                          </span>
-                        )}
-
-                        {/* Плашки на фото, знизу — ширина за текстом */}
-                        {(product.is_promo === true ||
-                          product.is_hit === true ||
-                          product.dietitian_approved === true ||
-                          product.free_delivery_badge === true) && (
-                          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/45 via-black/15 to-transparent px-2 pb-2 pt-8 sm:px-2.5 sm:pb-2.5 sm:pt-10">
-                            <div className="flex flex-wrap gap-2">
-                              {product.is_promo === true && (
-                                <span className="inline-flex w-fit max-w-full shrink-0 items-center rounded-lg border border-[#3D1A00]/12 bg-[#D7D799] px-2.5 py-1.5 text-[11px] font-bold font-['Montserrat'] uppercase tracking-wide text-[#3D1A00] shadow-md shadow-black/20">
-                                  Акція
-                                </span>
-                              )}
-                              {product.is_hit === true && (
-                                <span className="inline-flex w-fit max-w-full shrink-0 items-center rounded-lg bg-[#3D1A00] px-2.5 py-1.5 text-[11px] font-bold font-['Montserrat'] uppercase tracking-wide text-white shadow-md shadow-black/25">
-                                  Хіт
-                                </span>
-                              )}
-                              {product.dietitian_approved === true && (
-                                <span className="inline-flex w-fit max-w-full shrink-0 items-center rounded-lg border-2 border-[#3D1A00]/20 bg-white px-2.5 py-1.5 text-left text-[10px] font-bold font-['Montserrat'] leading-snug tracking-tight text-[#3D1A00] shadow-md shadow-black/15 sm:text-[11px]">
-                                  Схвалено асоціацією дієтологів
-                                </span>
-                              )}
-                              {product.free_delivery_badge === true && (
-                                <span className="inline-flex w-fit max-w-full shrink-0 items-center rounded-lg border border-emerald-800/25 bg-emerald-50/95 px-2.5 py-1.5 text-left text-[9px] font-bold font-['Montserrat'] leading-snug tracking-tight text-emerald-900 shadow-md shadow-black/10 sm:text-[10px]">
-                                  {LABEL_FREE_DELIVERY_FROM_2000}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Інфо */}
-                      <div className="p-4 flex flex-col gap-1 flex-1">
-                        <h3 className="font-['Montserrat'] font-light text-lg sm:text-xl md:text-2xl leading-tight tracking-[-0.02em] text-[#3D1A00] break-words line-clamp-2">
-                          {product.name}
-                        </h3>
-                        {shortDesc && (
-                          <p className="font-['Montserrat'] font-light text-[11px] leading-[194%] tracking-[-0.02em] text-[#3D1A00] align-middle line-clamp-2">
-                            {shortDesc}
-                          </p>
-                        )}
-                        {(product.package_weight || product.course) && (
-                          <div className="font-['Montserrat'] text-[10px] sm:text-[11px] leading-snug text-[#3D1A00]/75 space-y-0.5">
-                            {product.package_weight ? (
-                              <p>
-                                <span className="font-semibold text-[#3D1A00]/90">
-                                  {LABEL_PRODUCT_PACKAGE}:
-                                </span>{" "}
-                                {product.package_weight}
-                              </p>
-                            ) : null}
-                            {product.course ? (
-                              <p>
-                                <span className="font-semibold text-[#3D1A00]/90">
-                                  {LABEL_PRODUCT_COURSE}:
-                                </span>{" "}
-                                {product.course}
-                              </p>
-                            ) : null}
-                          </div>
-                        )}
-                        <div className="mt-auto pt-3 flex items-center justify-between gap-2">
-                          <div className="flex flex-col leading-none space-y-0.5">
-                            {strikePrice != null && (
-                              <span className="font-['Montserrat'] font-normal text-sm sm:text-base lg:text-xl leading-none tracking-[-0.02em] text-[#3D1A00]/70 line-through">
-                                {strikePrice.toLocaleString("uk-UA")} грн
-                              </span>
-                            )}
-                            <span className="font-['Montserrat'] font-normal text-lg sm:text-xl lg:text-3xl leading-none tracking-[-0.02em] text-[#3D1A00] align-middle">
-                              {displayPrice.toLocaleString("uk-UA")} грн
-                            </span>
-                          </div>
-                          <button
-                            type="button"
-                            disabled={outOfStock}
-                            onClick={outOfStock ? undefined : (e) => handleAddToCart(e, product)}
-                            className={`py-2 px-4 text-xs sm:text-sm font-semibold font-['Montserrat'] rounded-full transition-colors whitespace-nowrap ${
-                              outOfStock
-                                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                                : "bg-[#8B9A47] hover:bg-[#7a8940] text-white"
-                            }`}
-                          >
-                            {outOfStock ? "Немає в наявності" : "В кошик"}
-                          </button>
-                        </div>
-                      </div>
-                    </Link>
-                  );
-                })
+                visibleProducts.map((product, index) => (
+                  <CatalogProductCard
+                    key={product.id}
+                    product={product}
+                    onAddToCart={handleAddToCart}
+                    imagePriority={index < 3}
+                    imageLoading={index < 9 ? "eager" : "lazy"}
+                  />
+                ))
               )}
             </div>
 
@@ -1051,10 +675,14 @@ export default function CatalogClient({
             )}
 
             {/* Пагінація / показати ще */}
-            {visibleCount < sortedProducts.length && (
+            {hasMoreProducts && (
               <div className="mt-10 flex justify-center">
                 <button
-                  onClick={() => setVisibleCount((prev) => prev + 9)}
+                  onClick={() =>
+                    setVisibleCount(
+                      (prev) => prev + catalogLoadMoreIncrement(isCatalogDesktop)
+                    )
+                  }
                   className="px-8 py-3 bg-[#3D1A00] text-white font-semibold font-['Montserrat'] uppercase tracking-wider hover:bg-[#3D1A00]/90 transition-colors rounded-lg min-h-[44px]"
                 >
                   Показати ще

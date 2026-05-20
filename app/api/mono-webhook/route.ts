@@ -55,9 +55,13 @@ export async function POST(req: NextRequest) {
         if (item.productId == null) continue;
         const product = await tx.product.findUnique({
           where: { id: item.productId },
-          select: { stock: true },
+          select: { stock: true, inStock: true },
         });
-        if (product && product.stock >= item.quantity) {
+        if (
+          product &&
+          product.inStock === true &&
+          product.stock >= item.quantity
+        ) {
           await tx.product.update({
             where: { id: item.productId },
             data: { stock: { decrement: item.quantity } },

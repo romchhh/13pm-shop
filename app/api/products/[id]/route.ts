@@ -1,7 +1,13 @@
 // app/api/products/[id]/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
-import { sqlGetProduct, sqlPutProduct, sqlDeleteProduct } from "@/lib/sql";
+import {
+  sqlGetProduct,
+  sqlPutProduct,
+  sqlDeleteProduct,
+  sqlSyncSizeVariants,
+  sqlSyncSizeVariantsOrdered,
+} from "@/lib/sql";
 import { apiLogger } from "@/lib/logger";
 import { revalidateProducts } from "@/lib/revalidate";
 
@@ -122,6 +128,26 @@ export async function PUT(
           .filter((n: number) => Number.isInteger(n) && n > 0)
       : [];
 
+    const isNew = body.is_new === true;
+
+    const sizeLinkedIds: number[] | undefined = Array.isArray(body.size_linked_ids)
+      ? body.size_linked_ids
+          .map((x: unknown) => Number(x))
+          .filter((n: number) => Number.isInteger(n) && n > 0)
+      : undefined;
+
+    const sizeGroupOrderedIds: number[] | undefined = Array.isArray(
+      body.size_group_ordered_ids
+    )
+      ? body.size_group_ordered_ids
+          .map((x: unknown) => Number(x))
+          .filter((n: number) => Number.isInteger(n) && n > 0)
+      : undefined;
+
+    const useSizeGroupOrder =
+      sizeGroupOrderedIds !== undefined && sizeGroupOrderedIds.length > 0;
+    const useLegacySizeLinks = sizeLinkedIds !== undefined;
+
     await sqlPutProduct(id, {
       name: body.name,
       subtitle: body.subtitle ?? undefined,
@@ -152,6 +178,10 @@ export async function PUT(
       gift_product_id: giftProductId,
       bought_together_ids: boughtTogetherIds,
       pair_together_ids: pairTogetherIds,
+      color_options: body.color_options,
+      size_variants:
+        useSizeGroupOrder || useLegacySizeLinks ? undefined : body.size_variants,
+      is_new: isNew,
       stock,
       category_id: categoryId,
       subcategory_id: subcategoryId,
@@ -162,6 +192,12 @@ export async function PUT(
       category_ids: categoryIds,
       subcategory_ids: subcategoryIds,
     });
+
+    if (useSizeGroupOrder) {
+      await sqlSyncSizeVariantsOrdered(sizeGroupOrderedIds!);
+    } else if (useLegacySizeLinks) {
+      await sqlSyncSizeVariants(id, sizeLinkedIds!);
+    }
 
     // Revalidate cache after updating product
     await revalidateProducts();

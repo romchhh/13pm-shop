@@ -12,6 +12,7 @@ interface Product {
   id: number;
   name: string;
   slug?: string | null;
+  subtitle?: string | null;
   price: number;
   old_price?: number | null;
   description?: string | null;
@@ -74,8 +75,8 @@ export default async function CatalogServer(props: CatalogServerProps) {
   const catalogUrl = `${baseUrl}/catalog${categoryName ? `?category=${encodeURIComponent(categoryName)}` : ""}`;
   const pageName = categoryName || "Каталог товарів";
   const pageDescription = categoryName
-    ? `Каталог товарів категорії «${categoryName}» у ${SITE_STORE_NAME}. Оригінальна продукція ${SITE_PRODUCT_BRAND}, wellness та eco-засоби.`
-    : `Каталог оригінальної продукції ${SITE_PRODUCT_BRAND} в інтернет-магазині ${SITE_STORE_NAME}: wellness-комплекси, натуральний догляд та eco-товари.`;
+    ? `Товари категорії «${categoryName}» в інтернет-магазині ${SITE_STORE_NAME}: дерев'яний декор і подарунки з фанери ${SITE_PRODUCT_BRAND}.`
+    : `Каталог дерев'яного декору та іменних подарунків ${SITE_PRODUCT_BRAND} — ${SITE_STORE_NAME}. Фанера, лазерне різання, доставка по Україні.`;
 
   const breadcrumbs = [
     { name: "Головна", url: baseUrl },

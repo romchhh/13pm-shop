@@ -5,6 +5,7 @@ import { useBasket } from "@/lib/BasketProvider";
 import Link from "next/link";
 import Image from "next/image";
 import { getItemSubtotal } from "@/lib/pricing";
+import { useBodyScrollLock } from "@/lib/useBodyScrollLock";
 
 interface SidebarBasketProps {
   isOpen: boolean;
@@ -30,17 +31,19 @@ export default function SidebarBasket({
     0
   );
 
+  useBodyScrollLock(isOpen);
+
   return (
-    <div className="relative z-50">
+    <div className="relative z-[var(--z-site-overlay)]">
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/40 z-30"
+          className="fixed inset-0 bg-black/40 z-[var(--z-site-overlay-backdrop)]"
           onClick={() => setIsOpen(false)}
         />
       )}
 
       <div
-        className={`fixed top-0 right-0 h-full w-full sm:w-4/5 sm:max-w-md bg-white shadow-lg z-40 transform transition-transform duration-300 ${
+        className={`fixed top-0 right-0 h-full w-full sm:w-4/5 sm:max-w-md bg-white shadow-lg z-[var(--z-site-overlay)] transform transition-transform duration-300 ${
           isOpen ? "translate-x-0" : "translate-x-full"
         } overflow-y-auto flex flex-col`}
       >

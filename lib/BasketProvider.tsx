@@ -222,13 +222,10 @@ export function BasketProvider({ children }: { children: ReactNode }) {
       });
 
       if (!response.ok) {
-        const data = await response.json();
-        const available = data.insufficientItems?.[0]?.available ?? 0;
-        setCachedStock(newItem.id, newItem.size, available);
+        await response.json().catch(() => ({}));
+        setCachedStock(newItem.id, newItem.size, 0);
         throw new Error(
-          available > 0
-            ? `Недостатньо товару в наявності. Доступно: ${available} шт.`
-            : "Недостатньо товару в наявності"
+          "Цей товар зараз недоступний для покупки. Оновіть сторінку або оберіть інший товар."
         );
       }
 
@@ -405,13 +402,10 @@ export function BasketProvider({ children }: { children: ReactNode }) {
       });
 
       if (!response.ok) {
-        const data = await response.json();
-        const available = data.insufficientItems?.[0]?.available ?? 0;
-        setCachedStock(id, size, available);
+        await response.json().catch(() => ({}));
+        setCachedStock(id, size, 0);
         throw new Error(
-          available > 0
-            ? `Недостатньо товару в наявності. Доступно: ${available} шт.`
-            : "Недостатньо товару в наявності"
+          "Цей товар зараз недоступний для покупки. Оновіть сторінку або оберіть інший товар."
         );
       }
 

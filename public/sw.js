@@ -1,17 +1,15 @@
-// Mobile-optimized service worker for Choice e-commerce
-const CACHE_NAME = 'choice-mobile-v4';
-const STATIC_CACHE = 'choice-static-v4';
-const DYNAMIC_CACHE = 'choice-dynamic-v4';
-const IMAGE_CACHE = 'choice-images-v4';
-const API_CACHE = 'choice-api-v4';
+// Mobile-optimized service worker for Plywood Present
+const CACHE_NAME = 'plywood-present-mobile-v1';
+const STATIC_CACHE = 'plywood-present-static-v1';
+const DYNAMIC_CACHE = 'plywood-present-dynamic-v1';
+const IMAGE_CACHE = 'plywood-present-images-v1';
+const API_CACHE = 'plywood-present-api-v1';
 
 // Critical resources to cache immediately
 const STATIC_ASSETS = [
   '/',
   '/catalog',
   '/images/tg_image_3614117882.png',
-  '/images/instagram-icon.svg'
-  // Video only cached on desktop, Why Choose Us images load on scroll
 ];
 
 // Install event - cache critical resources

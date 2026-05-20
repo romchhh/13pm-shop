@@ -84,14 +84,24 @@
   --z-popover: 1060;
   --z-tooltip: 1070;
 
-  /* Висота фіксованого хедера (промо + верхня смуга + навігація). Змінювати разом із layout у Header.tsx */
-  --site-header-offset: 10.5rem;
+  /* Контактна смуга (#8B5E3F) — hero починається одразу під нею */
+  --site-contact-bar-height: 2.5rem;
+  /* Висота рядка навігації (лого + меню) */
+  --site-nav-height: 4rem;
+  /* Повний хедер — для інших сторінок і відступу контенту */
+  --site-header-offset: calc(var(--site-contact-bar-height) + var(--site-nav-height));
+
+  /* Шари хедера та оверлеїв (пошук, кошик, меню) */
+  --z-site-header: 50;
+  --z-site-contact-bar: 60;
+  --z-site-overlay-backdrop: 65;
+  --z-site-overlay: 70;
 }
 
 @media (min-width: 1024px) {
   :root {
-    /* Десктоп: та сама структура, h-11 + h-20 трохи компактніші за мобільну смугу */
-    --site-header-offset: 10.25rem;
+    --site-contact-bar-height: 2.75rem;
+    --site-nav-height: 5.75rem;
   }
 }
 
@@ -159,6 +169,59 @@ input[type="range"]::-moz-range-thumb {
   background: #111827;
   cursor: pointer;
   border: none;
+}
+
+/* Каталог: подвійний слайдер ціни — видимі кружечки */
+.catalog-price-range-input {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+}
+
+.catalog-price-range-input::-webkit-slider-runnable-track {
+  height: 6px;
+  background: transparent;
+  border: none;
+}
+
+.catalog-price-range-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-top: -7px;
+  border-radius: 50%;
+  background: #8b5e3f;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22);
+  cursor: grab;
+}
+
+.catalog-price-range-input:active::-webkit-slider-thumb {
+  cursor: grabbing;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
+}
+
+.catalog-price-range-input::-moz-range-track {
+  height: 6px;
+  background: transparent;
+  border: none;
+}
+
+.catalog-price-range-input::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #8b5e3f;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22);
+  cursor: grab;
+}
+
+.catalog-price-range-input:focus-visible::-webkit-slider-thumb,
+.catalog-price-range-input:focus-visible::-moz-range-thumb {
+  outline: 2px solid #8b5e3f;
+  outline-offset: 2px;
 }
 
 /* Enhanced focus states for accessibility */

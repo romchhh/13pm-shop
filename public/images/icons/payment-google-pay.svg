@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="68" height="18" viewBox="0 0 68 18" fill="none" aria-hidden="true">
+  <rect width="68" height="18" rx="2" fill="#fff" stroke="#dadce0" stroke-width="1"/>
+  <circle cx="11" cy="9" r="4.5" fill="#4285F4"/>
+  <text x="38" y="12" text-anchor="middle" fill="#5f6368" font-family="system-ui,-apple-system,sans-serif" font-size="7" font-weight="500">Google Pay</text>
+</svg>

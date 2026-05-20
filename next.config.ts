@@ -9,7 +9,16 @@ const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
 });
 
+/** ngrok / тунелі в dev — HMR і dev-ресурси (див. allowedDevOrigins у Next.js) */
+const allowedDevOrigins = [
+  "gramophonic-melany-mettlesome.ngrok-free.dev",
+  ...(process.env.ALLOWED_DEV_ORIGINS?.split(",")
+    .map((h) => h.trim())
+    .filter(Boolean) ?? []),
+];
+
 const nextConfig: NextConfig = {
+  allowedDevOrigins,
   images: {
     remotePatterns: [
       {
@@ -53,8 +62,6 @@ const nextConfig: NextConfig = {
     proxyClientMaxBodySize: "50mb",
     // Enable optimized package imports with tree shaking
     optimizePackageImports: [
-      "@react-jvectormap/core", 
-      "swiper", 
       "react-apexcharts",
       "web-vitals"
     ],
@@ -126,6 +133,20 @@ const nextConfig: NextConfig = {
     }
     
     return config;
+  },
+  async redirects() {
+    return [
+      {
+        source: "/info",
+        destination: "/#about",
+        permanent: true,
+      },
+      {
+        source: "/info/:path*",
+        destination: "/#about",
+        permanent: true,
+      },
+    ];
   },
   // Headers for better caching and performance
   async headers() {

@@ -1,7 +1,7 @@
 "use client";
 
-import { useAppContext } from "@/lib/GeneralProvider";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { useBasket } from "@/lib/BasketProvider";
 import Image from "next/image";
 import Link from "next/link";
@@ -17,66 +17,42 @@ import {
 } from "@/lib/ga4Ecommerce";
 import {
   LABEL_FREE_DELIVERY_FROM_2000,
-  LABEL_PRODUCT_COURSE,
-  LABEL_PRODUCT_PACKAGE,
 } from "@/lib/siteBrand";
+import type { ProductColorOption, ProductSizeVariant } from "@/lib/productOptions";
 import OneClickOrderModal from "@/components/product/OneClickOrderModal";
 import ProductDeliveryPaymentTab from "@/components/product/ProductDeliveryPaymentTab";
+import ProductMediaLightbox from "@/components/product/ProductMediaLightbox";
 import YouMightLike from "@/components/product/YouMightLike";
+import AddToCartButton from "@/components/shared/AddToCartButton";
 import CategoryDescriptionMarkdown from "@/components/shared/CategoryDescriptionMarkdown";
+import { isProductOutOfStock } from "@/lib/productAvailability";
+import { productToFavoriteSnapshot } from "@/lib/favoritesStorage";
+import FavoriteButton from "@/components/shared/FavoriteButton";
 
-const DEFAULT_SIZE = "—";
+const ACCENT = "#8B5E3F";
 
-type TabId =
-  | "description"
-  | "action"
-  | "usage"
-  | "composition"
-  | "contraindications"
-  | "delivery_payment";
-
-const TABS: { id: TabId; label: string }[] = [
-  { id: "description", label: "ОПИС" },
-  { id: "action", label: "ДІЯ АКТИВНИХ КОМПОНЕНТІВ" },
-  { id: "usage", label: "СПОСІБ ВИКОРИСТАННЯ" },
-  { id: "composition", label: "СКЛАД" },
-  { id: "contraindications", label: "ПРОТИПОКАЗАННЯ" },
-  { id: "delivery_payment", label: "ДОСТАВКА ТА ОПЛАТА" },
-];
+type TabId = "details" | "delivery_payment";
 
 interface ProductClientProps {
   product: {
     id: number;
     name: string;
     price: number;
+    slug?: string | null;
     stock?: number;
     in_stock?: boolean;
     old_price?: number | null;
     discount_percentage?: number | null;
     subtitle?: string | null;
-    release_form?: string | null;
-    course?: string | null;
-    package_weight?: string | null;
-    main_info?: string | null;
     short_description?: string | null;
     description?: string | null;
-    main_action?: string | null;
-    indications_for_use?: string | null;
-    benefits?: string | null;
-    full_composition?: string | null;
-    usage_method?: string | null;
-    contraindications?: string | null;
-    storage_conditions?: string | null;
+    main_info?: string | null;
     media?: { url: string; type: string }[];
-    fabric_composition?: string | null;
-    has_lining?: boolean;
-    lining_description?: string | null;
     category_name?: string | null;
     subcategory_name?: string | null;
     category_slug?: string | null;
     category_description?: string | null;
     is_hit?: boolean;
-    dietitian_approved?: boolean;
     is_promo?: boolean;
     free_delivery_badge?: boolean;
     gift_product?: {
@@ -88,7 +64,6 @@ interface ProductClientProps {
       discount_percentage?: number | null;
       first_media?: { url: string; type: string } | null;
     } | null;
-    bought_together_ids?: number[];
     bought_together_products?: {
       id: number;
       name: string;
@@ -97,34 +72,60 @@ interface ProductClientProps {
       first_media?: { url: string; type: string } | null;
       description?: string | null;
     }[];
+    color_options?: ProductColorOption[];
+    size_variants?: ProductSizeVariant[];
   };
 }
 
+function productHref(slug: string | null | undefined, id: number): string {
+  const s = slug && String(slug).trim();
+  return s ? `/product/${s}` : `/product/${id}`;
+}
+
 export default function ProductClient({ product }: ProductClientProps) {
+  const router = useRouter();
   const [quantity, setQuantity] = useState(1);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [activeTab, setActiveTab] = useState<TabId>("description");
+  const [activeTab, setActiveTab] = useState<TabId>("details");
+  const [selectedColorIndex, setSelectedColorIndex] = useState(0);
   const { addItem } = useBasket();
-  const { setIsBasketOpen } = useAppContext();
   const [showCartAlert, setShowCartAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
-  const [alertType, setAlertType] = useState<
-    "success" | "error" | "warning" | "info"
-  >("info");
+  const [alertType, setAlertType] = useState<"success" | "error" | "warning" | "info">("info");
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [oneClickOpen, setOneClickOpen] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
   const isAddingToCartRef = useRef(false);
-  const touchStartXRef = useRef<number | null>(null);
-  const touchStartYRef = useRef<number | null>(null);
+  const mobileGalleryScrollRef = useRef<HTMLDivElement>(null);
+
+  const colors = product.color_options ?? [];
+  const sizeVariants = product.size_variants ?? [];
+
+  useEffect(() => {
+    setActiveImageIndex(0);
+    setSelectedColorIndex(0);
+    setQuantity(1);
+    const el = mobileGalleryScrollRef.current;
+    if (el) el.scrollTo({ left: 0, behavior: "auto" });
+  }, [product.id]);
+
+  useEffect(() => {
+    if (selectedColorIndex >= colors.length) setSelectedColorIndex(0);
+  }, [colors.length, selectedColorIndex]);
+
+  const currentSizeLabel = useMemo(() => {
+    const v = sizeVariants.find((s) => s.productId === product.id);
+    return v?.label ?? "—";
+  }, [sizeVariants, product.id]);
+
+  const selectedColorName =
+    colors.length > 0 && colors[selectedColorIndex]
+      ? colors[selectedColorIndex].name
+      : undefined;
 
   const handleAddToCart = async () => {
     if (isAddingToCartRef.current) return;
-    if (!product) {
-      setAlertMessage("Товар не завантажений");
-      setAlertType("error");
-      setTimeout(() => setAlertMessage(null), 3000);
-      return;
-    }
     if (!addItem) {
       setAlertMessage("Кошик недоступний. Спробуйте оновити сторінку.");
       setAlertType("error");
@@ -139,11 +140,12 @@ export default function ProductClient({ product }: ProductClientProps) {
         id: product.id,
         name: product.name,
         price: product.price,
-        size: DEFAULT_SIZE,
+        size: currentSizeLabel,
         quantity,
         imageUrl: getFirstProductImage(media),
         discount_percentage: product.discount_percentage ?? undefined,
-        subtitle: product.main_info || product.short_description || undefined,
+        subtitle: product.subtitle || product.short_description || undefined,
+        color: selectedColorName,
         category_name: analyticsCategory,
       });
       setShowCartAlert(true);
@@ -160,39 +162,24 @@ export default function ProductClient({ product }: ProductClientProps) {
     }
   };
 
-  const handleBuyInOneClick = () => {
-    if (!product) {
-      setAlertMessage("Товар не завантажений");
-      setAlertType("error");
-      setTimeout(() => setAlertMessage(null), 3000);
-      return;
-    }
-    if (outOfStock) {
-      setAlertMessage("Товар недоступний для замовлення");
-      setAlertType("error");
-      setTimeout(() => setAlertMessage(null), 3000);
-      return;
-    }
-    setOneClickOpen(true);
-  };
-
   const media = product.media || [];
-  const outOfStock =
-    product.in_stock === false ||
-    (typeof product.stock === "number" && product.stock <= 0);
+  const outOfStock = isProductOutOfStock({
+    in_stock: product.in_stock,
+    stock: product.stock,
+  });
   const displayPrice = product.discount_percentage
     ? Math.round(product.price * (1 - product.discount_percentage / 100))
-    : product.price;
+    : Math.round(product.price);
 
   const analyticsCategory = product.subcategory_name ?? product.category_name ?? null;
 
-  const categorySlug = product.category_slug ?? (product.category_name ? encodeURIComponent(product.category_name) : null);
+  const categorySlug =
+    product.category_slug ?? (product.category_name ? encodeURIComponent(product.category_name) : null);
   const categoryUrl = categorySlug ? `/catalog/${categorySlug}` : "/catalog";
 
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => setIsMounted(true), []);
 
-  /** Один view_item на item_id; скидається при зміні товару (клієнтська навігація / схожі товари). */
   const lastViewItemIdRef = useRef<number | null>(null);
   useEffect(() => {
     if (!isMounted) return;
@@ -228,111 +215,160 @@ export default function ProductClient({ product }: ProductClientProps) {
 
   if (!isMounted) return null;
 
-  const attributesLine1 = product.release_form || product.subtitle || null;
-  const packageLine = product.package_weight
-    ? `${LABEL_PRODUCT_PACKAGE}: ${product.package_weight}`
-    : null;
-  const courseLine = product.course
-    ? `${LABEL_PRODUCT_COURSE}: ${product.course}`
-    : null;
-  const purposeText = product.main_info || product.short_description || product.description;
+  const shortText =
+    product.short_description || product.main_info || product.subtitle || "";
 
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case "description":
-        return product.description ? (
-          <div className="text-[#3D1A00]/90 font-['Montserrat'] font-normal leading-[1.59] tracking-[-0.02em] text-sm md:text-base whitespace-pre-line">
-            {product.description}
-          </div>
-        ) : (
-          <p className="text-[#3D1A00]/70 font-['Montserrat'] font-normal leading-[1.86] tracking-[-0.02em] text-sm">Опис відсутній.</p>
-        );
-      case "action":
-        return (product.main_action || product.benefits || product.indications_for_use) ? (
-          <div className="text-[#3D1A00]/90 font-['Montserrat'] font-normal leading-[1.86] tracking-[-0.02em] text-sm md:text-base whitespace-pre-line">
-            {[product.main_action, product.benefits, product.indications_for_use].filter(Boolean).join("\n\n")}
-          </div>
-        ) : (
-          <p className="text-[#3D1A00]/70 font-['Montserrat'] font-normal leading-[1.86] tracking-[-0.02em] text-sm">Інформація відсутня.</p>
-        );
-      case "usage":
-        return product.usage_method ? (
-          <div className="text-[#3D1A00]/90 font-['Montserrat'] font-normal leading-[1.86] tracking-[-0.02em] text-sm md:text-base whitespace-pre-line">
-            {product.usage_method}
-          </div>
-        ) : (
-          <p className="text-[#3D1A00]/70 font-['Montserrat'] font-normal leading-[1.86] tracking-[-0.02em] text-sm">Інформація відсутня.</p>
-        );
-      case "composition":
-        return (product.full_composition || product.fabric_composition) ? (
-          <div className="text-[#3D1A00]/90 font-['Montserrat'] font-normal leading-[1.86] tracking-[-0.02em] text-sm md:text-base whitespace-pre-line">
-            {product.full_composition || product.fabric_composition}
-          </div>
-        ) : (
-          <p className="text-[#3D1A00]/70 font-['Montserrat'] font-normal leading-[1.86] tracking-[-0.02em] text-sm">Інформація відсутня.</p>
-        );
-      case "contraindications":
-        return product.contraindications ? (
-          <div className="text-[#3D1A00]/90 font-['Montserrat'] font-normal leading-[1.86] tracking-[-0.02em] text-sm md:text-base whitespace-pre-line">
-            {product.contraindications}
-          </div>
-        ) : (
-          <p className="text-[#3D1A00]/70 font-['Montserrat'] font-normal leading-[1.86] tracking-[-0.02em] text-sm">Інформація відсутня.</p>
-        );
-      case "delivery_payment":
-        return <ProductDeliveryPaymentTab />;
-      default:
-        return null;
+  const onSizeClick = (v: ProductSizeVariant) => {
+    if (v.productId === product.id) return;
+    router.push(productHref(v.slug, v.productId));
+  };
+
+  const thumbWrap =
+    "relative aspect-square w-full overflow-hidden rounded-xl border-2 transition-colors bg-white";
+  const thumbActive = { borderColor: ACCENT, boxShadow: `0 0 0 1px ${ACCENT}` };
+  const thumbIdle = "border-black/[0.08] hover:border-black/20";
+
+  const openLightbox = (index: number) => {
+    setLightboxIndex(index);
+    setLightboxOpen(true);
+  };
+
+  const productBadgesOverlay =
+    product.is_promo === true || product.is_hit === true || product.free_delivery_badge === true ? (
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/40 to-transparent px-3 pb-3 pt-10">
+        <div className="flex flex-wrap gap-2">
+          {product.is_promo === true && (
+            <span
+              className="rounded-md px-2 py-1 text-[10px] font-bold uppercase text-white sm:text-xs"
+              style={{ backgroundColor: ACCENT }}
+            >
+              Акція
+            </span>
+          )}
+          {product.is_hit === true && (
+            <span className="rounded-md bg-black px-2 py-1 text-[10px] font-bold uppercase text-white sm:text-xs">
+              Хіт
+            </span>
+          )}
+          {product.free_delivery_badge === true && (
+            <span className="rounded-md border border-white/30 bg-white/90 px-2 py-1 text-[10px] font-semibold text-emerald-900 sm:text-xs">
+              {LABEL_FREE_DELIVERY_FROM_2000}
+            </span>
+          )}
+        </div>
+      </div>
+    ) : null;
+
+  const renderMediaSlide = (item: { url: string; type: string }, alt: string, priority = false) => {
+    if (item.type === "video") {
+      return (
+        <video
+          className="absolute inset-0 z-0 h-full w-full bg-transparent object-contain"
+          src={`/api/images/${item.url}`}
+          autoPlay
+          loop
+          muted
+          playsInline
+        />
+      );
     }
+    return (
+      <Image
+        src={`/api/images/${item.url}`}
+        alt={alt}
+        fill
+        className="bg-transparent object-contain"
+        sizes="(max-width: 1024px) 100vw, 56vw"
+        priority={priority}
+      />
+    );
+  };
+
+  const scrollMobileGalleryTo = (index: number) => {
+    const el = mobileGalleryScrollRef.current;
+    if (!el || media.length === 0) return;
+    const i = Math.max(0, Math.min(index, media.length - 1));
+    el.scrollTo({ left: i * el.clientWidth, behavior: "smooth" });
+    setActiveImageIndex(i);
   };
 
   return (
-    <section className="w-full bg-[#FFFFFF] min-h-screen">
-      <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-12 py-6 lg:py-8">
-        {/* Breadcrumbs — тільки з md і вище */}
-        <nav className="hidden md:block mb-4" aria-label="Breadcrumb">
-          <ol className="flex items-center gap-2 text-sm font-['Montserrat'] font-normal leading-[1.86] tracking-[-0.02em] text-[#3D1A00]/70">
+    <section className="w-full bg-white min-h-screen pb-24 sm:pb-0">
+      <div className="mx-auto max-w-[1920px] px-4 py-4 sm:px-6 lg:px-12 lg:py-8">
+        {/* Breadcrumbs — mobile + desktop */}
+        <nav className="mb-4" aria-label="Breadcrumb">
+          <ol className="flex flex-wrap items-center gap-x-1 gap-y-1 text-xs font-['Montserrat'] text-black/45 sm:text-sm">
             <li>
-              <Link href="/" className="hover:text-[#3D1A00] transition-colors">
+              <Link href="/" className="hover:text-black/70">
                 Головна
               </Link>
             </li>
-            <li aria-hidden className="text-[#3D1A00]/50">|</li>
-            <li>
-              {product.category_name ? (
-                <Link href={categoryUrl} className="hover:text-[#3D1A00] transition-colors">
-                  {product.category_name}
-                </Link>
-              ) : (
-                <Link href="/catalog" className="hover:text-[#3D1A00] transition-colors">
-                  Каталог
-                </Link>
-              )}
+            <li aria-hidden className="text-black/35">
+              &gt;
             </li>
-            <li aria-hidden className="text-[#3D1A00]/50">|</li>
-            <li className="text-[#3D1A00] font-normal">{product.name}</li>
+            <li>
+              <Link href="/catalog" className="hover:text-black/70">
+                Каталог товарів
+              </Link>
+            </li>
+            {product.category_name && (
+              <>
+                <li aria-hidden className="text-black/35">
+                  &gt;
+                </li>
+                <li>
+                  <Link href={categoryUrl} className="hover:text-black/70">
+                    {product.category_name}
+                  </Link>
+                </li>
+              </>
+            )}
+            <li aria-hidden className="text-black/35">
+              &gt;
+            </li>
+            <li className="text-black/80 line-clamp-1">{product.name}</li>
           </ol>
         </nav>
 
-        <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 lg:items-start mt-6 lg:mt-8">
-          {/* Left: Thumbnails + Main image (з можливістю свайпу між фото) */}
-          <div className="flex flex-row gap-4 w-full lg:w-[58%] lg:max-w-[58%]">
+        <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-12">
+          {/* Gallery */}
+          <div className="relative flex w-full min-w-0 flex-col gap-3 lg:w-[56%] lg:flex-row lg:gap-4">
+            <div className="absolute right-2 top-2 z-30 lg:right-0 lg:top-0">
+              <FavoriteButton
+                product={productToFavoriteSnapshot({
+                  id: product.id,
+                  name: product.name,
+                  slug: product.slug,
+                  price: product.price,
+                  old_price: product.old_price,
+                  discount_percentage: product.discount_percentage,
+                  subtitle: product.subtitle,
+                  subcategory_name: product.subcategory_name,
+                  category_name: product.category_name,
+                  media: product.media,
+                  in_stock: product.in_stock,
+                  stock: product.stock,
+                  is_hit: product.is_hit,
+                  is_promo: product.is_promo,
+                  gift_product_id: product.gift_product?.id ?? null,
+                })}
+                variant="product"
+              />
+            </div>
+            {/* Desktop: vertical thumbnails */}
             {media.length > 1 && (
-              <div className="flex flex-col gap-2 w-16 md:w-20 flex-shrink-0 order-2 lg:order-1">
+              <div className="hidden shrink-0 flex-col gap-2 lg:flex lg:w-[88px]">
                 {media.map((item, i) => (
                   <button
                     key={i}
                     type="button"
                     onClick={() => setActiveImageIndex(i)}
-                    className={`relative aspect-square w-full rounded overflow-hidden border-2 transition-colors ${
-                      activeImageIndex === i
-                        ? "border-[#3D1A00]"
-                        : "border-transparent hover:border-[#3D1A00]/30"
-                    }`}
+                    className={`${thumbWrap} ${activeImageIndex === i ? "" : thumbIdle}`}
+                    style={activeImageIndex === i ? thumbActive : undefined}
                   >
                     {item.type === "video" ? (
                       <video
-                        className="w-full h-full object-cover"
+                        className="h-full w-full object-cover"
                         src={`/api/images/${item.url}`}
                         muted
                         playsInline
@@ -343,213 +379,253 @@ export default function ProductClient({ product }: ProductClientProps) {
                         alt=""
                         fill
                         className="object-cover"
-                        sizes="80px"
+                        sizes="88px"
                       />
                     )}
                   </button>
                 ))}
               </div>
             )}
-            <div
-              className="relative order-1 min-h-[420px] flex-1 touch-pan-y overflow-hidden rounded-lg bg-[#fafafa] sm:min-h-[480px] md:min-h-[520px] lg:order-2 lg:min-h-[620px] xl:min-h-[700px]"
-              onTouchStart={(e) => {
-                if (!media.length || media.length < 2) return;
-                touchStartXRef.current = e.touches[0]?.clientX ?? null;
-                touchStartYRef.current = e.touches[0]?.clientY ?? null;
-              }}
-              onTouchEnd={(e) => {
-                if (!media.length || media.length < 2) return;
-                if (touchStartXRef.current === null) return;
-                const endX = e.changedTouches[0]?.clientX ?? touchStartXRef.current;
-                const endY = e.changedTouches[0]?.clientY ?? touchStartYRef.current ?? 0;
-                const startX = touchStartXRef.current;
-                const startY = touchStartYRef.current ?? endY;
-                const deltaX = endX - startX;
-                const deltaY = endY - startY;
-                const threshold = 60; // трохи більший поріг для більш «плавного» свайпу
-                touchStartXRef.current = null;
-                touchStartYRef.current = null;
 
-                // ігноруємо переважно вертикальні жести
-                if (Math.abs(deltaX) < Math.abs(deltaY)) return;
-                if (Math.abs(deltaX) < threshold) return;
-
-                if (deltaX < 0) {
-                  // свайп вліво -> наступне фото
-                  setActiveImageIndex((prev) =>
-                    prev < media.length - 1 ? prev + 1 : prev
-                  );
-                } else {
-                  // свайп вправо -> попереднє фото
-                  setActiveImageIndex((prev) =>
-                    prev > 0 ? prev - 1 : prev
-                  );
-                }
-              }}
-            >
-              {media[activeImageIndex]?.type === "video" ? (
-                <video
-                  className="absolute inset-0 z-0 h-full w-full object-contain"
-                  src={`/api/images/${media[activeImageIndex]?.url}`}
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                />
-              ) : media[activeImageIndex] ? (
-                <Image
-                  src={`/api/images/${media[activeImageIndex].url}`}
-                  alt={product.name}
-                  fill
-                  className="z-0 object-contain"
-                  sizes="(max-width: 1024px) 100vw, 58vw"
-                  priority
-                />
+            {/* Мобільна галерея — горизонтальний скрол */}
+            <div className="w-full lg:hidden">
+              {media.length === 0 ? (
+                <div className="flex min-h-[280px] items-center justify-center rounded-2xl font-['Montserrat'] text-black/35">
+                  Немає зображення
+                </div>
               ) : (
-                <div className="relative z-0 flex h-full w-full items-center justify-center text-[#3D1A00]/40 font-['Montserrat']">
+                <>
+                  <div
+                    ref={mobileGalleryScrollRef}
+                    role="region"
+                    aria-roledescription="carousel"
+                    aria-label="Галерея зображень товару"
+                    className="-mx-4 flex w-full min-w-0 snap-x snap-mandatory overflow-x-auto overflow-y-hidden scroll-smooth pb-2 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                    onScroll={(e) => {
+                      const el = e.currentTarget;
+                      const w = el.clientWidth;
+                      if (w <= 0) return;
+                      const idx = Math.round(el.scrollLeft / w);
+                      const clamped = Math.max(0, Math.min(idx, media.length - 1));
+                      setActiveImageIndex((prev) => (prev === clamped ? prev : clamped));
+                    }}
+                  >
+                    {media.map((item, i) => (
+                      <div
+                        key={`mobile-slide-${item.url}-${i}`}
+                        className="flex w-full min-w-full shrink-0 snap-center snap-always items-center justify-center px-4"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => openLightbox(i)}
+                          className="relative aspect-[3/4] w-full max-w-[min(420px,calc(100vw-2rem))] shrink-0 overflow-hidden rounded-2xl border-0 bg-transparent p-0 text-left shadow-none outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[#8B5E3F]/40 focus-visible:ring-offset-2"
+                          aria-label={`Відкрити фото ${i + 1} у повному розмірі`}
+                        >
+                          {renderMediaSlide(item, `${product.name} — ${i + 1}`, i === 0)}
+                          {i === 0 ? productBadgesOverlay : null}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  {media.length > 1 && (
+                    <div className="mt-3 flex justify-center gap-2" role="tablist" aria-label="Слайди галереї">
+                      {media.map((_, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          role="tab"
+                          aria-selected={i === activeImageIndex}
+                          aria-label={`Слайд ${i + 1}`}
+                          onClick={() => scrollMobileGalleryTo(i)}
+                          className={`h-1.5 rounded-full transition-all ${
+                            i === activeImageIndex ? "w-5 bg-[#8B5E3F]" : "w-1.5 bg-black/20"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Десктоп: головне фото */}
+            <button
+              type="button"
+              onClick={() => media.length > 0 && openLightbox(activeImageIndex)}
+              className="relative order-1 hidden min-h-[520px] w-full flex-1 cursor-zoom-in overflow-hidden rounded-2xl border-0 bg-transparent p-0 shadow-none outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[#8B5E3F]/40 focus-visible:ring-offset-2 lg:block"
+              aria-label="Збільшити фото"
+              disabled={media.length === 0}
+            >
+              {media[activeImageIndex] ? (
+                renderMediaSlide(media[activeImageIndex], product.name, true)
+              ) : (
+                <div className="flex h-full w-full items-center justify-center font-['Montserrat'] text-black/35">
                   Немає зображення
                 </div>
               )}
-
-              {(product.is_promo === true ||
-                product.is_hit === true ||
-                product.dietitian_approved === true ||
-                product.free_delivery_badge === true) && (
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/45 via-black/15 to-transparent px-3 pb-3 pt-12 sm:px-4 sm:pb-4 sm:pt-14">
-                  <div className="flex flex-wrap gap-2.5">
-                    {product.is_promo === true && (
-                      <span className="inline-flex w-fit max-w-full shrink-0 items-center rounded-lg border border-[#3D1A00]/12 bg-[#D7D799] px-3 py-2 text-xs font-bold font-['Montserrat'] uppercase tracking-wide text-[#3D1A00] shadow-md shadow-black/20 sm:text-sm">
-                        Акція
-                      </span>
-                    )}
-                    {product.is_hit === true && (
-                      <span className="inline-flex w-fit max-w-full shrink-0 items-center rounded-lg bg-[#3D1A00] px-3 py-2 text-xs font-bold font-['Montserrat'] uppercase tracking-wide text-white shadow-md shadow-black/30 sm:text-sm">
-                        Хіт
-                      </span>
-                    )}
-                    {product.dietitian_approved === true && (
-                      <span className="inline-flex w-fit max-w-full shrink-0 items-center rounded-lg border-2 border-[#3D1A00]/20 bg-white px-3 py-2 text-left text-[11px] font-bold font-['Montserrat'] leading-snug tracking-tight text-[#3D1A00] shadow-md shadow-black/15 sm:text-sm">
-                        Схвалено асоціацією дієтологів
-                      </span>
-                    )}
-                    {product.free_delivery_badge === true && (
-                      <span className="inline-flex w-fit max-w-full shrink-0 items-center rounded-lg border border-emerald-800/25 bg-emerald-50 px-3 py-2 text-left text-[10px] font-bold font-['Montserrat'] leading-snug tracking-tight text-emerald-900 shadow-md shadow-black/15 sm:text-xs">
-                        {LABEL_FREE_DELIVERY_FROM_2000}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
+              {productBadgesOverlay}
+            </button>
           </div>
 
-          {/* Right: Info */}
-          <div className="flex flex-col gap-4 w-full lg:max-w-[45%] font-['Montserrat'] font-normal leading-[1.86] tracking-[-0.02em]">
-            <h1 className="text-2xl md:text-3xl lg:text-4xl font-semibold text-[#3D1A00] capitalize leading-[1.29] tracking-[-0.02em]" style={{ fontFamily: "Montserrat, sans-serif" }}>
+          <ProductMediaLightbox
+            media={media}
+            initialIndex={lightboxIndex}
+            open={lightboxOpen}
+            onClose={() => setLightboxOpen(false)}
+            productName={product.name}
+          />
+
+          {/* Info */}
+          <div className="flex w-full flex-col gap-5 font-['Montserrat'] lg:max-w-[44%]">
+            <h1 className="text-2xl font-semibold capitalize leading-tight text-black sm:text-3xl lg:text-4xl">
               {product.name}
             </h1>
 
-            <p className="text-sm md:text-base font-['Montserrat'] font-normal leading-[1.86] tracking-[-0.02em] text-[#3D1A00]/80">
-              {outOfStock ? "Немає в наявності" : "В наявності"}
-            </p>
+            <div className="flex flex-wrap items-baseline gap-3">
+              <span className="text-xl font-semibold text-black sm:text-2xl">
+                {displayPrice.toLocaleString("uk-UA")} грн
+              </span>
+              {product.old_price != null && Number(product.old_price) > displayPrice && (
+                <span className="text-base text-black/40 line-through">
+                  {Math.round(Number(product.old_price)).toLocaleString("uk-UA")} грн
+                </span>
+              )}
+            </div>
 
-            {(attributesLine1 || packageLine || courseLine) && (
-              <div className="flex flex-col gap-0.5 text-sm font-['Montserrat'] font-normal leading-[1.86] tracking-[-0.02em] text-[#3D1A00]/80">
-                {attributesLine1 && <span>{attributesLine1}</span>}
-                {packageLine && <span>{packageLine}</span>}
-                {courseLine && <span>{courseLine}</span>}
+            <p className="text-sm text-black/45">{outOfStock ? "Немає в наявності" : "В наявності"}</p>
+
+            {shortText ? (
+              <p className="text-base leading-relaxed text-black/85">{shortText}</p>
+            ) : null}
+
+            {colors.length > 0 && (
+              <div className="border-t border-black/10 pt-5">
+                <p className="mb-3 text-sm text-black/45">Оберіть колір</p>
+                <div className="flex flex-wrap gap-3">
+                  {colors.map((c, i) => (
+                    <button
+                      key={`${c.hex}-${c.name}-${i}`}
+                      type="button"
+                      onClick={() => setSelectedColorIndex(i)}
+                      className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 shadow-sm transition-transform hover:scale-105 ${
+                        c.hex.toLowerCase() === "#ffffff" || c.hex.toLowerCase() === "#fff"
+                          ? "border-black/25"
+                          : "border-black/10"
+                      }`}
+                      style={{ backgroundColor: c.hex }}
+                      title={c.name}
+                      aria-label={c.name}
+                      aria-pressed={selectedColorIndex === i}
+                    >
+                      {selectedColorIndex === i && (
+                        <svg className="h-5 w-5 text-white drop-shadow" viewBox="0 0 24 24" fill="none" aria-hidden>
+                          <path
+                            d="M20 6L9 17l-5-5"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      )}
+                    </button>
+                  ))}
+                </div>
+                {selectedColorName && (
+                  <p className="mt-2 text-xs text-black/50">{selectedColorName}</p>
+                )}
               </div>
             )}
 
-            {purposeText && (
-              <p className="text-sm md:text-base font-['Montserrat'] font-normal leading-[1.59] tracking-[-0.02em] text-[#3D1A00]/90">
-                {purposeText}
-              </p>
+            {sizeVariants.length > 0 && (
+              <div className="border-t border-black/10 pt-5">
+                <p className="mb-3 text-sm text-black/45">Оберіть розмір</p>
+                <div className="flex flex-wrap gap-2">
+                  {sizeVariants.map((v) => {
+                    const active = v.productId === product.id;
+                    return (
+                      <button
+                        key={`${v.label}-${v.productId}`}
+                        type="button"
+                        onClick={() => onSizeClick(v)}
+                        className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                          active ? "text-white" : "bg-black/[0.06] text-black/55 hover:bg-black/10"
+                        }`}
+                        style={active ? { backgroundColor: ACCENT } : undefined}
+                      >
+                        {v.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             )}
 
-            <div className="flex items-center justify-between gap-4 pt-2 flex-wrap">
-              <span className="text-2xl md:text-2xl font-['Montserrat'] font-normal leading-[1.59] tracking-[-0.02em] text-[#3D1A00]">
-                {displayPrice.toLocaleString("uk-UA")} грн
-              </span>
-              <div className="flex items-center border border-[#3D1A00]/20 rounded overflow-hidden shrink-0">
+            {product.gift_product && (
+              <div className="rounded-xl border border-black/10 bg-[#faf8f5] p-4 text-sm">
+                <p className="font-semibold text-black">Подарунок до товару</p>
+                <Link
+                  href={productHref(product.gift_product.slug, product.gift_product.id)}
+                  className="mt-1 inline-block font-medium underline" style={{ color: ACCENT }}
+                >
+                  {product.gift_product.name}
+                </Link>
+              </div>
+            )}
+
+            {/* Кількість + кошик в один ряд (десктоп / планшет) */}
+            <div className="hidden gap-3 border-t border-black/10 pt-5 sm:flex sm:items-stretch">
+              <div
+                className="flex h-12 w-[7.5rem] shrink-0 items-center justify-between rounded-xl px-2 sm:w-32"
+                style={{ backgroundColor: "rgba(0,0,0,0.06)" }}
+              >
                 <button
                   type="button"
                   onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                  className="w-10 h-10 flex items-center justify-center text-[#3D1A00] hover:bg-[#3D1A00]/5 transition-colors"
+                  className="flex h-10 w-10 items-center justify-center rounded-lg text-xl text-black hover:bg-black/5"
                   aria-label="Зменшити"
                 >
                   −
                 </button>
-                <input
-                  type="number"
-                  min={1}
-                  value={quantity}
-                  onChange={(e) => {
-                    const v = parseInt(e.target.value, 10);
-                    if (!Number.isNaN(v) && v >= 1) setQuantity(v);
-                  }}
-                  className="w-14 h-10 py-0 px-2 text-center text-[#3D1A00] border-x border-[#3D1A00]/20 bg-transparent font-['Montserrat'] text-sm focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
- style={{ textAlign: "center" }}
-                />
+                <span className="min-w-[2rem] text-center text-base font-medium tabular-nums">{quantity}</span>
                 <button
                   type="button"
                   onClick={() => setQuantity((q) => q + 1)}
-                  className="w-10 h-10 flex items-center justify-center text-[#3D1A00] hover:bg-[#3D1A00]/5 transition-colors"
+                  className="flex h-10 w-10 items-center justify-center rounded-lg text-xl text-black hover:bg-black/5"
                   aria-label="Збільшити"
                 >
                   +
                 </button>
               </div>
+              <AddToCartButton
+                size="md"
+                className="min-w-0 flex-1 rounded-xl"
+                label={isAddingToCart ? "Додавання…" : "В кошик"}
+                disabled={outOfStock}
+                loading={isAddingToCart}
+                onClick={() => {
+                  if (!outOfStock && !isAddingToCart) void handleAddToCart();
+                }}
+              />
             </div>
 
-            {/* Gift promo */}
-            {product.gift_product && (
-              <div className="rounded-lg border border-[#3D1A00]/15 bg-[#FFF9F0] p-4">
-                <p className="text-sm font-['Montserrat'] font-semibold text-[#3D1A00]">
-                  Подарунок до цього товару:
-                </p>
-                <div className="mt-2 flex items-center justify-between gap-4 flex-wrap">
-                  <Link
-                    href={`/product/${(product.gift_product.slug && String(product.gift_product.slug).trim()) ? product.gift_product.slug : product.gift_product.id}`}
-                    className="text-sm font-['Montserrat'] text-[#3D1A00] underline hover:opacity-80"
-                  >
-                    {product.gift_product.name}
-                  </Link>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm line-through text-[#3D1A00]/60">
-                      {Math.round(product.gift_product.price).toLocaleString("uk-UA")} грн
-                    </span>
-                    <span className="text-sm font-bold text-[#3D1A00]">
-                      безкоштовно
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
+            {/* Відступ під закріплену панель на мобільному */}
+            <div className="h-2 sm:hidden" aria-hidden />
 
-            <div className="flex flex-col sm:flex-row gap-3 pt-2">
-              <button
-                onClick={outOfStock || isAddingToCart ? undefined : handleAddToCart}
-                disabled={outOfStock || isAddingToCart}
-                className="flex-1 py-3 px-6 text-center border-2 border-[#3D1A00] bg-white text-[#3D1A00] font-['Montserrat'] font-normal leading-[1.86] tracking-[-0.02em] uppercase text-sm md:text-base transition-colors hover:bg-[#3D1A00]/5 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isAddingToCart ? "Додавання..." : "В КОШИК"}
-              </button>
-              <button
-                type="button"
-                onClick={outOfStock || isAddingToCart ? undefined : handleBuyInOneClick}
-                disabled={outOfStock || isAddingToCart}
-                className="flex-1 py-3 px-6 text-center bg-[#D7D799] hover:bg-[#c5c58a] text-[#3D1A00] font-['Montserrat'] font-normal leading-[1.86] tracking-[-0.02em] uppercase text-sm md:text-base transition-colors border border-[#b8b87a] disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isAddingToCart ? "Додавання..." : "КУПИТИ В 1 КЛІК"}
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => !outOfStock && setOneClickOpen(true)}
+              disabled={outOfStock}
+              className="text-center text-sm text-black/50 underline-offset-2 hover:underline disabled:opacity-45"
+            >
+              Швидке замовлення
+            </button>
 
             <CartAlert
               isVisible={showCartAlert}
               onGoToCart={() => {
                 setShowCartAlert(false);
-                setIsBasketOpen(true);
+                router.push("/cart");
               }}
             />
             <Alert
@@ -573,12 +649,9 @@ export default function ProductClient({ product }: ProductClientProps) {
               quantity={quantity}
             />
 
-            {/* Category description (Markdown) */}
             {product.category_description && (
-              <div className="border-t border-[#3D1A00]/10 pt-6">
-                <p className="text-xs uppercase tracking-wider text-[#3D1A00]/60 font-['Montserrat'] font-semibold">
-                  Про категорію
-                </p>
+              <div className="border-t border-black/10 pt-6">
+                <p className="text-xs font-semibold uppercase tracking-wider text-black/45">Про категорію</p>
                 <div className="mt-2">
                   <CategoryDescriptionMarkdown content={product.category_description} />
                 </div>
@@ -587,32 +660,102 @@ export default function ProductClient({ product }: ProductClientProps) {
           </div>
         </div>
 
-        {/* Купують разом */}
         {product.bought_together_products && product.bought_together_products.length > 0 && (
-          <div className="mt-10">
+          <div className="mt-12">
             <YouMightLike title="Купують разом" suggestedProducts={product.bought_together_products} />
           </div>
         )}
 
         {/* Tabs */}
-        <div className="mt-12 pt-8 border-t border-[#3D1A00]/10">
-          <div className="flex flex-wrap gap-6 md:gap-8 border-b border-[#3D1A00]/15 pb-1 mb-6">
-            {TABS.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={`font-['Montserrat'] font-normal leading-[1.86] tracking-[-0.02em] text-sm uppercase transition-colors ${
-                  activeTab === tab.id
-                    ? "text-[#3D1A00] font-semibold border-b-2 border-[#3D1A00] pb-1 -mb-[3px]"
-                    : "text-[#3D1A00]/70 hover:text-[#3D1A00]"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+        <div className="mt-14 border-t border-black/10 pt-10">
+          <div role="tablist" className="flex gap-10 border-b border-black/10">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "details"}
+              onClick={() => setActiveTab("details")}
+              className={`pb-3 font-['Montserrat'] text-sm font-medium transition-colors sm:text-base ${
+                activeTab === "details" ? "text-black" : "text-black/45 hover:text-black/70"
+              }`}
+              style={
+                activeTab === "details"
+                  ? { boxShadow: `inset 0 -3px 0 0 ${ACCENT}` }
+                  : undefined
+              }
+            >
+              Деталі продукту
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "delivery_payment"}
+              onClick={() => setActiveTab("delivery_payment")}
+              className={`pb-3 font-['Montserrat'] text-sm font-medium transition-colors sm:text-base ${
+                activeTab === "delivery_payment" ? "text-black" : "text-black/45 hover:text-black/70"
+              }`}
+              style={
+                activeTab === "delivery_payment"
+                  ? { boxShadow: `inset 0 -3px 0 0 ${ACCENT}` }
+                  : undefined
+              }
+            >
+              Доставка та оплата
+            </button>
           </div>
-          <div className="min-h-[120px]">{renderTabContent()}</div>
+          <div className="min-h-[100px] pt-4">
+            {activeTab === "details" ? (
+              product.description ? (
+                <div className="whitespace-pre-line font-['Montserrat'] text-sm leading-relaxed text-black/80 sm:text-base">
+                  {product.description}
+                </div>
+              ) : (
+                <p className="font-['Montserrat'] text-sm text-black/45">Детальний опис відсутній.</p>
+              )
+            ) : (
+              <ProductDeliveryPaymentTab />
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Мобільна панель: кількість + «В кошик» закріплена знизу */}
+      <div
+        className="fixed inset-x-0 bottom-0 z-50 border-t border-black/10 bg-white/95 px-4 py-3 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] backdrop-blur-sm sm:hidden"
+        style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
+      >
+        <div className="mx-auto flex max-w-[1920px] items-stretch gap-2">
+          <div
+            className="flex h-12 w-[7.5rem] shrink-0 items-center justify-between rounded-xl px-1"
+            style={{ backgroundColor: "rgba(0,0,0,0.06)" }}
+          >
+            <button
+              type="button"
+              onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+              className="flex h-10 w-9 items-center justify-center rounded-lg text-xl text-black"
+              aria-label="Зменшити"
+            >
+              −
+            </button>
+            <span className="min-w-[1.75rem] text-center text-base font-semibold tabular-nums">{quantity}</span>
+            <button
+              type="button"
+              onClick={() => setQuantity((q) => q + 1)}
+              className="flex h-10 w-9 items-center justify-center rounded-lg text-xl text-black"
+              aria-label="Збільшити"
+            >
+              +
+            </button>
+          </div>
+          <AddToCartButton
+            size="md"
+            className="min-w-0 flex-1 rounded-xl"
+            label={isAddingToCart ? "…" : "В кошик"}
+            disabled={outOfStock}
+            loading={isAddingToCart}
+            onClick={() => {
+              if (!outOfStock && !isAddingToCart) void handleAddToCart();
+            }}
+          />
         </div>
       </div>
     </section>

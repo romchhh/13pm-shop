@@ -2,6 +2,8 @@
  * Telegram Bot API utilities for sending order notifications
  */
 
+import { PAYMENT_TYPE_LABELS_LONG } from "@/lib/paymentTypeLabels";
+
 interface OrderData {
   id: number;
   invoice_id: string;
@@ -29,15 +31,6 @@ interface OrderData {
  * Format order data into a readable Telegram message
  */
 function formatOrderMessage(order: OrderData, isPaid: boolean = false): string {
-  const paymentTypeMap: Record<string, string> = {
-    full: "Повна оплата",
-    prepay: "Накладений платіж (без онлайн-оплати)",
-    pay_after: "Оплата після (при отриманні)",
-    test_payment: "Тест оплата (імітація)",
-    installment: "Розстрочка",
-    crypto: "Криптовалюта",
-  };
-
   const deliveryMethodMap: Record<string, string> = {
     one_click: "Нова пошта — уточнити у клієнта (1 клік)",
     nova_poshta_branch: "Нова пошта (відділення)",
@@ -69,7 +62,7 @@ function formatOrderMessage(order: OrderData, isPaid: boolean = false): string {
     message += `📧 <b>Email:</b> ${order.email}\n`;
   }
 
-  message += `\n💳 <b>Спосіб оплати:</b> ${paymentTypeMap[order.payment_type] || order.payment_type}\n`;
+  message += `\n💳 <b>Спосіб оплати:</b> ${PAYMENT_TYPE_LABELS_LONG[order.payment_type] || order.payment_type}\n`;
   message += `📦 <b>Доставка:</b> ${deliveryMethodMap[order.delivery_method] || order.delivery_method}\n`;
   message += `🏙️ <b>Місто:</b> ${order.city}\n`;
   message += `📍 <b>Відділення:</b> ${order.post_office}\n`;
@@ -188,6 +181,47 @@ export async function sendContactFormNotification(data: {
     return true;
   } catch (error) {
     console.error("[Telegram] Error sending contact form notification:", error);
+    return false;
+  }
+}
+
+export async function sendNewsletterSubscribeNotification(email: string): Promise<boolean> {
+  try {
+    const botToken = process.env.BOT_TOKEN;
+    const chatId = process.env.CHAT_ID;
+
+    if (!botToken || !chatId) {
+      console.warn(
+        "[Telegram] Missing BOT_TOKEN or CHAT_ID, skipping newsletter subscribe notification"
+      );
+      return false;
+    }
+
+    const text =
+      `📬 <b>ПІДПИСКА НА РОЗСИЛКУ</b>\n\n` +
+      `📧 <b>Email:</b> ${escapeHtml(email)}\n\n` +
+      `🕐 <b>Дата:</b> ${new Date().toLocaleString("uk-UA")}`;
+
+    const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text,
+        parse_mode: "HTML",
+        disable_web_page_preview: true,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error("[Telegram] Failed to send newsletter subscribe:", errorData);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error("[Telegram] Error sending newsletter subscribe:", error);
     return false;
   }
 }

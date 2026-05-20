@@ -7,20 +7,18 @@ import "./globals.css";
 import "./mobile-optimizations.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import NewsletterSubscribe from "@/components/layout/NewsletterSubscribe";
 import { AppProvider } from "@/lib/GeneralProvider";
 import { BasketProvider } from "@/lib/BasketProvider";
+import { FavoritesProvider } from "@/lib/FavoritesProvider";
 import { CategoriesProvider } from "@/lib/CategoriesProvider";
 import { registerServiceWorker } from "@/lib/registerSW";
 import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
 import { WebVitals } from "@/components/shared/WebVitals";
 import MainContent from "@/components/shared/MainContent";
 import { OrganizationStructuredData, WebSiteStructuredData } from "@/components/shared/StructuredData";
-import {
-  SITE_PRODUCT_BRAND,
-  SITE_STORE_NAME,
-  siteFooterLead,
-  siteOfficialRepLine,
-} from "@/lib/siteBrand";
+import { buildRootSiteMetadata } from "@/lib/seo";
+import { SITE_ICON_PATH, siteMetadataIcons } from "@/lib/siteBrand";
 
 const montserrat = Montserrat({
   subsets: ["latin", "cyrillic"],
@@ -33,32 +31,9 @@ const montserrat = Montserrat({
   weight: ["300", "400", "500", "600", "700"],
 });
 
-const baseUrlForMeta = process.env.PUBLIC_URL || process.env.NEXT_PUBLIC_PUBLIC_URL || "http://localhost:3000";
-
 export const metadata: Metadata = {
-  metadataBase: new URL(baseUrlForMeta),
-  title: `${SITE_STORE_NAME} — ${siteOfficialRepLine} | Eco та wellness`,
-  description: `${siteFooterLead} Замовлення та консультація оригінальної продукції ${SITE_PRODUCT_BRAND}.`,
-  keywords: `ForBody Space, ${SITE_PRODUCT_BRAND}, wellness, eco, фітокомплекси, офіційний представник ${SITE_PRODUCT_BRAND}, натуральна продукція, Україна`,
-  icons: {
-    icon: "/images/choice-features/open-browser.png",
-    shortcut: "/images/choice-features/open-browser.png",
-    apple: "/images/choice-features/open-browser.png",
-  },
-  openGraph: {
-    title: `${SITE_STORE_NAME} — ${siteOfficialRepLine}`,
-    description: siteFooterLead,
-    type: "website",
-    locale: "uk_UA",
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: { index: true, follow: true },
-  },
-  alternates: {
-    canonical: baseUrlForMeta,
-  },
+  ...buildRootSiteMetadata(),
+  icons: siteMetadataIcons,
 };
 
 export default function RootLayout({
@@ -89,15 +64,17 @@ export default function RootLayout({
         <meta name="format-detection" content="telephone=no" />
         
         {/* Favicon and App Icons */}
-        <link rel="icon" type="image/png" href="/images/choice-features/open-browser.png" />
-        <link rel="shortcut icon" type="image/png" href="/images/choice-features/open-browser.png" />
-        <link rel="apple-touch-icon" href="/images/choice-features/open-browser.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+        <link rel="icon" type="image/png" href={SITE_ICON_PATH} />
+        <link rel="shortcut icon" type="image/png" href={SITE_ICON_PATH} />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/site.webmanifest" />
-        <meta name="theme-color" content="#000000" />
-        <meta name="msapplication-TileColor" content="#000000" />
+        <meta name="theme-color" content="#8B5E3F" />
+        <meta name="msapplication-TileColor" content="#8B5E3F" />
+        <meta name="msapplication-TileImage" content="/android-chrome-192x192.png" />
         
         {/* Preload critical resources */}
-        <link rel="preload" href="/images/browser-open.png" as="image" />
         {/* Hero image preload */}
         <link rel="preload" href="/images/hf_20260222_063745_3c9c7bbc-82d2-4f3f-8c11-4216792e4995.jpeg" as="image" />
         <link rel="preload" href="/api/products/top-sale" as="fetch" crossOrigin="anonymous" />
@@ -119,8 +96,6 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         
-        {/* Apple touch icon */}
-        <link rel="apple-touch-icon" href="/images/choice-features/open-browser.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       </head>
@@ -171,13 +146,16 @@ export default function RootLayout({
         <ErrorBoundary>
           <AppProvider>
             <BasketProvider>
+              <FavoritesProvider>
               <CategoriesProvider>
                 <Header />
                 <Suspense fallback={<main id="main-content" className="bg-[var(--background-warm-yellow)] mt-[var(--site-header-offset)] min-h-screen" />}>
                   <MainContent id="main-content">{children}</MainContent>
                 </Suspense>
+                <NewsletterSubscribe />
                 <Footer />
               </CategoriesProvider>
+              </FavoritesProvider>
             </BasketProvider>
           </AppProvider>
         </ErrorBoundary>

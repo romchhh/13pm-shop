@@ -1,11 +1,11 @@
 {
-  "name": "13VPLUS — Жіночий Одяг | Повсякденний, Домашній Одяг та Купальники",
-  "short_name": "13VPLUS",
-  "description": "Повсякденний одяг, домашній одяг та купальники в мінімалістичному лакшері стилі. Індивідуальний пошив під ваші параметри.",
+  "name": "Plywood Present — дерев'яний декор та подарунки з фанери",
+  "short_name": "Plywood Present",
+  "description": "Іменні подарунки та декор із фанери: фоторамки, метрики, ключниці. Власне виробництво в Україні, доставка Новою Поштою.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#000000",
+  "background_color": "#faf9f7",
+  "theme_color": "#8B5E3F",
   "orientation": "portrait-primary",
   "scope": "/",
   "lang": "uk",
@@ -38,13 +38,5 @@
       "purpose": "maskable any"
     }
   ],
-  "categories": ["shopping", "lifestyle", "fashion"],
-  "screenshots": [
-    {
-      "src": "/images/hero-bg.png",
-      "sizes": "1920x1080",
-      "type": "image/png",
-      "form_factor": "wide"
-    }
-  ]
+  "categories": ["shopping", "lifestyle", "gifts"]
 }

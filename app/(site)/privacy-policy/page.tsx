@@ -1,36 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SITE_STORE_NAME } from "@/lib/siteBrand";
+import { buildPageMetadata } from "@/lib/seo";
 
-const baseUrl =
-  process.env.PUBLIC_URL || process.env.NEXT_PUBLIC_PUBLIC_URL || "http://localhost:3000";
-
-export const metadata: Metadata = {
-  title: `Політика конфіденційності | ${SITE_STORE_NAME}`,
-  description: `Політика конфіденційності інтернет-магазину ${SITE_STORE_NAME}. Як ми збираємо, зберігаємо та захищаємо персональні дані клієнтів при замовленні wellness та eco-продукції.`,
-  openGraph: {
-    title: `Політика конфіденційності | ${SITE_STORE_NAME}`,
-    description: `Докладна політика конфіденційності ${SITE_STORE_NAME}: обробка персональних даних, захист інформації та використання даних при онлайн-замовленнях.`,
-    type: "article",
-    locale: "uk_UA",
-    url: `${baseUrl}/privacy-policy`,
-    images: [
-      {
-        url: `${baseUrl}/images/tg_image_3614117882.png`,
-        width: 1200,
-        height: 630,
-        alt: `${SITE_STORE_NAME} — політика конфіденційності`,
-      },
-    ],
-    siteName: SITE_STORE_NAME,
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: `Політика конфіденційності | ${SITE_STORE_NAME}`,
-    description: `Як інтернет-магазин ${SITE_STORE_NAME} працює з персональними даними при замовленні wellness та eco-продукції.`,
-    images: [`${baseUrl}/images/tg_image_3614117882.png`],
-  },
-};
+export const metadata: Metadata = buildPageMetadata({
+  title: "Політика конфіденційності",
+  description: `Як ${SITE_STORE_NAME} обробляє персональні дані при замовленнях дерев'яного декору та подарунків з фанери онлайн. Зберігання, мета використання та ваші права.`,
+  path: "/privacy-policy",
+});
 
 export default function PrivacyPolicyPage() {
   return (
@@ -265,20 +242,20 @@ export default function PrivacyPolicyPage() {
             <div className="bg-black/5 dark:bg-white/5 p-8 rounded-2xl border border-black/10 dark:border-white/10 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <p className="text-sm font-semibold mb-2 opacity-60">Отримувач</p>
-                  <p className="text-sm opacity-90">ФОП Максякова Марія Олександрівна</p>
+                  <p className="text-sm font-semibold mb-2 opacity-60">Покупець</p>
+                  <p className="text-sm opacity-90">ФОП Макарук Тетяна Віталіївна</p>
                 </div>
                 <div>
                   <p className="text-sm font-semibold mb-2 opacity-60">ІПН/ЄДРПОУ</p>
-                  <p className="text-sm opacity-90">3285005389</p>
+                  <p className="text-sm opacity-90">3667609682</p>
                 </div>
                 <div className="md:col-span-2">
                   <p className="text-sm font-semibold mb-2 opacity-60">IBAN</p>
-                  <p className="text-sm opacity-90">UA443220010000026001350065476</p>
+                  <p className="text-sm opacity-90">UA023220010000026008370057694</p>
                 </div>
                 <div>
-                  <p className="text-sm font-semibold mb-2 opacity-60">Акціонерне товариство</p>
-                  <p className="text-sm opacity-90">Акціонерне Товариство УНІВЕРСАЛ БАНК</p>
+                  <p className="text-sm font-semibold mb-2 opacity-60">Банк</p>
+                  <p className="text-sm opacity-90">АТ «УНІВЕРСАЛ БАНК»</p>
                 </div>
                 <div>
                   <p className="text-sm font-semibold mb-2 opacity-60">МФО</p>

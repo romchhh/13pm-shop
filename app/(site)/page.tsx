@@ -1,45 +1,40 @@
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
-import Hero from "@/components/main-page/Hero";
-import { SITE_STORE_NAME, siteFooterLead, siteOfficialRepLine } from "@/lib/siteBrand";
+import HeroServer from "@/components/main-page/HeroServer";
+import { siteFooterLead, siteMetaDescription, siteOfficialRepLine } from "@/lib/siteBrand";
+import { buildPageMetadata } from "@/lib/seo";
 import CategoriesShowcase from "@/components/main-page/CategoriesShowcase";
+import HowWeWork from "@/components/main-page/HowWeWork";
+import HomeHashScroll from "@/components/shared/HomeHashScroll";
 
-// Lazy load components that are below the fold
 const Bestsellers = dynamic(() => import("@/components/main-page/Bestsellers"), {
-  loading: () => <div className="h-64 animate-pulse bg-[#FFF9F0]" />
+  loading: () => <div className="h-64 animate-pulse bg-white" />,
 });
-const AboutChoiceSection = dynamic(() => import("@/components/main-page/AboutChoiceSection"), {
-  loading: () => <div className="h-64 animate-pulse bg-[#FFF9F0]" />
+const NewArrivals = dynamic(() => import("@/components/main-page/NewArrivals"), {
+  loading: () => <div className="h-64 animate-pulse bg-white" />,
 });
-const FeaturesSection = dynamic(() => import("@/components/main-page/FeaturesSection"), {
-  loading: () => <div className="h-32 animate-pulse bg-white" />
-});
+import Reviews from "@/components/main-page/Reviews";
+import FAQ from "@/components/main-page/FAQ";
 
-// ISR - Regenerate page every 5 minutes
 export const revalidate = 300;
+export const runtime = "nodejs";
 
-// Optimize runtime
-export const runtime = 'nodejs';
-
-// Metadata for SEO
-export const metadata = {
-  title: `${SITE_STORE_NAME} — ${siteOfficialRepLine} | Eco та wellness`,
-  description: siteFooterLead,
-  alternates: {
-    canonical: '/',
-  },
-};
+export const metadata = buildPageMetadata({
+  title: siteOfficialRepLine,
+  description: siteMetaDescription,
+  path: "/",
+  imageAlt: siteFooterLead.slice(0, 120),
+});
 
 export default function Home() {
   return (
     <>
-      {/* Critical above-the-fold content */}
-      <Hero />
-      
-      {/* Suspense boundary for categories — fallback must match CategoriesShowcase loading state to avoid hydration mismatch */}
+      <HomeHashScroll />
+      <HeroServer />
+
       <Suspense
         fallback={
-          <section className="w-full bg-[#FFFFFF] py-16 lg:py-20">
+          <section className="w-full bg-white py-6 lg:py-8">
             <div className="max-w-[1920px] mx-auto px-6">
               <p className="text-[#3D1A00] font-['Montserrat']">Завантаження категорій...</p>
             </div>
@@ -49,13 +44,19 @@ export default function Home() {
         <CategoriesShowcase />
       </Suspense>
 
-      <Suspense fallback={<div className="h-64 bg-[#FFFFFF] animate-pulse" />}>
+      <Suspense fallback={<div className="h-64 bg-white animate-pulse" />}>
         <Bestsellers />
       </Suspense>
 
-      <AboutChoiceSection />
+      <Suspense fallback={<div className="h-64 bg-white animate-pulse" />}>
+        <NewArrivals />
+      </Suspense>
 
-      <FeaturesSection />
+      <HowWeWork />
+
+      <Reviews />
+
+      <FAQ />
     </>
   );
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { canFulfillQuantity } from "@/lib/productAvailability";
 
 const DEFAULT_SIZE = "—";
 
@@ -24,19 +25,26 @@ export async function POST(req: NextRequest) {
         }) => {
           const product = await prisma.product.findUnique({
             where: { id: item.product_id },
-            select: { stock: true },
+            select: { stock: true, inStock: true },
           });
 
-          const availableStock = product?.stock ?? 0;
           const requestedQuantity = item.quantity;
           const size = item.size ?? DEFAULT_SIZE;
+          const availableStock =
+            product?.inStock === true ? (product?.stock ?? 0) : 0;
 
           return {
             product_id: item.product_id,
             size,
             requested: requestedQuantity,
             available: availableStock,
-            sufficient: availableStock >= requestedQuantity,
+            sufficient: canFulfillQuantity(
+              {
+                in_stock: product?.inStock,
+                stock: product?.stock,
+              },
+              requestedQuantity
+            ),
           };
         }
       )
@@ -47,8 +55,8 @@ export async function POST(req: NextRequest) {
     if (insufficientItems.length > 0) {
       return NextResponse.json(
         {
-          error: "Insufficient stock",
-          insufficientItems,
+          error:
+            "Один або кілька товарів зараз недоступні. Оновіть кошик і спробуйте ще раз.",
         },
         { status: 400 }
       );

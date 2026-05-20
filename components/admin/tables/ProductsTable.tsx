@@ -12,6 +12,7 @@ import Link from "next/link";
 import Image from "next/image";
 import Pagination from "./Pagination";
 import { getProductImageSrc } from "@/lib/getFirstProductImage";
+import { buildSizeGroupLabels } from "@/lib/sizeGroupLabels";
 
 const SIZE_MAP: Record<string, string> = {
   "1": "XL",
@@ -37,6 +38,7 @@ interface Product {
   category_name?: string;
   color: string;
   first_media?: { url: string; type: string } | null;
+  size_variants?: unknown;
 }
 
 export default function ProductsTable() {
@@ -59,6 +61,14 @@ export default function ProductsTable() {
         currentPage * productsPerPage
       ),
     [products, currentPage, productsPerPage]
+  );
+
+  const sizeGroupLabelById = useMemo(
+    () =>
+      buildSizeGroupLabels(
+        products.map((p) => ({ id: p.id, size_variants: p.size_variants }))
+      ),
+    [products]
   );
 
   // Reset to first page if orders are changed (e.g., after deletion)
@@ -190,6 +200,12 @@ export default function ProductsTable() {
                   isHeader
                   className="px-5 py-3 text-left text-sm font-semibold text-gray-900"
                 >
+                  Група розмірів
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="px-5 py-3 text-left text-sm font-semibold text-gray-900"
+                >
                   Категорія
                 </TableCell>
                 <TableCell
@@ -223,7 +239,7 @@ export default function ProductsTable() {
               {loading ? (
                 <TableRow>
                   <TableCell
-                    colSpan={10}
+                    colSpan={11}
                     className="text-center py-6 text-gray-600"
                   >
                     Завантаження...
@@ -232,7 +248,7 @@ export default function ProductsTable() {
               ) : products.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={10}
+                    colSpan={11}
                     className="text-center py-6 text-gray-600"
                   >
                     Продуктів не знайдено.
@@ -278,6 +294,15 @@ export default function ProductsTable() {
                         : "—"}
                     </TableCell>
                     <TableCell className="px-5 py-4 text-sm text-gray-700">
+                      {sizeGroupLabelById.get(product.id) ? (
+                        <span className="inline-block rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-900 ring-1 ring-amber-200/80">
+                          {sizeGroupLabelById.get(product.id)}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-sm text-gray-700">
                       {product.category_name || "—"}
                     </TableCell>
                     <TableCell className="px-5 py-4 text-sm text-gray-700">
@@ -292,6 +317,7 @@ export default function ProductsTable() {
                     <TableCell className="px-5 py-4 space-x-2">
                       <Link
                         href={`/admin/products/${product.id}/edit`}
+                        scroll={false}
                         className="inline-block rounded-md bg-blue-500 px-3 py-1.5 text-white text-sm font-medium hover:bg-blue-600 transition shadow-sm"
                       >
                         Редагувати

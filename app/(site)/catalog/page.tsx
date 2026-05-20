@@ -2,66 +2,23 @@ import { Suspense } from "react";
 import CatalogServer from "@/components/catalog/CatalogServer";
 import type { Metadata } from "next";
 import { CatalogGridSkeleton } from "@/components/shared/SkeletonLoader";
+import { SITE_WORDMARK } from "@/lib/siteBrand";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const revalidate = 1200; // ISR every 20 minutes
+/** Завжди свіжий список товарів (після seed/адмінки без очікування ISR). */
+export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Каталог wellness та eco-продукції | ForBody",
-  description:
-    "Перегляньте повний каталог wellness-комплексів, фітопрепаратів, натурального догляду та eco-засобів для дому від ForBody. Підберіть продукти для здоров'я, енергії та комфорту щодня.",
-  keywords:
-    "ForBody, каталог продукції, wellness, фітокомплекси, вітаміни, натуральний догляд, eco-засоби для дому, здоров'я, імунітет, детокс, енергія",
-  openGraph: {
-    title: "Каталог wellness та eco-продукції | ForBody",
-    description:
-      "Wellness-комплекси, фітопрепарати, натуральний догляд і eco-засоби для дому від ForBody. Оберіть рішення для вашого здоров'я та комфорту.",
-    type: "website",
-    locale: "uk_UA",
-    url: `${process.env.PUBLIC_URL || process.env.NEXT_PUBLIC_PUBLIC_URL || "http://localhost:3000"}/catalog`,
-    images: [
-      {
-        url: `${process.env.PUBLIC_URL || process.env.NEXT_PUBLIC_PUBLIC_URL || "http://localhost:3000"}/images/tg_image_3614117882.png`,
-        width: 1200,
-        height: 630,
-        alt: "ForBody — каталог wellness та eco-продукції",
-      },
-    ],
-    siteName: "ForBody",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Каталог wellness та eco-продукції | ForBody",
-    description:
-      "Перегляньте каталог wellness та eco-продукції ForBody: фітокомплекси, природна підтримка організму та засоби для здорового дому.",
-    images: [
-      `${
-        process.env.PUBLIC_URL ||
-        process.env.NEXT_PUBLIC_PUBLIC_URL ||
-        "http://localhost:3000"
-      }/images/tg_image_3614117882.png`,
-    ],
-  },
-  alternates: {
-    canonical: `${process.env.PUBLIC_URL || process.env.NEXT_PUBLIC_PUBLIC_URL || "http://localhost:3000"}/catalog`,
-  },
-};
+export const metadata: Metadata = buildPageMetadata({
+  title: `Каталог дерев'яного декору та подарунків`,
+  description: `Каталог ${SITE_WORDMARK}: фоторамки, метрики, ключниці та декор з фанери власного виробництва. Іменні подарунки з лазерним гравіюванням — доставка по Україні.`,
+  path: "/catalog",
+  imageAlt: `${SITE_WORDMARK} — каталог подарунків і декору з фанери`,
+});
 
-export default async function CatalogPage() {
+export default function CatalogPage() {
   return (
-    <Suspense fallback={
-      <section className="max-w-[1824px] mx-auto px-4 sm:px-6 lg:px-8 pt-8 mt-10 mb-20">
-        <div className="flex justify-between items-center mb-12">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold font-['Montserrat'] uppercase tracking-wider text-gray-900">
-            Завантаження...
-          </h1>
-        </div>
-        <CatalogGridSkeleton count={12} />
-      </section>
-    }>
-      <CatalogServer 
-        category={null}
-        subcategory={null}
-      />
+    <Suspense fallback={<CatalogGridSkeleton />}>
+      <CatalogServer />
     </Suspense>
   );
 }

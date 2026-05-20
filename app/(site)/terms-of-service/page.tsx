@@ -1,36 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SITE_STORE_NAME } from "@/lib/siteBrand";
+import { buildPageMetadata, getSiteBaseUrl } from "@/lib/seo";
 
-const baseUrl =
-  process.env.PUBLIC_URL || process.env.NEXT_PUBLIC_PUBLIC_URL || "http://localhost:3000";
+const baseUrl = getSiteBaseUrl();
 
-export const metadata: Metadata = {
-  title: `Договір публічної оферти | ${SITE_STORE_NAME}`,
-  description: `Умови купівлі wellness та eco-продукції в інтернет-магазині ${SITE_STORE_NAME}: оформлення замовлень, оплата, доставка та повернення.`,
-  openGraph: {
-    title: `Договір публічної оферти | ${SITE_STORE_NAME}`,
-    description: `Публічна оферта ${SITE_STORE_NAME}: правила замовлень, оплати, доставки та повернення товарів.`,
-    type: "article",
-    locale: "uk_UA",
-    url: `${baseUrl}/terms-of-service`,
-    images: [
-      {
-        url: `${baseUrl}/images/tg_image_3614117882.png`,
-        width: 1200,
-        height: 630,
-        alt: `${SITE_STORE_NAME} — умови публічної оферти`,
-      },
-    ],
-    siteName: SITE_STORE_NAME,
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: `Договір публічної оферти | ${SITE_STORE_NAME}`,
-    description: `Умови публічної оферти інтернет-магазину ${SITE_STORE_NAME}.`,
-    images: [`${baseUrl}/images/tg_image_3614117882.png`],
-  },
-};
+export const metadata: Metadata = buildPageMetadata({
+  title: "Договір публічної оферти",
+  description: `Публічна оферта ${SITE_STORE_NAME}: купівля дерев'яного декору та подарунків з фанери онлайн — оформлення, оплата, доставка та повернення.`,
+  path: "/terms-of-service",
+});
 
 export default function TermsOfServicePage() {
   return (
@@ -314,20 +293,20 @@ export default function TermsOfServicePage() {
             <div className="bg-black/5 p-8 rounded-2xl border border-black/10 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <p className="text-sm font-semibold mb-2 opacity-60">Отримувач</p>
-                  <p className="text-sm opacity-90">ФОП Максякова Марія Олександрівна</p>
+                  <p className="text-sm font-semibold mb-2 opacity-60">Покупець</p>
+                  <p className="text-sm opacity-90">ФОП Макарук Тетяна Віталіївна</p>
                 </div>
                 <div>
                   <p className="text-sm font-semibold mb-2 opacity-60">ІПН/ЄДРПОУ</p>
-                  <p className="text-sm opacity-90">3285005389</p>
+                  <p className="text-sm opacity-90">3667609682</p>
                 </div>
                 <div className="md:col-span-2">
                   <p className="text-sm font-semibold mb-2 opacity-60">IBAN</p>
-                  <p className="text-sm opacity-90">UA443220010000026001350065476</p>
+                  <p className="text-sm opacity-90">UA023220010000026008370057694</p>
                 </div>
                 <div>
-                  <p className="text-sm font-semibold mb-2 opacity-60">Акціонерне товариство</p>
-                  <p className="text-sm opacity-90">Акціонерне Товариство УНІВЕРСАЛ БАНК</p>
+                  <p className="text-sm font-semibold mb-2 opacity-60">Банк</p>
+                  <p className="text-sm opacity-90">АТ «УНІВЕРСАЛ БАНК»</p>
                 </div>
                 <div>
                   <p className="text-sm font-semibold mb-2 opacity-60">МФО</p>

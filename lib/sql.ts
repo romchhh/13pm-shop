@@ -3,6 +3,12 @@ import { prisma } from "./prisma";
 import { unlink } from "fs/promises";
 import path from "path";
 import { unstable_cache } from "next/cache";
+import {
+  buildSizeVariantsForGroup,
+  parseColorOptions,
+  parseSizeVariants,
+  serializeSizeVariants,
+} from "./productOptions";
 import { textToSlug, ensureUniqueSlug } from "./slug";
 
 // Keep sql template literal for backward compatibility (used in migrate route)
@@ -72,11 +78,14 @@ async function _sqlGetAllProducts() {
     id: p.id,
     name: p.name,
     slug: p.slug ?? null,
+    subtitle: p.subtitle ?? null,
     price: Number(p.price),
     description: p.description,
     old_price: p.oldPrice ? Number(p.oldPrice) : null,
     discount_percentage: p.discountPercentage,
     is_hit: p.isHit ?? false,
+    top_sale: p.topSale ?? false,
+    limited_edition: p.limitedEdition ?? false,
     dietitian_approved: p.dietitianApproved ?? false,
     is_promo: p.isPromo ?? false,
     free_delivery_badge: (p as any).freeDeliveryBadge ?? false,
@@ -107,6 +116,8 @@ async function _sqlGetAllProducts() {
     package_weight: p.packageWeight ?? null,
     course: p.course ?? null,
     first_media: p.media[0] ? { type: p.media[0].type, url: p.media[0].url } : null,
+    is_new: (p as any).isNew ?? false,
+    size_variants: (p as any).sizeVariants ?? [],
   }));
 }
 
@@ -221,6 +232,9 @@ export async function sqlGetProduct(id: number) {
           : null,
         bought_together_ids: (product as any).boughtTogetherIds ?? [],
         pair_together_ids: (product as any).pairTogetherIds ?? [],
+        color_options: parseColorOptions((product as any).colorOptions ?? []),
+        size_variants: parseSizeVariants((product as any).sizeVariants ?? []),
+        is_new: (product as any).isNew ?? false,
       };
     },
     [`product-${id}`],
@@ -323,6 +337,9 @@ export async function sqlGetProductBySlug(slug: string) {
       : null,
     bought_together_ids: product.boughtTogetherIds ?? [],
     pair_together_ids: product.pairTogetherIds ?? [],
+    color_options: parseColorOptions(product.colorOptions ?? []),
+    size_variants: parseSizeVariants(product.sizeVariants ?? []),
+    is_new: product.isNew ?? false,
   };
 }
 
@@ -354,6 +371,9 @@ export async function sqlGetProductsByCategory(categoryName: string) {
           category: {
             select: { name: true },
           },
+          subcategory: {
+            select: { name: true },
+          },
           categoryLinks: {
             select: { categoryId: true },
           },
@@ -372,6 +392,7 @@ export async function sqlGetProductsByCategory(categoryName: string) {
         id: p.id,
         name: p.name,
         slug: p.slug ?? null,
+        subtitle: p.subtitle ?? null,
         price: Number(p.price),
         old_price: p.oldPrice ? Number(p.oldPrice) : null,
         discount_percentage: p.discountPercentage,
@@ -395,9 +416,11 @@ export async function sqlGetProductsByCategory(categoryName: string) {
         stock: p.stock,
         in_stock: p.inStock,
         category_name: p.category?.name || null,
+        subcategory_name: p.subcategory?.name || null,
         package_weight: p.packageWeight ?? null,
         course: p.course ?? null,
         first_media: p.media[0] ? { type: p.media[0].type, url: p.media[0].url } : null,
+        is_new: (p as any).isNew ?? false,
       }));
     },
     [`products-by-category-${categoryName}`],
@@ -466,6 +489,7 @@ export async function sqlGetProductsBySubcategoryName(name: string) {
         id: p.id,
         name: p.name,
         slug: p.slug ?? null,
+        subtitle: p.subtitle ?? null,
         price: Number(p.price),
         old_price: p.oldPrice ? Number(p.oldPrice) : null,
         discount_percentage: p.discountPercentage,
@@ -501,6 +525,7 @@ export async function sqlGetProductsBySubcategoryName(name: string) {
         package_weight: p.packageWeight ?? null,
         course: p.course ?? null,
         first_media: p.media[0] ? { type: p.media[0].type, url: p.media[0].url } : null,
+        is_new: (p as any).isNew ?? false,
       }));
     },
     [`products-by-subcategory-${name}`],
@@ -511,80 +536,94 @@ export async function sqlGetProductsBySubcategoryName(name: string) {
   )();
 }
 
-// Get only top sale products
-async function _sqlGetTopSaleProducts() {
-  const products = await prisma.product.findMany({
-    where: { topSale: true },
-    orderBy: { id: "desc" },
-    include: {
-      media: {
-        take: 1,
-        orderBy: { id: "asc" },
-        select: {
-          type: true,
-          url: true,
-        },
-      },
-    },
-  });
+const homeCarouselProductInclude = {
+  category: { select: { name: true } },
+  subcategory: { select: { name: true } },
+  media: {
+    take: 1,
+    orderBy: { id: "asc" as const },
+    select: { type: true, url: true },
+  },
+};
 
-  return products.map((p) => ({
+function mapHomeCarouselProduct(p: {
+  id: number;
+  name: string;
+  slug: string | null;
+  subtitle: string | null;
+  price: unknown;
+  oldPrice: unknown;
+  discountPercentage: number | null;
+  topSale: boolean;
+  limitedEdition: boolean;
+  isHit: boolean;
+  isNew?: boolean;
+  isPromo?: boolean;
+  giftProductId?: number | null;
+  inStock: boolean;
+  stock: number;
+  category?: { name: string } | null;
+  subcategory?: { name: string } | null;
+  media: { type: string; url: string }[];
+}) {
+  return {
     id: p.id,
     name: p.name,
     slug: p.slug ?? null,
+    subtitle: p.subtitle ?? null,
     price: Number(p.price),
     old_price: p.oldPrice ? Number(p.oldPrice) : null,
     discount_percentage: p.discountPercentage,
     top_sale: p.topSale,
     limited_edition: p.limitedEdition,
+    is_hit: p.isHit ?? false,
+    is_new: p.isNew ?? false,
+    is_promo: p.isPromo ?? false,
+    gift_product_id: p.giftProductId ?? null,
+    in_stock: p.inStock,
+    stock: p.stock,
+    category_name: p.category?.name || null,
+    subcategory_name: p.subcategory?.name || null,
     first_media: p.media[0] ? { type: p.media[0].type, url: p.media[0].url } : null,
-  }));
+  };
+}
+
+// Get hit products (плашка «Хіт» на картці)
+async function _sqlGetTopSaleProducts() {
+  const products = await prisma.product.findMany({
+    where: { isHit: true },
+    orderBy: { id: "desc" },
+    include: homeCarouselProductInclude,
+  });
+
+  return products.map((p) => mapHomeCarouselProduct(p));
 }
 
 // Cached version with 20 minute revalidation
 export const sqlGetTopSaleProducts = unstable_cache(
   _sqlGetTopSaleProducts,
-  ['top-sale-products'],
+  ['hit-products'],
   {
     revalidate: 1200, // 20 minutes
     tags: ['products'],
   }
 );
 
-// Get only limited edition products
+// Get new products (плашка NEW на картці)
 async function _sqlGetLimitedEditionProducts() {
   const products = await prisma.product.findMany({
-    where: { limitedEdition: true },
+    where: { isNew: true },
     orderBy: { id: "desc" },
-    include: {
-      media: {
-        take: 1,
-        orderBy: { id: "asc" },
-        select: {
-          type: true,
-          url: true,
-        },
-      },
-    },
+    include: homeCarouselProductInclude,
   });
 
-  return products.map((p) => ({
-    id: p.id,
-    name: p.name,
-    slug: p.slug ?? null,
-    price: Number(p.price),
-    old_price: p.oldPrice ? Number(p.oldPrice) : null,
-    discount_percentage: p.discountPercentage,
-    top_sale: p.topSale,
-    limited_edition: p.limitedEdition,
-    first_media: p.media[0] ? { type: p.media[0].type, url: p.media[0].url } : null,
-  }));
+  return products.map((p) => mapHomeCarouselProduct(p));
 }
 
 // Cached version with 20 minute revalidation
 export const sqlGetLimitedEditionProducts = unstable_cache(
   _sqlGetLimitedEditionProducts,
-  ['limited-edition-products'],
+  ['new-products'],
   {
     revalidate: 1200, // 20 minutes
     tags: ['products'],
@@ -622,6 +661,9 @@ export async function sqlPostProduct(product: {
   gift_product_id?: number | null;
   bought_together_ids?: number[];
   pair_together_ids?: number[];
+  color_options?: unknown;
+  size_variants?: unknown;
+  is_new?: boolean;
   stock?: number;
   category_id?: number | null;
   subcategory_id?: number | null;
@@ -669,6 +711,9 @@ export async function sqlPostProduct(product: {
       giftProductId: product.gift_product_id ?? null,
       boughtTogetherIds: product.bought_together_ids ?? [],
       pairTogetherIds: product.pair_together_ids ?? [],
+      colorOptions: (product.color_options as Prisma.InputJsonValue) ?? [],
+      sizeVariants: (product.size_variants as Prisma.InputJsonValue) ?? [],
+      isNew: product.is_new ?? false,
       stock: product.stock ?? 0,
       categoryId: product.category_id ?? null,
       subcategoryId: product.subcategory_id ?? null,
@@ -753,6 +798,9 @@ export async function sqlPutProduct(
     gift_product_id?: number | null;
     bought_together_ids?: number[];
     pair_together_ids?: number[];
+    color_options?: unknown;
+    size_variants?: unknown;
+    is_new?: boolean;
     stock?: number;
     category_id?: number | null;
     subcategory_id?: number | null;
@@ -817,6 +865,15 @@ export async function sqlPutProduct(
         giftProductId: update.gift_product_id === undefined ? undefined : update.gift_product_id,
         boughtTogetherIds: update.bought_together_ids ?? undefined,
         pairTogetherIds: update.pair_together_ids ?? undefined,
+        colorOptions:
+          update.color_options === undefined
+            ? undefined
+            : (update.color_options as Prisma.InputJsonValue),
+        sizeVariants:
+          update.size_variants === undefined
+            ? undefined
+            : (update.size_variants as Prisma.InputJsonValue),
+        isNew: update.is_new ?? undefined,
         stock: update.stock ?? undefined,
         // null має явно записуватись у БД; ?? undefined перетворював null на «не змінювати» і лишав старий categoryId
         categoryId:
@@ -904,6 +961,65 @@ export async function sqlPutProduct(
   }
 
   return { updated: true };
+}
+
+/**
+ * Sync size_variants JSON for all products in a size group.
+ * `orderedAllIds` — порядок id товарів у групі (як кнопки розмірів на сайті).
+ */
+export async function sqlSyncSizeVariantsOrdered(
+  orderedAllIds: number[]
+): Promise<void> {
+  const seen = new Set<number>();
+  const allIds: number[] = [];
+  for (const raw of orderedAllIds) {
+    const id = Number(raw);
+    if (!Number.isInteger(id) || id <= 0 || seen.has(id)) continue;
+    seen.add(id);
+    allIds.push(id);
+  }
+  if (allIds.length === 0) return;
+
+  const products = await prisma.product.findMany({
+    where: { id: { in: allIds } },
+    select: { id: true, subtitle: true, slug: true, name: true },
+  });
+
+  const variants = buildSizeVariantsForGroup(
+    products.map((p) => ({
+      id: p.id,
+      subtitle: p.subtitle,
+      slug: p.slug,
+      name: p.name,
+    })),
+    allIds
+  );
+
+  const serialized = serializeSizeVariants(variants) as Prisma.InputJsonValue;
+
+  await prisma.$transaction(
+    allIds.map((id) =>
+      prisma.product.update({
+        where: { id },
+        data: { sizeVariants: serialized },
+      })
+    )
+  );
+}
+
+/** Legacy: поточний товар завжди перший, далі `linkedIds` у заданому порядку. */
+export async function sqlSyncSizeVariants(
+  productId: number,
+  linkedIds: number[]
+): Promise<void> {
+  const uniqueLinked = Array.from(
+    new Set(
+      linkedIds.filter(
+        (id) => id !== productId && Number.isInteger(id) && id > 0
+      )
+    )
+  );
+  await sqlSyncSizeVariantsOrdered([productId, ...uniqueLinked]);
 }
 
 export async function sqlDeleteProduct(id: number) {
@@ -1107,9 +1223,13 @@ export async function sqlPostOrder(order: OrderInput) {
       for (const item of order.items) {
         const product = await tx.product.findUnique({
           where: { id: item.product_id },
-          select: { stock: true },
+          select: { stock: true, inStock: true },
         });
-        if (!product || product.stock < item.quantity) {
+        if (
+          !product ||
+          product.inStock !== true ||
+          product.stock < item.quantity
+        ) {
           throw new Error(
             `Недостатньо товару на складі для товару #${item.product_id} (потрібно ${item.quantity}, доступно ${product?.stock ?? 0})`
           );

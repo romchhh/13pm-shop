@@ -1,4 +1,4 @@
--- Single init migration: full schema for wellness-site (matches schema.prisma)
+-- Single init migration: full schema for plywood-present-site (matches schema.prisma)
 
 -- Users & auth (no deps)
 CREATE TABLE "users" (

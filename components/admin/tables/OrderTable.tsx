@@ -10,6 +10,7 @@ import {
 } from "../ui/table";
 import Link from "next/link";
 import Pagination from "./Pagination";
+import { getPaymentTypeLabel } from "@/lib/paymentTypeLabels";
 
 const ORDERS_CACHE_KEY = "orders_cache";
 const ORDERS_CACHE_EXPIRY_KEY = "orders_cache_expiry";
@@ -288,19 +289,7 @@ export default function OrdersTable() {
                       {order.post_office}
                     </TableCell>
                     <TableCell className="px-5 py-4 text-sm text-gray-700">
-                      {order.payment_type === "full"
-                        ? "Повна"
-                        : order.payment_type === "prepay"
-                        ? "Передоплата"
-                        : order.payment_type === "pay_after"
-                        ? "Післяоплата"
-                        : order.payment_type === "test_payment"
-                        ? "Тест оплата"
-                        : order.payment_type === "installment"
-                        ? "Розсрочка"
-                        : order.payment_type === "crypto"
-                        ? "Крипта"
-                        : "-"}
+                      {getPaymentTypeLabel(order.payment_type, "short")}
                     </TableCell>
                     <TableCell className="px-5 py-4 text-sm text-gray-700">
                       <select

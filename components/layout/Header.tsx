@@ -3,578 +3,476 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useAppContext } from "@/lib/GeneralProvider";
 import { useBasket } from "@/lib/BasketProvider";
+import { useFavorites } from "@/lib/FavoritesProvider";
 import { useCategories } from "@/lib/CategoriesProvider";
-import SidebarBasket from "./SidebarBasket";
 import SidebarSearch from "./SidebarSearch";
 import SidebarMenu from "./SidebarMenu";
-import { siteOfficialRepLine, SITE_WORDMARK } from "@/lib/siteBrand";
+import { siteContact } from "@/lib/siteContact";
+import { LABEL_FREE_DELIVERY_FROM_2000 } from "@/lib/siteBrand";
 
 interface Subcategory {
   id: number;
   name: string;
 }
 
-/** Затримка перед закриттям меню категорій — щоб встигнути перевести курсор на fixed-панель після виходу з пункту. */
-const NAV_MENU_LEAVE_DELAY_MS = 280;
+const NAV_MENU_LEAVE_DELAY_MS = 200;
+const ICON_CART = "/images/icons/cart.svg";
+const ICON_LIKE = "/images/icons/like.svg";
+const ICON_SEARCH = "/images/icons/search.svg";
+
+function PhoneLink({
+  phone,
+  className = "",
+  iconSize = 16,
+}: {
+  phone: (typeof siteContact.phones)[number];
+  className?: string;
+  iconSize?: number;
+}) {
+  return (
+    <a
+      href={`tel:${phone.tel}`}
+      className={`inline-flex shrink-0 items-center gap-1.5 font-['Montserrat'] font-medium hover:opacity-80 transition-opacity whitespace-nowrap ${className}`}
+    >
+      <svg
+        width={iconSize}
+        height={iconSize}
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        aria-hidden
+        className="shrink-0"
+      >
+        <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" />
+      </svg>
+      <span>{phone.display}</span>
+    </a>
+  );
+}
+
+function TopContactBar({ className = "" }: { className?: string }) {
+  const primaryPhone = siteContact.phones[0];
+
+  return (
+    <div className={`bg-[#8B5E3F] text-white shrink-0 ${className}`}>
+      <div className="max-w-[1920px] mx-auto px-3 sm:px-6 lg:px-12 min-h-10 lg:min-h-11 py-1.5 flex flex-nowrap items-center justify-between gap-2 lg:gap-6">
+        <p className="min-w-0 font-['Montserrat'] text-[10px] leading-tight sm:text-xs font-medium lg:text-sm truncate">
+          {LABEL_FREE_DELIVERY_FROM_2000}
+        </p>
+
+        <PhoneLink
+          phone={primaryPhone}
+          className="text-[10px] sm:text-xs lg:hidden"
+          iconSize={14}
+        />
+
+        <div className="hidden lg:flex items-center gap-8 shrink-0">
+          {siteContact.phones.map((phone) => (
+            <PhoneLink key={phone.tel} phone={phone} className="text-sm" />
+          ))}
+          <a
+            href={siteContact.instagramUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 font-['Montserrat'] text-sm font-medium hover:opacity-80 transition-opacity"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden className="shrink-0">
+              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+            </svg>
+            <span>Instagram</span>
+          </a>
+          <a
+            href={siteContact.tiktokUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 font-['Montserrat'] text-sm font-medium hover:opacity-80 transition-opacity"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden className="shrink-0">
+              <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64v-3.5a6.67 6.67 0 1 0 5.79 6.61V8.57a8.16 8.16 0 0 0 4.32 1.24V6.69Z" />
+            </svg>
+            <span>TikTok</span>
+          </a>
+          <a
+            href={siteContact.telegramUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 font-['Montserrat'] text-sm font-medium hover:opacity-80 transition-opacity"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden className="shrink-0">
+              <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.559z" />
+            </svg>
+            <span>Telegram</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const mainNavLinks = [
+  { label: "Новинки", href: "/catalog?new=1" },
+  { label: "Хіти", href: "/catalog?hits=1" },
+  { label: "Про нас", href: "/#about" },
+  { label: "Контакти", href: "/contacts" },
+  { label: "Відгуки", href: "/#reviews" },
+] as const;
 
 export default function Header() {
   const {
     isSidebarOpen,
     setIsSidebarOpen,
-    isBasketOpen,
-    setIsBasketOpen,
     isSearchOpen,
     setIsSearchOpen,
   } = useAppContext();
 
-  const router = useRouter();
   const pathname = usePathname();
   const { items } = useBasket();
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-
-  const handleAnchorClick = (e: React.MouseEvent<HTMLAnchorElement>, anchor: string) => {
-    e.preventDefault();
-    if (pathname === "/") {
-      // Якщо вже на головній сторінці, просто прокручуємо до якоря
-      const element = document.getElementById(anchor.replace("#", ""));
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    } else {
-      // Якщо на іншій сторінці, переходимо на головну з якорем
-      router.push(`/${anchor}`);
-      // Після переходу прокручуємо до якоря
-      setTimeout(() => {
-        const element = document.getElementById(anchor.replace("#", ""));
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-      }, 100);
-    }
-  };
-
-  // Use categories from context instead of fetching
+  const { count: favoritesCount } = useFavorites();
   const { categories } = useCategories();
+
+  const [catalogOpen, setCatalogOpen] = useState(false);
+  const [hoveredCategoryId, setHoveredCategoryId] = useState<number | null>(null);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [subcategoriesLoading, setSubcategoriesLoading] = useState(false);
-  const [hoveredCategoryId, setHoveredCategoryId] = useState<number | null>(
-    null
-  );
-  const [infoMenuOpen, setInfoMenuOpen] = useState(false);
-  const infoTimeout = useRef<NodeJS.Timeout | null>(null);
+  const catalogTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const catalogRef = useRef<HTMLDivElement | null>(null);
 
-  const [pinnedCatalog, setPinnedCatalog] = useState(false);
-  const hoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const menuRef = useRef<HTMLDivElement | null>(null);
-
-  const cancelCatalogMenuClose = () => {
-    if (hoverTimeout.current) {
-      clearTimeout(hoverTimeout.current);
-      hoverTimeout.current = null;
-    }
+  const handleHomeAnchorClick = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    anchorId: string
+  ) => {
+    if (pathname !== "/") return;
+    e.preventDefault();
+    document.getElementById(anchorId)?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  /** Один таймер на все меню каталогу: header / категорія / панель — інакше залишаються «сирі» таймери й null прилітає вже коли курсор знову на категорії (mouseEnter не повторюється). */
-  const scheduleCatalogMenuClose = () => {
-    if (pinnedCatalog) return;
-    cancelCatalogMenuClose();
-    hoverTimeout.current = setTimeout(() => {
+  const scheduleCatalogClose = () => {
+    if (catalogTimeout.current) clearTimeout(catalogTimeout.current);
+    catalogTimeout.current = setTimeout(() => {
+      setCatalogOpen(false);
       setHoveredCategoryId(null);
-      hoverTimeout.current = null;
     }, NAV_MENU_LEAVE_DELAY_MS);
   };
-  const categoryRefs = useRef<Map<number, HTMLDivElement>>(new Map());
-  const infoRef = useRef<HTMLSpanElement | null>(null);
-  const [categoryLeftPositions, setCategoryLeftPositions] = useState<Map<number, number>>(new Map());
-  const [infoLeftPosition, setInfoLeftPosition] = useState<number>(0);
-  const [isScrolled, setIsScrolled] = useState(false);
 
-  const isHeroMode = pathname === "/" && !isScrolled;
-  // Коли бургер відкритий — хедер завжди білий (навіть якщо був прозорий)
-  const headerTransparent = isHeroMode && !isSidebarOpen;
-
-  useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll(); // init
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  const cancelCatalogClose = () => {
+    if (catalogTimeout.current) {
+      clearTimeout(catalogTimeout.current);
+      catalogTimeout.current = null;
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (
-        pinnedCatalog &&
-        menuRef.current &&
-        !menuRef.current.contains(e.target as Node)
-      ) {
-        setPinnedCatalog(false);
+      if (catalogRef.current && !catalogRef.current.contains(e.target as Node)) {
+        setCatalogOpen(false);
         setHoveredCategoryId(null);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [pinnedCatalog]);
-
-  useEffect(() => {
-    return () => {
-      if (infoTimeout.current) clearTimeout(infoTimeout.current);
-    };
   }, []);
-
-  // Categories are now loaded from context, no need to fetch
 
   useEffect(() => {
     if (hoveredCategoryId === null) {
       setSubcategories([]);
-      setSubcategoriesLoading(false);
       return;
     }
-
     const categoryId = hoveredCategoryId;
-    setSubcategories([]);
     setSubcategoriesLoading(true);
     let cancelled = false;
-
     (async () => {
       try {
-        const res = await fetch(
-          `/api/subcategories?parent_category_id=${categoryId}`
-        );
+        const res = await fetch(`/api/subcategories?parent_category_id=${categoryId}`);
         const data = await res.json();
-        if (cancelled) return;
-        setSubcategories(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error("Failed to load subcategories", err);
+        if (!cancelled) setSubcategories(Array.isArray(data) ? data : []);
+      } catch {
         if (!cancelled) setSubcategories([]);
       } finally {
         if (!cancelled) setSubcategoriesLoading(false);
       }
     })();
-
     return () => {
       cancelled = true;
     };
   }, [hoveredCategoryId]);
 
-  // Calculate positions for dropdown alignment
+  const [isScrolled, setIsScrolled] = useState(false);
+  const isHeroMode = pathname === "/" && !isScrolled;
+  const headerTransparent = isHeroMode && !isSidebarOpen;
+
   useEffect(() => {
-    const updatePositions = () => {
-      // Find the header container
-      const headerContainer = document.querySelector('.max-w-\\[1920px\\]');
-      if (!headerContainer) return;
-      
-      const containerRect = headerContainer.getBoundingClientRect();
-      const containerPadding = 40; // px-10 = 40px
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
-      // Update category positions
-      const newPositions = new Map<number, number>();
-      categoryRefs.current.forEach((element, categoryId) => {
-        if (element) {
-          const rect = element.getBoundingClientRect();
-          const leftOffset = rect.left - containerRect.left - containerPadding;
-          newPositions.set(categoryId, Math.max(0, leftOffset));
-        }
-      });
-      setCategoryLeftPositions(newPositions);
+  useEffect(() => {
+    if (pathname !== "/") setIsScrolled(false);
+  }, [pathname]);
 
-      // Update info position
-      if (infoRef.current) {
-        const rect = infoRef.current.getBoundingClientRect();
-        const leftOffset = rect.left - containerRect.left - containerPadding;
-        setInfoLeftPosition(Math.max(0, leftOffset));
-      }
-    };
-
-    // Small delay to ensure DOM is ready
-    const timeoutId = setTimeout(updatePositions, 100);
-    window.addEventListener('resize', updatePositions);
-    
-    return () => {
-      clearTimeout(timeoutId);
-      window.removeEventListener('resize', updatePositions);
-    };
-  }, [categories, hoveredCategoryId, infoMenuOpen]);
-
+  const shellClass = headerTransparent
+    ? "bg-transparent border-transparent shadow-none"
+    : "bg-white border-[#E8E0D5] shadow-sm";
 
   return (
     <>
+      {/* Коричнева смуга — завжди зверху, не перекриває hero */}
+      <div className="fixed top-0 left-0 right-0 z-[var(--z-site-contact-bar)]">
+        <TopContactBar />
+      </div>
+
+      {/* Навігація — під смугою, на головній прозора над hero */}
       <header
-        className={`max-w-[1920px] mx-auto fixed top-0 left-1/2 transform -translate-x-1/2 w-full z-50 transition-all duration-300 ${
-          headerTransparent ? "bg-transparent text-white shadow-none" : "bg-white text-[#3D1A00] shadow-md"
-        }`}
-        onMouseEnter={() => {
-          cancelCatalogMenuClose();
-        }}
-        onMouseLeave={() => {
-          scheduleCatalogMenuClose();
-        }}
+        className={`fixed left-0 right-0 z-[var(--z-site-header)] transition-all duration-300 top-[var(--site-contact-bar-height)]`}
       >
-        {/* === WRAPPER: everything inside shares same bg and styles === */}
-        <div className={`w-full transition-all duration-300 ${headerTransparent ? "shadow-none" : "shadow-md"}`}>
-          {/* Промо-смуга — однакова на мобільній та десктопній версії */}
-          <div className="flex justify-center bg-white text-[#3D1A00] border-b border-[#3D1A00]/10">
-            <div className="w-full max-w-[1920px] mx-auto px-3 sm:px-4 lg:px-10 flex items-center justify-center min-h-8 py-1.5">
-              <p className="text-[10px] sm:text-xs font-['Montserrat'] font-semibold tracking-wide text-center uppercase leading-tight">
-                Безкоштовна доставка від 2&nbsp;000 грн
-              </p>
-            </div>
-          </div>
-          {/* Top info bar — роздільна лінія тільки в межах контенту (не на весь екран) */}
-          <div className={`hidden lg:flex justify-center transition-colors ${headerTransparent ? "bg-[#FFF9F0]" : "bg-[#D7D799]"}`}>
-            <div className="w-full max-w-[1920px] mx-auto px-10 flex justify-between items-center h-11 text-xs font-['Montserrat'] text-[#3D1A00] border-b border-[#3D1A00]/20">
-              <span>{siteOfficialRepLine}</span>
-              <div className="flex items-center gap-4">
-                <Link href="/contacts" className="hover:opacity-80 transition-colors">Контакти</Link>
-                <a href="https://www.instagram.com/my_choice_mari" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-colors">Instagram</a>
-                <a href="https://t.me/m_maksyakova" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-colors">Telegram</a>
-              </div>
-            </div>
-          </div>
-          {/* Top info bar — mobile */}
-          <div className={`lg:hidden flex justify-center transition-colors ${headerTransparent ? "bg-[#FFF9F0]" : "bg-[#D7D799]"}`}>
-            <div className="w-full max-w-[1920px] mx-auto flex justify-between items-center min-h-10 py-2.5 px-3 sm:px-4 text-[10px] sm:text-xs font-['Montserrat'] text-[#3D1A00] border-b border-[#3D1A00]/20">
-              <span className="truncate mr-2 max-w-[55%] sm:max-w-none">{siteOfficialRepLine}</span>
-              <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                <Link href="/contacts" className="hover:opacity-80 transition-colors whitespace-nowrap">Контакти</Link>
-                <a href="https://www.instagram.com/my_choice_mari" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-colors whitespace-nowrap">Instagram</a>
-                <a href="https://t.me/m_maksyakova" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-colors whitespace-nowrap">Telegram</a>
-              </div>
-            </div>
-          </div>
-          {/* Top nav — трохи вищий */}
-          <div className="hidden lg:flex justify-center">
-            <div className="w-full max-w-[1920px] mx-auto flex justify-between items-stretch h-20 px-10">
-            <Link href="/" className="flex items-center self-center pt-1 group shrink-0">
-              <span
-                className={`font-['Montserrat'] font-light text-[1.75rem] lg:text-[2.35rem] leading-none tracking-[0.16em] transition-opacity duration-300 group-hover:opacity-85 ${
-                  headerTransparent ? "text-white drop-shadow-sm" : "text-[#3D1A00]"
-                }`}
-              >
-                {SITE_WORDMARK}
-              </span>
+        {/* Десктоп */}
+        <div className={`hidden lg:block border-b transition-all duration-300 ${shellClass}`}>
+          <div className="max-w-[1920px] mx-auto px-8 xl:px-12 min-h-[88px] py-2 flex items-center gap-6 xl:gap-10">
+            <Link href="/" className="shrink-0 flex items-center">
+              <Image
+                src="/images/logos/logo_brown.svg"
+                alt="Plywood Present"
+                width={104}
+                height={90}
+                priority
+                className="h-20 w-auto"
+              />
             </Link>
 
-            <div className="flex items-center gap-1 sm:gap-2 lg:gap-4 text-xs font-bold font-['Montserrat'] min-w-0">
-              {/* Product Categories — hover лише на тексті посилання, не на всю висоту рядка (items-stretch давав «раннє» відкриття). */}
-              {Array.isArray(categories) && categories.map((category) => (
-                <div
-                  key={category.id}
-                  ref={(el) => {
-                    if (el) {
-                      categoryRefs.current.set(category.id, el);
-                    } else {
-                      categoryRefs.current.delete(category.id);
-                    }
-                  }}
-                  className="relative group flex items-center self-center min-h-0"
-                >
-                  <Link
-                    href={`/catalog?categoryId=${category.id}`}
-                    onMouseEnter={() => {
-                      cancelCatalogMenuClose();
-                      setHoveredCategoryId(category.id);
-                    }}
-                    onMouseLeave={() => {
-                      scheduleCatalogMenuClose();
-                    }}
-                    className={`relative z-10 inline-block cursor-pointer whitespace-nowrap text-xs font-bold font-['Montserrat'] px-3 py-1.5 rounded-full transition-colors duration-200 ${
-                      headerTransparent ? "text-white hover:bg-white hover:text-[#3D1A00]" : "text-[#3D1A00] hover:bg-[#3D1A00] hover:text-white"
-                    }`}
-                  >
-                    {category.name}
-                  </Link>
-
-                  {/* Subcategories dropdown */}
-                  {hoveredCategoryId === category.id && (
-                      <div
-                        className="fixed top-[var(--site-header-offset)] left-0 w-full bg-white shadow-md px-4 py-4 z-50 transition-opacity duration-200 opacity-100 pointer-events-auto"
-                        onMouseEnter={() => {
-                          cancelCatalogMenuClose();
-                        }}
-                        onMouseLeave={() => {
-                          scheduleCatalogMenuClose();
-                        }}
-                      >
-                        <div className="max-w-[1920px] mx-auto w-full flex flex-col gap-1" style={{ paddingLeft: `${categoryLeftPositions.get(category.id) || 0}px` }}>
-                        {subcategoriesLoading ? (
-                          <p className="text-gray-500 text-xs py-2 font-['Montserrat']">
-                            Завантаження…
-                          </p>
-                        ) : (
-                          <>
-                            {subcategories.map((subcat) => (
-                              <Link
-                                key={subcat.id}
-                                href={`/catalog?subcategory=${encodeURIComponent(
-                                  subcat.name
-                                )}`}
-                                className="text-gray-600 hover:text-[#3D1A00] text-xs py-2 font-bold font-['Montserrat'] transition-colors duration-200"
-                              >
-                                {subcat.name}
-                              </Link>
-                            ))}
-                            <Link
-                              href={`/catalog?categoryId=${category.id}`}
-                              className={`text-gray-600 hover:text-[#3D1A00] text-xs py-2 font-bold font-['Montserrat'] transition-colors duration-200 underline ${subcategories.length > 0 ? "mt-2" : ""}`}
-                            >
-                              Переглянути всі
-                            </Link>
-                          </>
-                        )}
-                        </div>
-                      </div>
-                    )}
-                </div>
-              ))}
-
-              {/* Information dropdown */}
-              <div className="relative flex items-center self-center min-h-0">
-                <span
-                  ref={infoRef}
-                  onMouseEnter={() => {
-                    if (infoTimeout.current) clearTimeout(infoTimeout.current);
-                    setInfoMenuOpen(true);
-                  }}
-                  onMouseLeave={() => {
-                    infoTimeout.current = setTimeout(() => {
-                      setInfoMenuOpen(false);
-                    }, NAV_MENU_LEAVE_DELAY_MS);
-                  }}
-                  className={`relative z-10 inline-block cursor-default whitespace-nowrap text-xs font-bold font-['Montserrat'] px-3 py-1.5 rounded-full transition-colors duration-200 ${
-                    headerTransparent ? "text-white hover:bg-white hover:text-[#3D1A00]" : "text-[#3D1A00] hover:bg-[#3D1A00] hover:text-white"
-                  } ${infoMenuOpen ? (headerTransparent ? "bg-white text-[#3D1A00]" : "bg-[#3D1A00] text-white") : ""}`}
-                >
-                  ІНФО
-                </span>
-
-                <div
-                  className={`fixed top-[var(--site-header-offset)] left-0 w-full bg-white shadow-md px-4 py-2 z-50 transition-opacity duration-200 ${
-                    infoMenuOpen
-                      ? "opacity-100 pointer-events-auto"
-                      : "opacity-0 pointer-events-none"
+            <nav className="flex items-center justify-center gap-6 xl:gap-8 flex-1 min-w-0 font-['Montserrat'] text-[15px] text-[#3D1A00]">
+              <div
+                ref={catalogRef}
+                className="relative"
+                onMouseEnter={() => {
+                  cancelCatalogClose();
+                  setCatalogOpen(true);
+                }}
+                onMouseLeave={scheduleCatalogClose}
+              >
+                <button
+                  type="button"
+                  className={`inline-flex items-center gap-1.5 whitespace-nowrap hover:text-[#8B5E3F] transition-colors ${
+                    catalogOpen ? "text-[#8B5E3F]" : ""
                   }`}
-                  onMouseEnter={() => {
-                    if (infoTimeout.current) clearTimeout(infoTimeout.current);
-                  }}
-                  onMouseLeave={() => {
-                    infoTimeout.current = setTimeout(() => {
-                      setInfoMenuOpen(false);
-                    }, NAV_MENU_LEAVE_DELAY_MS);
-                  }}
+                  onClick={() => setCatalogOpen((v) => !v)}
+                  aria-expanded={catalogOpen}
                 >
-                  <div className="max-w-[1920px] mx-auto w-full flex flex-col gap-1" style={{ paddingLeft: `${infoLeftPosition}px` }}>
+                  Каталог товарів
+                  <svg width="12" height="8" viewBox="0 0 12 8" fill="none" aria-hidden className={`transition-transform ${catalogOpen ? "rotate-180" : ""}`}>
+                    <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                </button>
+
+                {catalogOpen && (
+                  <div
+                    className="absolute top-full left-0 mt-2 min-w-[280px] bg-white rounded-lg shadow-lg border border-[#E8E0D5] py-3 z-50"
+                    onMouseEnter={cancelCatalogClose}
+                    onMouseLeave={scheduleCatalogClose}
+                  >
+                    <div className="flex">
+                      <div className="w-44 border-r border-[#E8E0D5] py-1">
+                        {categories.map((cat) => (
+                          <Link
+                            key={cat.id}
+                            href={`/catalog?categoryId=${cat.id}`}
+                            onMouseEnter={() => setHoveredCategoryId(cat.id)}
+                            className={`block px-4 py-2 text-sm hover:bg-[#FFF9F0] transition-colors ${
+                              hoveredCategoryId === cat.id ? "bg-[#FFF9F0] text-[#8B5E3F] font-medium" : ""
+                            }`}
+                            onClick={() => setCatalogOpen(false)}
+                          >
+                            {cat.name}
+                          </Link>
+                        ))}
+                      </div>
+                      <div className="flex-1 py-1 px-2 min-w-[160px]">
+                        {subcategoriesLoading ? (
+                          <p className="px-3 py-2 text-sm text-gray-500">Завантаження…</p>
+                        ) : subcategories.length > 0 ? (
+                          subcategories.map((sub) => (
+                            <Link
+                              key={sub.id}
+                              href={`/catalog?subcategory=${encodeURIComponent(sub.name)}`}
+                              className="block px-3 py-2 text-sm hover:bg-[#FFF9F0] rounded transition-colors"
+                              onClick={() => setCatalogOpen(false)}
+                            >
+                              {sub.name}
+                            </Link>
+                          ))
+                        ) : hoveredCategoryId ? (
+                          <Link
+                            href={`/catalog?categoryId=${hoveredCategoryId}`}
+                            className="block px-3 py-2 text-sm text-[#8B5E3F] underline"
+                            onClick={() => setCatalogOpen(false)}
+                          >
+                            Переглянути всі
+                          </Link>
+                        ) : (
+                          <p className="px-3 py-2 text-sm text-gray-400">Оберіть категорію</p>
+                        )}
+                      </div>
+                    </div>
                     <Link
-                      href="/info#about"
-                      className="text-gray-600 hover:text-[#3D1A00] text-xs py-2 font-bold font-['Montserrat'] transition-colors duration-200"
+                      href="/catalog"
+                      className="block mx-3 mt-2 pt-2 border-t border-[#E8E0D5] text-sm font-medium text-[#8B5E3F] hover:underline"
+                      onClick={() => setCatalogOpen(false)}
                     >
-                      Про бренд
-                    </Link>
-                    <Link
-                      href="/partnership"
-                      className="text-gray-600 hover:text-[#3D1A00] text-xs py-2 font-bold font-['Montserrat'] transition-colors duration-200"
-                    >
-                      Партнерство
-                    </Link>
-                    <Link
-                      href="/delivery-and-payment"
-                      className="text-gray-600 hover:text-[#3D1A00] text-xs py-2 font-bold font-['Montserrat'] transition-colors duration-200"
-                    >
-                      Доставка та оплата
-                    </Link>
-                    <Link
-                      href="/returns-and-exchange"
-                      className="text-gray-600 hover:text-[#3D1A00] text-xs py-2 font-bold font-['Montserrat'] transition-colors duration-200"
-                    >
-                      Повернення та обмін
-                    </Link>
-                    <Link
-                      href="/info#faq"
-                      className="text-gray-600 hover:text-[#3D1A00] text-xs py-2 font-bold font-['Montserrat'] transition-colors duration-200"
-                    >
-                      FAQ
-                    </Link>
-                    <Link
-                      href="/contacts"
-                      className="text-gray-600 hover:text-[#3D1A00] text-xs py-2 font-bold font-['Montserrat'] transition-colors duration-200"
-                    >
-                      Контакти
-                    </Link>
-                    <Link
-                      href="/catalog?promo=1"
-                      className="text-gray-600 hover:text-[#3D1A00] text-xs py-2 font-bold font-['Montserrat'] transition-colors duration-200"
-                    >
-                      Акції
+                      Весь каталог
                     </Link>
                   </div>
-                </div>
+                )}
               </div>
-            </div>
 
-            {/* Right Icons */}
-            <div className="flex items-center gap-1 self-center shrink-0">
-              <button
-                type="button"
-                onClick={() => setIsSearchOpen(true)}
-                aria-label="Пошук"
-                className="cursor-pointer relative flex h-12 w-12 shrink-0 items-center justify-center transition-opacity hover:opacity-80"
-              >
-                <Image
-                  className="h-7 w-7"
-                  height="28"
-                  width="28"
-                  alt=""
-                  src="/images/dark-theme/search.svg"
-                  style={{
-                    filter: headerTransparent
-                      ? "brightness(0) invert(1)"
-                      : "brightness(0) saturate(100%) invert(14%) sepia(99%) saturate(2044%) hue-rotate(11deg) brightness(95%) contrast(101%)",
-                  }}
-                />
-              </button>
+              {mainNavLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={
+                    link.href === "/#reviews"
+                      ? (e) => handleHomeAnchorClick(e, "reviews")
+                      : link.href === "/#about"
+                        ? (e) => handleHomeAnchorClick(e, "about")
+                        : undefined
+                  }
+                  className="whitespace-nowrap hover:text-[#8B5E3F] transition-colors"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
 
-              <button
-                className="cursor-pointer relative flex h-12 w-12 shrink-0 items-center justify-center"
-                onClick={() => setIsBasketOpen(!isBasketOpen)}
+            <button
+              type="button"
+              onClick={() => setIsSearchOpen(true)}
+              className={`flex items-center gap-2 h-10 px-4 rounded-full text-[#3D1A00]/60 transition-colors min-w-[180px] xl:min-w-[220px] max-w-[280px] shrink-0 ${
+                headerTransparent
+                  ? "bg-white/75 hover:bg-white/90 backdrop-blur-sm"
+                  : "bg-[#F5F0E8] hover:bg-[#EDE8DF]"
+              }`}
+              aria-label="Пошук"
+            >
+              <Image src={ICON_SEARCH} alt="" width={18} height={18} className="h-[18px] w-[18px] shrink-0 opacity-60" />
+              <span className="font-['Montserrat'] text-sm">Пошук</span>
+            </button>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <Link
+                href="/cart"
+                className={`relative flex h-11 w-11 items-center justify-center rounded-full transition-colors ${
+                  headerTransparent ? "hover:bg-white/30" : "hover:bg-[#FFF9F0]"
+                }`}
+                aria-label="Кошик"
               >
-                <Image
-                  className="h-7 w-7"
-                  height="28"
-                  width="28"
-                  alt="shopping basket"
-                  src="/images/light-theme/cart.svg"
-                  style={{ filter: headerTransparent ? "brightness(0) invert(1)" : "brightness(0) saturate(100%) invert(14%) sepia(99%) saturate(2044%) hue-rotate(11deg) brightness(95%) contrast(101%)" }}
-                />
+                <Image src={ICON_CART} alt="" width={23} height={21} className="h-5 w-auto" />
                 {totalItems > 0 && (
-                  <span className="absolute top-0 right-0 min-w-[1.25rem] h-5 px-1 flex items-center justify-center text-white text-sm font-['Montserrat'] font-bold bg-[#8C7461] rounded-full leading-none">
+                  <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center text-[10px] font-bold text-white bg-[#8B5E3F] rounded-full">
                     {totalItems > 99 ? "99+" : totalItems}
                   </span>
                 )}
-              </button>
-            </div>
+              </Link>
+              <Link
+                href="/favorites"
+                className={`relative flex h-11 w-11 items-center justify-center rounded-full transition-colors ${
+                  headerTransparent ? "hover:bg-white/30" : "hover:bg-[#FFF9F0]"
+                }`}
+                aria-label="Вішлист"
+              >
+                <Image src={ICON_LIKE} alt="" width={20} height={19} className="h-5 w-auto" />
+                {favoritesCount > 0 && (
+                  <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center text-[10px] font-bold text-white bg-[#8B5E3F] rounded-full">
+                    {favoritesCount > 99 ? "99+" : favoritesCount}
+                  </span>
+                )}
+              </Link>
             </div>
           </div>
         </div>
 
-        {/* Mobile Header */}
-        <div className={`lg:hidden w-full h-16 relative overflow-hidden px-4 flex items-center justify-between transition-all duration-300 ${
-          headerTransparent ? "bg-transparent text-white shadow-none" : "bg-white text-[#3D1A00] shadow-md"
-        }`}>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className={`relative w-7 h-7 flex items-center justify-center ${headerTransparent ? "text-white" : "text-[#3D1A00]"}`}
-            >
-              {isSidebarOpen ? (
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              ) : (
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-                  />
-                </svg>
-              )}
-            </button>
-            <Link
-              href="/"
-              className="flex items-center pt-0.5 group"
-              onClick={(e) => {
-                if (isSidebarOpen) {
-                  e.preventDefault();
-                  setIsSidebarOpen(false);
-                  setTimeout(() => {
-                    const heroElement = document.getElementById("hero");
-                    if (heroElement) {
-                      heroElement.scrollIntoView({ behavior: "smooth" });
-                    }
-                  }, 300);
-                }
-              }}
-            >
-              <span
-                className={`font-['Montserrat'] font-light text-[1.35rem] sm:text-[1.55rem] leading-none tracking-[0.14em] sm:tracking-[0.16em] transition-opacity duration-300 group-hover:opacity-85 ${
-                  headerTransparent ? "text-white drop-shadow-sm" : "text-[#3D1A00]"
-                }`}
+        {/* Мобільний */}
+        <div className={`lg:hidden border-b transition-all duration-300 ${shellClass}`}>
+          <div className="min-h-[64px] py-1 px-4 flex items-center gap-2">
+            <div className="flex min-w-0 flex-1 items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                className="flex h-10 w-10 shrink-0 items-center justify-center text-[#3D1A00]"
+                aria-label="Меню"
               >
-                {SITE_WORDMARK}
-              </span>
-            </Link>
-          </div>
+                {isSidebarOpen ? (
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                    <path strokeLinecap="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                ) : (
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                    <path strokeLinecap="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                  </svg>
+                )}
+              </button>
 
-          <div className="flex items-center gap-3 ml-auto">
-            <button 
-              onClick={() => setIsSearchOpen(true)} 
-              className="flex items-center rounded-full px-3 py-1.5 transition-colors bg-[#D7D799] hover:opacity-90"
-            >
-              <Image
-                height="18"
-                width="18"
-                alt="search icon"
-                src="/images/dark-theme/search.svg"
-                className="h-[18px] w-[18px] mr-1.5 brightness-0"
-                style={{ filter: "brightness(0) saturate(100%) invert(14%) sepia(99%) saturate(2044%) hue-rotate(11deg) brightness(95%) contrast(101%)" }}
-              />
-              <span className="text-xs font-['Montserrat'] text-[#3D1A00]">Пошук</span>
-            </button>
+              <Link
+                href="/"
+                className="flex min-w-0 shrink items-center"
+                onClick={() => isSidebarOpen && setIsSidebarOpen(false)}
+              >
+                <Image
+                  src="/images/logos/logo_brown.svg"
+                  alt="Plywood Present"
+                  width={80}
+                  height={70}
+                  className="h-16 w-auto max-w-[calc(100vw-11rem)] object-left object-contain"
+                />
+              </Link>
+            </div>
 
-            <button
-              onClick={() => setIsBasketOpen(!isBasketOpen)}
-              className="relative flex items-center justify-center p-2 min-w-[2.75rem] min-h-[2.75rem]"
-            >
-              <Image
-                height="24"
-                width="24"
-                alt="shopping basket"
-                src="/images/light-theme/cart.svg"
-                className="h-6 w-6"
-                style={{ filter: headerTransparent ? "brightness(0) invert(1)" : "brightness(0) saturate(100%) invert(14%) sepia(99%) saturate(2044%) hue-rotate(11deg) brightness(95%) contrast(101%)" }}
-              />
-              {totalItems > 0 && (
-                <span className="absolute top-0 right-0 min-w-[1.125rem] h-4 px-0.5 flex items-center justify-center text-white text-xs font-['Montserrat'] font-bold bg-[#8C7461] rounded-full leading-none">
-                  {totalItems > 99 ? "99+" : totalItems}
-                </span>
-              )}
-            </button>
+            <div className="flex shrink-0 items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setIsSearchOpen(true)}
+                className={`flex h-10 items-center gap-1.5 px-3 rounded-full text-[#3D1A00]/70 transition-colors ${
+                  headerTransparent
+                    ? "bg-white/75 hover:bg-white/90 backdrop-blur-sm"
+                    : "bg-[#F5F0E8]"
+                }`}
+                aria-label="Пошук"
+              >
+                <Image src={ICON_SEARCH} alt="" width={16} height={16} className="h-4 w-4 shrink-0 opacity-70" />
+                <span className="text-xs font-['Montserrat'] hidden xs:inline">Пошук</span>
+              </button>
+              <Link
+                href="/favorites"
+                className="relative flex h-10 w-10 items-center justify-center"
+                aria-label="Вішлист"
+              >
+                <Image src={ICON_LIKE} alt="" width={20} height={19} className="h-[18px] w-auto" />
+                {favoritesCount > 0 && (
+                  <span className="absolute top-0 right-0 min-w-[16px] h-4 px-0.5 flex items-center justify-center text-[9px] font-bold text-white bg-[#8B5E3F] rounded-full">
+                    {favoritesCount > 99 ? "99+" : favoritesCount}
+                  </span>
+                )}
+              </Link>
+              <Link
+                href="/cart"
+                className="relative flex h-10 w-10 items-center justify-center"
+                aria-label="Кошик"
+              >
+                <Image src={ICON_CART} alt="" width={23} height={21} className="h-[18px] w-auto" />
+                {totalItems > 0 && (
+                  <span className="absolute top-0 right-0 min-w-[16px] h-4 px-0.5 flex items-center justify-center text-[9px] font-bold text-white bg-[#8B5E3F] rounded-full">
+                    {totalItems}
+                  </span>
+                )}
+              </Link>
+            </div>
           </div>
         </div>
       </header>
 
-      <SidebarMenu
-        isOpen={isSidebarOpen}
-        setIsOpen={setIsSidebarOpen}
-      />
-
-      <SidebarBasket
-        isOpen={isBasketOpen}
-        setIsOpen={setIsBasketOpen}
-      />
-      <SidebarSearch
-        isOpen={isSearchOpen}
-        setIsOpen={setIsSearchOpen}
-      />
+      <SidebarMenu isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
+      <SidebarSearch isOpen={isSearchOpen} setIsOpen={setIsSearchOpen} />
     </>
   );
 }

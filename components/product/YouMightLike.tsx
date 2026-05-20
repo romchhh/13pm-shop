@@ -1,9 +1,15 @@
 "use client";
 
-import React, { useMemo, useRef } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { getProductImageSrc } from "@/lib/getFirstProductImage";
+import { useMemo, useState } from "react";
+import CatalogProductCard, {
+  type CatalogProductCardItem,
+} from "@/components/catalog/CatalogProductCard";
+import HomeSectionCarousel, {
+  homeCarouselItemClass,
+} from "@/components/main-page/HomeSectionCarousel";
+import { useBasket } from "@/lib/BasketProvider";
+import { mapToCatalogProductCardItem } from "@/lib/mapToCatalogProductCardItem";
+import { addProductCardToCart } from "@/lib/productCardAddToCart";
 import { useProducts } from "@/lib/useProducts";
 
 export type YouMightLikeProduct = {
@@ -13,139 +19,106 @@ export type YouMightLikeProduct = {
   price: number;
   first_media?: { url: string; type: string } | null;
   description?: string | null;
+  subtitle?: string | null;
+  old_price?: number | null;
+  discount_percentage?: number | null;
+  is_new?: boolean;
+  is_hit?: boolean;
+  is_promo?: boolean;
+  gift_product_id?: number | null;
+  in_stock?: boolean;
+  stock?: number;
 };
 
 interface YouMightLikeProps {
-  /** Якщо передано — використовуються ці товари (напр. з сервера на сторінці товару). Інакше — клієнтський useProducts(). */
   suggestedProducts?: YouMightLikeProduct[];
   title?: string;
+  /** Показати посилання «Весь каталог →» */
+  showCatalogLink?: boolean;
 }
 
-export default function YouMightLike({ suggestedProducts, title }: YouMightLikeProps = {}) {
+export default function YouMightLike({
+  suggestedProducts,
+  title,
+  showCatalogLink = false,
+}: YouMightLikeProps = {}) {
   const { products: clientProducts, loading } = useProducts();
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const { addItem } = useBasket();
+  const [cartError, setCartError] = useState<string | null>(null);
 
-  const products = useMemo(() => {
-    if (suggestedProducts?.length) {
-      return suggestedProducts.slice(0, 8);
+  const productsById = useMemo(() => {
+    const map = new Map<number, (typeof clientProducts)[number]>();
+    for (const p of clientProducts) {
+      map.set(p.id, p);
     }
-    const shuffled = [...clientProducts].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, 8);
-  }, [suggestedProducts, clientProducts]);
+    return map;
+  }, [clientProducts]);
 
-  const scrollLeft = () => {
-    const container = scrollContainerRef.current;
-    if (container) container.scrollBy({ left: -320, behavior: "smooth" });
+  const items = useMemo((): CatalogProductCardItem[] => {
+    const source = suggestedProducts?.length
+      ? suggestedProducts.slice(0, 8)
+      : [...clientProducts].sort(() => 0.5 - Math.random()).slice(0, 8);
+
+    return source.map((p) => {
+      const full = productsById.get(p.id);
+      return mapToCatalogProductCardItem(full ?? p, p);
+    });
+  }, [suggestedProducts, clientProducts, productsById]);
+
+  const handleAddToCart = async (
+    e: React.MouseEvent,
+    product: CatalogProductCardItem
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCartError(null);
+    const result = await addProductCardToCart(addItem, product);
+    if (!result.ok) {
+      setCartError(result.message);
+      setTimeout(() => setCartError(null), 5000);
+    }
   };
 
-  const scrollRight = () => {
-    const container = scrollContainerRef.current;
-    if (container) container.scrollBy({ left: 320, behavior: "smooth" });
-  };
+  const isLoading = !suggestedProducts?.length && loading;
 
-  const isLoading = !suggestedProducts && loading;
   if (isLoading) {
     return (
-      <section className="w-full bg-[#FFFFFF] py-12 lg:py-16">
-        <div className="max-w-[1920px] mx-auto px-6 lg:px-10">
-          <p className="text-[#3D1A00] font-['Montserrat']">Завантаження...</p>
-        </div>
-      </section>
+      <HomeSectionCarousel
+        title={title || "Вам також може сподобатися"}
+        catalogHref={showCatalogLink ? "/catalog" : null}
+        loading
+      />
     );
   }
 
-  if (!products.length) {
+  if (!items.length) {
     return null;
   }
 
   return (
-    <section className="w-full bg-[#FFFFFF]">
-      <div className="max-w-[1920px] mx-auto px-6 lg:px-10 py-12 lg:py-16">
-        {/* Заголовок та стрілки — як у Наші бестселери */}
-        <div className="flex items-center justify-between gap-4 mb-8 lg:mb-10">
-          <h2 className="text-2xl lg:text-3xl font-bold font-['Montserrat'] uppercase tracking-tight text-[#3D1A00]">
-            {title || "Схожі товари"}
-          </h2>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={scrollLeft}
-              className="p-2 text-[#3D1A00] hover:opacity-70 transition-opacity"
-              aria-label="Прокрутити вліво"
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M15 18l-6-6 6-6" />
-              </svg>
-            </button>
-            <button
-              onClick={scrollRight}
-              className="p-2 text-[#3D1A00] hover:opacity-70 transition-opacity"
-              aria-label="Прокрутити вправо"
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 18l6-6-6-6" />
-              </svg>
-            </button>
+    <>
+      {cartError && (
+        <div className="mx-auto -mb-6 max-w-[1920px] px-6 lg:px-10">
+          <p className="font-['Montserrat'] text-sm text-red-600">{cartError}</p>
+        </div>
+      )}
+      <HomeSectionCarousel
+        title={title || "Вам також може сподобатися"}
+        catalogHref={showCatalogLink ? "/catalog" : null}
+      >
+        {items.map((product, index) => (
+          <div key={product.id} className={homeCarouselItemClass}>
+            <CatalogProductCard
+              product={product}
+              showSubtitle
+              onAddToCart={handleAddToCart}
+              imagePriority={index < 2}
+              imageLoading={index < 4 ? "eager" : "lazy"}
+              className="h-full"
+            />
           </div>
-        </div>
-
-        {/* Горизонтальний список: 2 на мобільному, 4 на десктопі — як у Bestsellers */}
-        <div
-          ref={scrollContainerRef}
-          className="flex gap-6 overflow-x-auto scrollbar-hide scroll-smooth pb-2"
-          style={{ WebkitOverflowScrolling: "touch" }}
-        >
-          {products.map((product) => (
-            <Link
-              key={product.id}
-              href={`/product/${(product.slug && String(product.slug).trim()) ? product.slug : product.id}`}
-              scroll={false}
-              onClick={() => {
-                if (typeof window !== "undefined") {
-                  window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-                }
-              }}
-              className="flex-shrink-0 w-[calc((100%-1.5rem)/2)] lg:w-[calc((100%-4.5rem)/4)] group"
-              aria-label={product.name}
-            >
-              <div className="aspect-[3/4] w-full rounded-lg overflow-hidden bg-gray-200 mb-3 relative">
-                {product.first_media?.url ? (
-                  product.first_media?.type === "video" ? (
-                    <div className="absolute inset-0 flex items-center justify-center bg-gray-200 text-[#3D1A00]/50 font-['Montserrat'] text-sm">
-                      Відео
-                    </div>
-                  ) : (
-                    <Image
-                      src={getProductImageSrc(product.first_media, "")}
-                      alt={product.name}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
-                      sizes="(max-width: 1023px) 50vw, 25vw"
-                    />
-                  )
-                ) : (
-                  <div className="absolute inset-0 bg-gray-200" aria-hidden />
-                )}
-              </div>
-              <div className="flex justify-between items-start gap-2">
-                <p className="text-[#3D1A00] font-['Montserrat'] font-semibold text-sm lg:text-base line-clamp-2">
-                  {product.name}
-                </p>
-                <span className="text-[#3D1A00] font-['Montserrat'] font-semibold text-sm lg:text-base whitespace-nowrap">
-                  {typeof product.price === "number" ? `${product.price.toLocaleString()} ₴` : "—"}
-                </span>
-              </div>
-              <p className="text-gray-500 font-['Montserrat'] text-xs mt-0.5">
-                CHOICE
-              </p>
-              {product.description && (
-                <p className="text-gray-500 font-['Montserrat'] text-xs mt-1 line-clamp-2">
-                  {product.description}
-                </p>
-              )}
-            </Link>
-          ))}
-        </div>
-      </div>
-    </section>
+        ))}
+      </HomeSectionCarousel>
+    </>
   );
 }

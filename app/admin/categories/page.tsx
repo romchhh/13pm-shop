@@ -4,7 +4,7 @@ import { Metadata } from "next";
 import React from "react";
 
 export const metadata: Metadata = {
-  title: "Категорії | ForBody Admin",
+  title: "Категорії | Plywood Present Admin",
   description: "Управління категоріями товарів",
 };
 

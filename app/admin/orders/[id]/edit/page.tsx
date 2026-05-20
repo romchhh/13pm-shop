@@ -7,6 +7,7 @@ import PageBreadcrumb from "@/components/admin/PageBreadCrumb";
 import Label from "@/components/admin/form/Label";
 import Input from "@/components/admin/form/input/InputField";
 import Select from "@/components/admin/form/Select";
+import { getPaymentTypeLabel } from "@/lib/paymentTypeLabels";
 
 export default function EditOrderPage() {
   const params = useParams();
@@ -174,21 +175,7 @@ export default function EditOrderPage() {
               <Label>Спосіб оплати</Label>
               <Input
                 type="text"
-                value={
-                  formData.payment_type === "full"
-                    ? "Повна оплата"
-                    : formData.payment_type === "prepay"
-                    ? "Накладений платіж (оплата при отриманні)"
-                    : formData.payment_type === "pay_after"
-                    ? "Оплата після (при отриманні)"
-                    : formData.payment_type === "test_payment"
-                    ? "Тест оплата (імітація)"
-                    : formData.payment_type === "installment"
-                    ? "В розсрочку"
-                    : formData.payment_type === "crypto"
-                    ? "Крипта (USDT, BTC та інші)"
-                    : "Не вказано"
-                }
+                value={getPaymentTypeLabel(formData.payment_type, "long")}
                 disabled
               />
             </div>

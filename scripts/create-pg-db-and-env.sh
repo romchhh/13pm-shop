@@ -3,13 +3,13 @@
 #
 # Usage:
 #   ./scripts/create-pg-db-and-env.sh [db_name]
-#   DB_NAME=wellness_site ./scripts/create-pg-db-and-env.sh
+#   DB_NAME=plywood_present_site ./scripts/create-pg-db-and-env.sh
 #
 # Requires: psql, .env or .env.example (for other vars). Uses local postgres by default.
 
 set -e
 
-DB_NAME="${DB_NAME:-${1:-wellness_site}}"
+DB_NAME="${DB_NAME:-${1:-plywood_present_site}}"
 ENV_FILE=".env"
 
 # Connection defaults (override via env: PGHOST, PGUSER, PGPASSWORD, PGPORT)

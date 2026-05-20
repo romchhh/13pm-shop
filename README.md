@@ -12,7 +12,7 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 2. **Створення нової бази даних**
 
-   **Варіант A (рекомендовано):** у `.env` вже вказано `DATABASE_URL` з назвою бази (наприклад `wellness_site`). Тоді просто:
+   **Варіант A (рекомендовано):** у `.env` вже вказано `DATABASE_URL` з назвою бази (наприклад `plywood_present_site`). Тоді просто:
    ```bash
    npm run create-db
    ```
@@ -38,9 +38,9 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 **Ручне створення БД через psql:**
 ```bash
 psql -U your_username -h your_host
-CREATE DATABASE wellness_site;
+CREATE DATABASE plywood_present_site;
 ```
-Потім у `.env` вкажіть: `DATABASE_URL="postgresql://user:password@host:5432/wellness_site"`.
+Потім у `.env` вкажіть: `DATABASE_URL="postgresql://user:password@host:5432/plywood_present_site"`.
 
 ### Running the Development Server
 
@@ -88,7 +88,7 @@ ADMIN_USER="?"
 ADMIN_PASS="?"
 BOT_TOKEN="?"
 CHAT_ID="?"
-NEXT_PUBLIC_NOVA_POSHTA_API_KEY="?"
+NOVA_POSHTA_API_KEY="?" (опційно; міста та відділення працюють і без ключа)
 MERCHANT_ACCOUNT="?" (або WAYFORPAY_MERCHANT_ACCOUNT)
 MERCHANT_SECRET="?" (або WAYFORPAY_MERCHANT_SECRET)
 MERCHANT_DOMAIN="?" (або WAYFORPAY_MERCHANT_DOMAIN, опціонально)

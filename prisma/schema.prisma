@@ -146,6 +146,11 @@ model Product {
   giftProductId        Int?           @map("gift_product_id")
   boughtTogetherIds    Int[]          @default([]) @map("bought_together_ids")
   pairTogetherIds      Int[]          @default([]) @map("pair_together_ids")
+  /// Палітра кольорів: [{ "hex": "#1a1a1a", "name": "Чорний" }, ...]
+  colorOptions         Json?          @default("[]") @map("color_options")
+  /// Варіанти розміру як окремі товари: [{ "label": "30×40", "productId": 12, "slug": "..." }]
+  sizeVariants         Json?          @default("[]") @map("size_variants")
+  isNew                Boolean        @default(false) @map("is_new")
   season               String[]       @default([])
   stock                Int            @default(0)
   categoryId           Int?           @map("category_id")
@@ -268,4 +273,27 @@ model NewsletterCampaign {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("newsletter_campaigns")
+}
+
+model NewsletterSubscriber {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  source    String?  @default("footer")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("newsletter_subscribers")
+}
+
+model HeroSlide {
+  id              Int      @id @default(autoincrement())
+  title           String   @db.Text
+  subtitle        String?  @db.Text
+  desktopImageUrl String   @map("desktop_image_url")
+  mobileImageUrl  String   @map("mobile_image_url")
+  sortOrder       Int      @default(0) @map("sort_order")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("hero_slides")
 }

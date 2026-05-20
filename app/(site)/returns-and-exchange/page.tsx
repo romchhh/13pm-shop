@@ -1,32 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SITE_STORE_NAME } from "@/lib/siteBrand";
+import { buildPageMetadata } from "@/lib/seo";
+import { siteContact } from "@/lib/siteContact";
 
-const baseUrl =
-  process.env.PUBLIC_URL || process.env.NEXT_PUBLIC_PUBLIC_URL || "http://localhost:3000";
-
-export const metadata: Metadata = {
-  title: `Повернення та обмін | ${SITE_STORE_NAME}`,
-  description:
-    "Обмін і повернення: звернення до продавця, строк і спосіб повернення коштів, витрати на доставку при поверненні, 14 днів, обмеження за КМУ №172.",
-  openGraph: {
-    title: `Повернення та обмін | ${SITE_STORE_NAME}`,
-    description:
-      "Умови обміну та повернення, повернення коштів, доставка при поверненні, контакти та юридичні підстави.",
-    type: "article",
-    locale: "uk_UA",
-    url: `${baseUrl}/returns-and-exchange`,
-    images: [
-      {
-        url: `${baseUrl}/images/tg_image_3614117882.png`,
-        width: 1200,
-        height: 630,
-        alt: `${SITE_STORE_NAME} — повернення та обмін`,
-      },
-    ],
-    siteName: SITE_STORE_NAME,
-  },
-};
+export const metadata: Metadata = buildPageMetadata({
+  title: "Повернення та обмін",
+  description: `Повернення та обмін подарунків з фанери від ${SITE_STORE_NAME}: строки, спосіб повернення коштів, індивідуальні замовлення. Відповідно до законодавства України.`,
+  path: "/returns-and-exchange",
+});
 
 export default function ReturnsAndExchangePage() {
   return (
@@ -103,10 +85,10 @@ export default function ReturnsAndExchangePage() {
             <p className="opacity-80">
               📩 Напишіть:{" "}
               <a
-                href="mailto:mari.choice26@gmail.com"
+                href={`mailto:${siteContact.email}`}
                 className="font-semibold underline underline-offset-2 hover:opacity-100"
               >
-                mari.choice26@gmail.com
+                {siteContact.email}
               </a>
             </p>
             <p className="opacity-80">Додайте фото товару.</p>

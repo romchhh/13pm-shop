@@ -1,5 +1,5 @@
 export const GA4_CURRENCY = "UAH";
-export const GA4_BRAND = "Choice";
+export const GA4_BRAND = "Plywood Present";
 export const GA4_VERTICAL = "retail";
 
 type GA4EcommerceItem = Record<string, unknown>;

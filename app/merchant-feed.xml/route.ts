@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { SITE_PRODUCT_BRAND, SITE_STORE_NAME } from "@/lib/siteBrand";
 
 function escapeXml(value: string): string {
   return value
@@ -111,7 +112,7 @@ export async function GET() {
         `<g:image_link>${escapeXml(imageUrl)}</g:image_link>`,
         `<g:availability>${gAvailability}</g:availability>`,
         "<g:condition>new</g:condition>",
-        "<g:brand>Forbody Space</g:brand>",
+        `<g:brand>${escapeXml(SITE_PRODUCT_BRAND)}</g:brand>`,
         `<g:price>${formatPriceUAH(basePrice)}</g:price>`,
         salePriceEffective !== null ? `<g:sale_price>${formatPriceUAH(salePriceEffective)}</g:sale_price>` : "",
         productType ? `<g:product_type>${escapeXml(productType)}</g:product_type>` : "",
@@ -128,9 +129,9 @@ export async function GET() {
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
 <channel>
-<title>Forbody Space Product Feed</title>
+<title>${SITE_STORE_NAME} — фід товарів</title>
 <link>${escapeXml(baseUrl)}</link>
-<description>Google Merchant Center feed for Forbody Space</description>
+<description>Google Merchant Center — ${SITE_STORE_NAME}, подарунки та декор з фанери</description>
 ${itemsXml}
 </channel>
 </rss>`;

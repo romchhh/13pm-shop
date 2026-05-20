@@ -18,7 +18,14 @@ interface Product {
   colors?: { label: string; hex?: string | null }[];
   top_sale?: boolean;
   limited_edition?: boolean;
+  is_hit?: boolean;
+  is_new?: boolean;
+  is_promo?: boolean;
+  old_price?: number | null;
+  gift_product_id?: number | null;
   category_name?: string;
+  subcategory_name?: string | null;
+  subtitle?: string | null;
   description?: string;
   has_lining?: boolean;
   lining_description?: string;

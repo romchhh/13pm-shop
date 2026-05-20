@@ -4,6 +4,7 @@ import "./globals.css";
 import { Montserrat } from "next/font/google";
 import { SidebarProvider } from "@/lib/SidebarContext";
 import ClientLayoutShell from "@/components/admin/ClientLayoutShell";
+import { SITE_ICON_PATH, SITE_STORE_NAME, siteMetadataIcons } from "@/lib/siteBrand";
 
 const montserrat = Montserrat({
   subsets: ["latin", "cyrillic"],
@@ -11,12 +12,8 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: "ForBody — Admin Panel",
-  icons: {
-    icon: "/images/choice-features/open-browser.png",
-    shortcut: "/images/choice-features/open-browser.png",
-    apple: "/images/choice-features/open-browser.png",
-  },
+  title: `${SITE_STORE_NAME} — Адмін-панель`,
+  icons: siteMetadataIcons,
 };
 
 export default function RootLayout({
@@ -27,10 +24,11 @@ export default function RootLayout({
   return (
     <html lang="uk">
       <head>
-        {/* Additional favicon for compatibility */}
-        <link rel="icon" type="image/png" href="/images/choice-features/open-browser.png" />
-        <link rel="shortcut icon" type="image/png" href="/images/choice-features/open-browser.png" />
-        <link rel="apple-touch-icon" href="/images/choice-features/open-browser.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+        <link rel="icon" type="image/png" href={SITE_ICON_PATH} />
+        <link rel="shortcut icon" type="image/png" href={SITE_ICON_PATH} />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
       </head>
       <body className={montserrat.className}>
           <SidebarProvider>

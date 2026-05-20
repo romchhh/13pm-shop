@@ -4,288 +4,234 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import { siteContact } from "@/lib/siteContact";
-import { SITE_WORDMARK, siteFooterLead, siteFooterLegalNote } from "@/lib/siteBrand";
+import { SITE_WORDMARK } from "@/lib/siteBrand";
+import { useCategories } from "@/lib/CategoriesProvider";
+
+const FOOTER_BG = "#d1d1a6";
 
 const PAYMENT_LOGOS = [
-  {
-    src: "/payments/Apple_Pay-Logo.wine.svg",
-    alt: "Apple Pay",
-    width: 88,
-    height: 36,
-    imageClassName:
-      "h-10 sm:h-12 w-auto max-h-12 object-contain opacity-85 hover:opacity-100 transition-opacity",
-  },
-  {
-    src: "/payments/Google_Pay_Logo.svg.webp",
-    alt: "Google Pay",
-    width: 52,
-    height: 28,
-    imageClassName:
-      "h-7 sm:h-8 w-auto max-h-8 object-contain opacity-85 hover:opacity-100 transition-opacity",
-  },
-  {
-    src: "/payments/Visa_Inc._logo_(2021–present).svg.png",
-    alt: "Visa",
-    width: 40,
-    height: 13,
-    imageClassName:
-      "h-4 sm:h-5 w-auto max-h-5 object-contain opacity-85 hover:opacity-100 transition-opacity",
-  },
-  {
-    src: "/payments/Mastercard-logo.png",
-    alt: "Mastercard",
-    width: 44,
-    height: 28,
-    imageClassName:
-      "h-7 sm:h-8 w-auto max-h-8 object-contain opacity-85 hover:opacity-100 transition-opacity",
-  },
+  { src: "/images/icons/Badge.svg", alt: "Visa" },
+  { src: "/images/icons/Badge-1.svg", alt: "Mastercard" },
+  { src: "/images/icons/Badge-2.svg", alt: "Apple Pay" },
+  { src: "/images/icons/Badge-3.svg", alt: "Google Pay" },
 ] as const;
+
+const footerLinkClass =
+  "font-['Montserrat'] text-sm text-black/90 hover:opacity-70 transition-opacity";
+
+const footerHeadingClass =
+  "font-['Montserrat'] text-xs font-bold uppercase tracking-[0.14em] text-black text-center lg:text-left";
+
+const socialLinkClass =
+  "inline-flex items-center gap-3 font-['Montserrat'] text-sm font-medium text-black/90 hover:opacity-70 transition-opacity";
+
+function InstagramIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden className="shrink-0">
+      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+    </svg>
+  );
+}
+
+function TikTokIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden className="shrink-0">
+      <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64v-3.5a6.67 6.67 0 1 0 5.79 6.61V8.57a8.16 8.16 0 0 0 4.32 1.24V6.69Z" />
+    </svg>
+  );
+}
 
 export default function Footer() {
   const router = useRouter();
   const pathname = usePathname();
+  const { categories, loading: categoriesLoading } = useCategories();
 
-  const handleAnchorClick = (e: React.MouseEvent<HTMLAnchorElement>, anchor: string) => {
-    e.preventDefault();
-    if (pathname === "/") {
-      const element = document.getElementById(anchor.replace("#", ""));
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    } else {
-      router.push(`/${anchor}`);
-      setTimeout(() => {
-        const element = document.getElementById(anchor.replace("#", ""));
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-      }, 100);
+  const scrollToAnchor = (anchor: string) => {
+    const id = anchor.replace("#", "");
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   };
 
+  const handleInPageAnchor = (e: React.MouseEvent<HTMLAnchorElement>, anchor: string) => {
+    if (pathname === "/") {
+      e.preventDefault();
+      scrollToAnchor(anchor);
+    } else {
+      e.preventDefault();
+      router.push("/" + anchor);
+      setTimeout(() => scrollToAnchor(anchor), 200);
+    }
+  };
+
+  const navLinks = (
+    <>
+      <Link href="/" className={footerLinkClass}>
+        Головна
+      </Link>
+      <Link href="/catalog" className={footerLinkClass}>
+        Каталог товарів
+      </Link>
+      <Link href="/catalog?new=1" className={footerLinkClass}>
+        Новинки
+      </Link>
+      <Link href="/catalog?hits=1" className={footerLinkClass}>
+        Хіти
+      </Link>
+      <Link
+        href="/#about"
+        className={footerLinkClass}
+        onClick={(e) => handleInPageAnchor(e, "#about")}
+      >
+        Про нас
+      </Link>
+      <Link href="/#faq" className={footerLinkClass} onClick={(e) => handleInPageAnchor(e, "#faq")}>
+        FAQ
+      </Link>
+      <Link
+        href="/#reviews"
+        className={footerLinkClass}
+        onClick={(e) => handleInPageAnchor(e, "#reviews")}
+      >
+        Відгуки
+      </Link>
+      <Link href="/contacts" className={footerLinkClass}>
+        Контакти
+      </Link>
+      <Link href="/delivery-and-payment" className={`${footerLinkClass} hidden lg:inline`}>
+        Умови доставки
+      </Link>
+      <Link href="/returns-and-exchange" className={`${footerLinkClass} hidden lg:inline`}>
+        Умови повернення
+      </Link>
+    </>
+  );
+
   return (
-    <footer className="w-full bg-[#FFF9F0] text-black border-t border-[#3D1A00]/10">
-      <div className="max-w-[1920px] mx-auto px-6 py-12 lg:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12 items-center md:items-start text-center md:text-left">
-          <div className="flex flex-col gap-5 items-center md:items-start max-w-md mx-auto md:mx-0">
-            <Link href="/" className="inline-block group">
-              <span
-                className="font-['Montserrat'] font-light text-[2rem] lg:text-[2.5rem] leading-none tracking-[0.16em] lg:tracking-[0.18em] text-black transition-opacity duration-300 group-hover:opacity-80"
-              >
-                {SITE_WORDMARK}
-              </span>
+    <footer
+      className="relative z-0 w-full text-[#1a1a1a] border-t border-[#3D1A00]/15"
+      style={{ backgroundColor: FOOTER_BG }}
+    >
+      <div className="max-w-[1920px] mx-auto px-6 pt-20 pb-10 sm:pt-24 sm:pb-12 lg:px-12 lg:pt-28 lg:pb-14">
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-4 lg:gap-10 xl:gap-16">
+          {/* Бренд */}
+          <div className="flex flex-col items-center gap-4 text-center lg:items-start lg:gap-5 lg:text-left max-w-md lg:max-w-none mx-auto lg:mx-0">
+            <Link href="/" className="inline-block">
+              <Image
+                src="/images/logos/logo_black.svg"
+                alt={SITE_WORDMARK}
+                width={200}
+                height={56}
+                className="h-14 w-auto sm:h-16 lg:h-12 mx-auto lg:mx-0"
+              />
             </Link>
-            <p className="text-sm lg:text-base text-gray-600 leading-relaxed w-full text-left tracking-normal">
-              {siteFooterLead}
+            <p className="font-['Montserrat'] text-sm leading-relaxed text-black/85 max-w-sm">
+              Власне виробництво дерев&apos;яного декору та подарунків.
             </p>
-            <p className="text-xs text-gray-500 text-left tracking-normal">
-              {siteFooterLegalNote}
+            <p className="font-['Montserrat'] text-sm leading-relaxed text-black/85 max-w-sm">
+              Іменні вироби, фоторамки, сімейні композиції та унікальні подарунки ручної роботи.
             </p>
           </div>
 
-          <div className="flex flex-col gap-5 items-center md:items-start max-w-md mx-auto md:mx-0">
-            <h3 className="text-base lg:text-lg font-semibold uppercase tracking-wider">Навігація</h3>
-            <nav className="flex flex-col gap-3 justify-center md:justify-start w-full">
-              <Link
-                href="/catalog"
-                className="text-sm lg:text-base text-gray-600 hover:text-black transition-colors duration-300 whitespace-nowrap tracking-normal"
-              >
-                Каталог
-              </Link>
-              <Link
-                href="/info#about"
-                className="text-sm lg:text-base text-gray-600 hover:text-black transition-colors duration-300 whitespace-nowrap tracking-normal"
-              >
-                Про бренд
-              </Link>
-              <Link
-                href="/partnership"
-                className="text-sm lg:text-base text-gray-600 hover:text-black transition-colors duration-300 whitespace-nowrap tracking-normal"
-              >
-                Партнерство
-              </Link>
-              <Link
-                href="/delivery-and-payment"
-                className="text-sm lg:text-base text-gray-600 hover:text-black transition-colors duration-300 whitespace-nowrap tracking-normal"
-              >
-                Доставка та оплата
-              </Link>
-              <Link
-                href="/info#faq"
-                className="text-sm lg:text-base text-gray-600 hover:text-black transition-colors duration-300 whitespace-nowrap tracking-normal"
-              >
-                FAQ
-              </Link>
-              <Link
-                href="/contacts"
-                className="text-sm lg:text-base text-gray-600 hover:text-black transition-colors duration-300 whitespace-nowrap tracking-normal"
-              >
-                Контакти
-              </Link>
+          {/* Навігація */}
+          <div className="flex flex-col items-center gap-4 lg:items-start lg:gap-5">
+            <h3 className={footerHeadingClass}>Навігація</h3>
+            <nav className="flex flex-wrap justify-center gap-x-3 gap-y-2 max-w-md lg:max-w-none lg:flex-col lg:items-start lg:gap-3 lg:justify-start">
+              {navLinks}
             </nav>
           </div>
 
-          <div className="flex flex-col gap-5 items-center md:items-start max-w-md mx-auto md:mx-0">
-            <h3 className="text-base lg:text-lg font-semibold uppercase tracking-wider">Інформація</h3>
-            <nav className="flex flex-row md:flex-col gap-3 flex-wrap justify-center md:justify-start">
-              <Link
-                href="/privacy-policy"
-                className="text-sm lg:text-base text-gray-600 hover:text-black transition-colors duration-300 tracking-normal"
-              >
-                Політика конфіденційності
-              </Link>
-              <Link
-                href="/terms-of-service"
-                className="text-sm lg:text-base text-gray-600 hover:text-black transition-colors duration-300 tracking-normal"
-              >
-                Договір оферти
-              </Link>
-              <Link
-                href="/returns-and-exchange"
-                className="text-sm lg:text-base text-gray-600 hover:text-black transition-colors duration-300 tracking-normal"
-              >
-                Повернення та обмін
-              </Link>
+          {/* Категорії */}
+          <div className="flex flex-col items-center gap-4 lg:items-start lg:gap-5">
+            <h3 className={footerHeadingClass}>Категорії</h3>
+            <nav className="flex flex-wrap justify-center gap-x-3 gap-y-2 max-w-md lg:max-w-none lg:flex-col lg:items-start lg:gap-3 lg:justify-start">
+              {categoriesLoading && categories.length === 0 ? (
+                <span className="text-black/50 text-sm font-['Montserrat']">Завантаження…</span>
+              ) : (
+                categories.map((cat) => (
+                  <Link
+                    key={cat.id}
+                    href={`/catalog?categoryId=${cat.id}`}
+                    className={footerLinkClass}
+                  >
+                    {cat.name}
+                  </Link>
+                ))
+              )}
             </nav>
           </div>
 
-          <div className="flex flex-col gap-5 items-center md:items-start max-w-md mx-auto md:mx-0 lg:max-w-none">
-            <h3 className="text-base lg:text-lg font-semibold uppercase tracking-wider">Зв&apos;язок</h3>
-            <Link
-              href="/contacts"
-              className="text-[#3D1A00] hover:opacity-80 transition-opacity font-['Montserrat']"
-              style={{
-                fontFamily: "Montserrat, sans-serif",
-                fontWeight: 400,
-                fontSize: "clamp(24px, 4vw, 36px)",
-                lineHeight: "120%",
-                letterSpacing: "0%",
-              }}
+          {/* Соцмережі + оплата */}
+          <div className="flex flex-col items-center gap-6 lg:items-start">
+            <div className="flex flex-col items-center gap-4 w-full lg:items-start">
+              <h3 className={footerHeadingClass}>Соц-мережі</h3>
+              <nav
+                className="flex flex-col items-center gap-3 lg:items-start"
+                aria-label="Соціальні мережі"
+              >
+                <Link
+                  href={siteContact.instagramUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={socialLinkClass}
+                  aria-label={`Instagram ${siteContact.instagramHandle}`}
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-black/10 text-black">
+                    <InstagramIcon />
+                  </span>
+                  <span>
+                    Instagram <span className="text-black/75">{siteContact.instagramHandle}</span>
+                  </span>
+                </Link>
+                <Link
+                  href={siteContact.tiktokUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={socialLinkClass}
+                  aria-label={`TikTok ${siteContact.tiktokHandle}`}
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-black/10 text-black">
+                    <TikTokIcon />
+                  </span>
+                  <span>
+                    TikTok <span className="text-black/75">{siteContact.tiktokHandle}</span>
+                  </span>
+                </Link>
+              </nav>
+            </div>
+            <ul
+              className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 lg:justify-start"
+              aria-label="Способи оплати"
             >
-              ЗВ&apos;ЯЗОК З {SITE_WORDMARK.toUpperCase()}
-            </Link>
-
-            <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5 text-left">
-              <div>
-                <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-gray-500 mb-1.5 font-['Montserrat']">
-                  Адреса
-                </p>
-                <address className="not-italic text-sm text-gray-700 font-['Montserrat'] leading-relaxed space-y-0.5">
-                  {siteContact.addressLines.map((line) => (
-                    <p key={line}>{line}</p>
-                  ))}
-                </address>
-              </div>
-              <div>
-                <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-gray-500 mb-1.5 font-['Montserrat']">
-                  Телефон
-                </p>
-                <a
-                  href={`tel:${siteContact.phoneTel}`}
-                  className="text-sm text-gray-700 hover:text-[#3D1A00] transition-colors font-['Montserrat']"
-                >
-                  {siteContact.phoneDisplay}
-                </a>
-              </div>
-              <div>
-                <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-gray-500 mb-1.5 font-['Montserrat']">
-                  E-mail
-                </p>
-                <a
-                  href={`mailto:${siteContact.email}`}
-                  className="text-sm text-gray-700 hover:text-[#3D1A00] transition-colors font-['Montserrat'] break-all"
-                >
-                  {siteContact.email}
-                </a>
-              </div>
-              <div>
-                <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-gray-500 mb-1.5 font-['Montserrat']">
-                  Графік роботи
-                </p>
-                <div className="text-sm text-gray-700 font-['Montserrat'] leading-relaxed space-y-0.5">
-                  {siteContact.scheduleLines.map((line) => (
-                    <p key={line}>{line}</p>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-row md:flex-col gap-3 flex-wrap justify-center md:justify-start pt-1">
-              <Link
-                href={siteContact.instagramUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 text-sm lg:text-base text-gray-600 hover:text-black transition-colors duration-300 group tracking-normal"
-              >
-                <Image
-                  src="/images/instagram-icon.svg"
-                  alt="Instagram"
-                  width={24}
-                  height={24}
-                  className="w-6 h-6 opacity-70 group-hover:opacity-100 transition-opacity"
-                />
-                <span>Instagram — {siteContact.instagramHandle}</span>
-              </Link>
-              <Link
-                href={siteContact.telegramUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 text-sm lg:text-base text-gray-600 hover:text-black transition-colors duration-300 group tracking-normal"
-                >
-                <svg
-                  className="w-6 h-6 opacity-70 group-hover:opacity-100 transition-opacity text-gray-600 group-hover:text-black"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-label="Telegram"
-                >
-                  <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.559z"/>
-                </svg>
-                <span>Telegram</span>
-              </Link>
-            </div>
+              {PAYMENT_LOGOS.map(({ src, alt }) => (
+                <li key={src}>
+                  <Image
+                    src={src}
+                    alt={alt}
+                    width={65}
+                    height={49}
+                    className="h-9 w-auto object-contain sm:h-10"
+                  />
+                </li>
+              ))}
+            </ul>
           </div>
-        </div>
-
-        <div className="mt-10 pt-10 border-t border-[#3D1A00]/10">
-          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-gray-500 mb-4 text-center md:text-left font-['Montserrat']">
-            Приймаємо до оплати
-          </p>
-          <ul
-            className="flex flex-wrap items-center justify-center md:justify-start gap-6 md:gap-8 list-none p-0 m-0"
-            aria-label="Платіжні системи: Apple Pay, Google Pay, Visa, Mastercard"
-          >
-            {PAYMENT_LOGOS.map(({ src, alt, width, height, imageClassName }) => (
-              <li key={src} className="flex items-center">
-                <Image
-                  src={src}
-                  alt={alt}
-                  width={width}
-                  height={height}
-                  className={imageClassName}
-                />
-              </li>
-            ))}
-          </ul>
         </div>
       </div>
 
-      <div className="border-t border-[#3D1A00]/10">
-        <div className="max-w-[1920px] mx-auto px-6 py-5">
-          <div className="flex flex-col items-center justify-center gap-2 text-center">
-            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-xs lg:text-sm text-gray-500">
-              <span className="tracking-normal">{siteFooterLegalNote}</span>
-            </div>
-            <div>
-              <Link
-                href="https://new.telebots.site/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm sm:text-base font-semibold font-['Montserrat'] text-black hover:text-gray-700 transition-colors tracking-wide"
-              >
-                Telebots | Розробка сайтів
-              </Link>
-            </div>
-          </div>
+      <div className="border-t border-black/25">
+        <div className="max-w-[1920px] mx-auto px-6 lg:px-12 py-5">
+          <p className="text-center font-['Montserrat'] text-xs text-black/60">
+            <Link
+              href="https://new.telebots.site/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-black transition-colors"
+            >
+              created by telebots
+            </Link>
+          </p>
         </div>
       </div>
     </footer>

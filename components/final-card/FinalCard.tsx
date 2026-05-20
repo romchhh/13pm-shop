@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useBasket } from "@/lib/BasketProvider";
-import Image from "next/image";
 import Link from "next/link";
-import { getDiscountedPrice } from "@/lib/pricing";
+import CartLineItems from "@/components/cart/CartLineItems";
+import { getDiscountedPrice, getItemSubtotal } from "@/lib/pricing";
+import { clearCartPromo, loadCartPromo, saveCartPromo } from "@/lib/cartPromoStorage";
 import {
   GA4_BRAND,
   GA4_CURRENCY,
@@ -13,6 +14,8 @@ import {
 } from "@/lib/ga4Ecommerce";
 
 /** Calculate order subtotal from basket items */
+const ACCENT = "#8B5E3F";
+
 function getSubtotal(items: { price: number | string; quantity: number; discount_percentage?: number | string }[]) {
   return items.reduce((total, item) => {
     const itemPrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
@@ -28,7 +31,7 @@ function getSubtotal(items: { price: number | string; quantity: number; discount
 
 export default function FinalCard() {
   // GENERAL
-  const { items, updateQuantity, removeItem, clearBasket } = useBasket();
+  const { items, clearBasket } = useBasket();
   const [mounted, setMounted] = useState(false);
 
   // Prevent hydration mismatch by only rendering after mount
@@ -47,16 +50,19 @@ export default function FinalCard() {
   const [deliveryMethod, setDeliveryMethod] = useState("nova_poshta_branch");
   const [city, setCity] = useState("");
   const [postOffice, setPostOffice] = useState("");
+  const [cityRef, setCityRef] = useState("");
   const DELIVERY_COST_BRANCH = 0; // доставка оплачується на відділенні, не додаємо до суми
   // Auto-fill showroom address when selected
   useEffect(() => {
     if (deliveryMethod === "showroom_pickup") {
       setCity("Київ");
       setPostOffice("Самовивіз: вул. Костянтинівська, 21 (13:00–19:00)");
+      setCityRef("");
     } else {
       // Для способів Нової пошти не фіксуємо місто за замовчуванням
       setCity("");
       setPostOffice("");
+      setCityRef("");
     }
   }, [deliveryMethod]);
 
@@ -121,7 +127,7 @@ export default function FinalCard() {
   }, [items, mounted]);
 
   const [comment, setComment] = useState("");
-  const [paymentType, setPaymentType] = useState("");
+  const [paymentType, setPaymentType] = useState("prepay");
   const [agreedToPolicy, setAgreedToPolicy] = useState(false);
 
   // Промокод: введений код, результат перевірки
@@ -145,6 +151,19 @@ export default function FinalCard() {
     postOffice?: string;
     paymentType?: string;
   }>({});
+
+  useEffect(() => {
+    if (!mounted) return;
+    const stored = loadCartPromo();
+    if (stored) {
+      setPromoCodeInput(stored.code);
+      setAppliedPromo({
+        promoCodeId: stored.promoCodeId,
+        discountAmount: stored.discountAmount,
+        message: stored.message,
+      });
+    }
+  }, [mounted]);
 
   const validateName = () => {
     if (!firstName.trim()) return "Ім'я обов'язкове";
@@ -334,12 +353,9 @@ export default function FinalCard() {
       });
 
       if (!stockCheckResponse.ok) {
-        const stockData = await stockCheckResponse.json();
-        const errorMessages = stockData.insufficientItems?.map(
-          (item: { product_id: number; size: string; requested: number; available: number }) =>
-            `Товар ID ${item.product_id} (розмір ${item.size}): доступно ${item.available} шт., запитано ${item.requested} шт.`
-        ) || ["Недостатньо товару в наявності"];
-        setError(`Недостатньо товару в наявності:\n${errorMessages.join("\n")}`);
+        setError(
+          "Один або кілька товарів зараз недоступні. Оновіть кошик і спробуйте ще раз."
+        );
         setLoading(false);
         return;
       }
@@ -379,6 +395,8 @@ export default function FinalCard() {
     const promoDiscount = appliedPromo?.discountAmount ?? 0;
     const fullAmount = Math.max(0, subtotal + deliveryCost - promoDiscount);
 
+    const orderComment = comment.trim();
+
     try {
       const requestBody = {
         customer_name: customerName,
@@ -387,7 +405,7 @@ export default function FinalCard() {
         delivery_method: deliveryMethod,
         city,
         post_office: postOffice,
-        comment,
+        comment: orderComment,
         payment_type: paymentType,
         total_amount: fullAmount.toFixed(2),
         bonus_points_to_spend: 0,
@@ -408,16 +426,21 @@ export default function FinalCard() {
       if (!response.ok) {
         const data = await response.json();
         console.error("[FinalCard] Error response:", data);
-        let errorMessage = data.error || "Помилка при оформленні замовлення.";
-        
-        if (data.details) {
+        const stockish =
+          typeof data.error === "string" &&
+          (data.error.includes("недоступн") || data.error.includes("Недостатньо"));
+        let errorMessage = stockish
+          ? "Один або кілька товарів зараз недоступні. Оновіть кошик і спробуйте ще раз."
+          : data.error || "Помилка при оформленні замовлення.";
+
+        if (data.details && !stockish) {
           if (Array.isArray(data.details)) {
             errorMessage = `${errorMessage}\n${data.details.join("\n")}`;
           } else {
             errorMessage = `${errorMessage}\n${data.details}`;
           }
         }
-        
+
         setError(errorMessage);
         setLoading(false);
         return;
@@ -469,7 +492,7 @@ export default function FinalCard() {
               phone: phoneNumber,
               city,
               postOffice,
-              comment,
+              comment: orderComment,
               paymentType,
             })
           );
@@ -491,6 +514,7 @@ export default function FinalCard() {
           // Should not happen, but just in case
           setSuccess("Замовлення успішно оформлено! Ми зв'яжемося з вами найближчим часом.");
           clearBasket();
+          clearCartPromo();
           setLoading(false);
         }
       }
@@ -552,6 +576,7 @@ export default function FinalCard() {
                 orderId: pendingData.orderId,
               });
               clearBasket();
+              clearCartPromo();
             } else {
               setSuccess("Оплата успішно завершена! Замовлення обробляється.");
             }
@@ -580,231 +605,156 @@ export default function FinalCard() {
     }
   }, [clearBasket]);
 
-  // POST OFFICE
-  const [cities, setCities] = useState<string[]>([]); // Available cities
-  const [postOffices, setPostOffices] = useState<string[]>([]); // Available post offices
-  const [loadingCities, setLoadingCities] = useState<boolean>(false); // Loading state for cities
-  const [loadingPostOffices, setLoadingPostOffices] = useState<boolean>(false); // Loading state for post offices
-  const [filteredCities, setFilteredCities] = useState<string[]>([]); // Filtered cities list for autocomplete
-  const [filteredPostOffices, setFilteredPostOffices] = useState<string[]>([]); // Filtered post offices list for autocomplete
+  type NpCityOption = { ref: string; name: string };
+  type NpWarehouseOption = { ref: string; description: string };
+
+  const [cities, setCities] = useState<NpCityOption[]>([]);
+  const [postOffices, setPostOffices] = useState<NpWarehouseOption[]>([]);
+  const [loadingCities, setLoadingCities] = useState(false);
+  const [loadingPostOffices, setLoadingPostOffices] = useState(false);
   const [cityListVisible, setCityListVisible] = useState(false);
   const [postOfficeListVisible, setPostOfficeListVisible] = useState(false);
-  // Region and district for Ukrposhta (currently unused but kept for future implementation)
-  const [region] = useState(""); // For Ukrposhta - область
-  const [district] = useState(""); // For Ukrposhta - район
+  const [npCityHint, setNpCityHint] = useState<string | null>(null);
+  const [npWarehouseHint, setNpWarehouseHint] = useState<string | null>(null);
 
-  // Example useEffect for region and district fetching for Ukrposhta
+  const isNpBranch = deliveryMethod === "nova_poshta_branch";
+  const isNpCourier = deliveryMethod === "nova_poshta_courier";
+  const isShowroom = deliveryMethod === "showroom_pickup";
+  const isNovaPoshta = deliveryMethod.startsWith("nova_poshta");
+
+  // Міста — getCities (як у документації НП: FindByString, Limit)
   useEffect(() => {
-    if (region) {
-      setLoadingCities(true);
-      // API call to fetch regions for Ukrposhta
-      setLoadingCities(false);
+    if (!isNovaPoshta || isShowroom) {
+      setCities([]);
+      setNpCityHint(null);
+      return;
     }
-  }, [region]);
 
-  useEffect(() => {
-    if (district) {
-      setLoadingPostOffices(true);
-      // API call to fetch districts for Ukrposhta
-      setLoadingPostOffices(false);
+    const q = city.trim();
+    if (q.length < 2) {
+      setCities([]);
+      return;
     }
-  }, [district]);
 
-  useEffect(() => {
-    // Fetch available cities when delivery method changes to Nova Poshta
-    if (deliveryMethod.startsWith("nova_poshta")) {
+    const timer = setTimeout(() => {
       setLoadingCities(true);
-
-      fetch("https://api.novaposhta.ua/v2.0/json/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          apiKey: process.env.NEXT_PUBLIC_NOVA_POSHTA_API_KEY,
-          modelName: "AddressGeneral",
-          calledMethod: "getCities",
-          methodProperties: {
-            FindByString: city,
-            limit: 20,
-          },
-        }),
-      })
+      setNpCityHint(null);
+      fetch(`/api/nova-poshta/cities?q=${encodeURIComponent(q)}`)
         .then((res) => res.json())
-        .then((data) => {
-          console.log("City fetch response", data); // ✅ Add this
-          if (data.success) {
-            const cityData = data.data || [];
-            setCities(
-              cityData.map((c: { Description: string }) => c.Description)
-            );
-          } else {
+        .then((data: { cities?: NpCityOption[]; error?: string | null }) => {
+          if (data.error) {
             setCities([]);
-            setError("Не вдалося знайти міста.");
+            setNpCityHint(data.error);
+            return;
           }
-        })
-        .catch((err) => {
-          console.error("Fetch error:", err);
-          setError("Помилка при завантаженні міст.");
-        })
-        .finally(() => {
-          setLoadingCities(false);
-        });
-    } else if (deliveryMethod == "ukrposhta") {
-      setLoadingCities(true);
-
-      // Fetch cities with `fetch`
-      fetch("https://api.novaposhta.ua/v2.0/json/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          apiKey: process.env.NEXT_PUBLIC_NOVA_POSHTA_API_KEY,
-          modelName: "AddressGeneral",
-          calledMethod: "getCities",
-          methodProperties: {
-            FindByString: city, // Replace with a dynamic city string if necessary
-            limit: 20,
-          },
-        }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          const cityData = data.data || [];
-          setCities(
-            cityData.map((city: { Description: unknown }) => city.Description)
-          );
-          // console.log(data);
+          setCities(data.cities ?? []);
         })
         .catch(() => {
-          console.error("Error fetching cities");
-          setError("Failed to load cities.");
+          setCities([]);
+          setNpCityHint("Помилка при завантаженні міст");
         })
-        .finally(() => {
-          setLoadingCities(false);
-        });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deliveryMethod]);
+        .finally(() => setLoadingCities(false));
+    }, 300);
 
-  useEffect(() => {
-    // Filter and sort the cities based on the current input
-    const filtered = cities.filter((cityOption) =>
-      cityOption.toLowerCase().includes(city.toLowerCase())
-    );
+    return () => clearTimeout(timer);
+  }, [city, isNovaPoshta, isShowroom]);
 
-    // Sort: exact matches first, then starts with, then contains
-    const sorted = filtered.sort((a, b) => {
-      const aLower = a.toLowerCase();
-      const bLower = b.toLowerCase();
-      const searchLower = city.toLowerCase();
-
-      // Exact match
-      if (aLower === searchLower) return -1;
-      if (bLower === searchLower) return 1;
-
-      // Starts with
-      const aStarts = aLower.startsWith(searchLower);
-      const bStarts = bLower.startsWith(searchLower);
-      if (aStarts && !bStarts) return -1;
-      if (!aStarts && bStarts) return 1;
-
-      // Alphabetical for remaining
-      return a.localeCompare(b);
+  const filteredCities = useMemo(() => {
+    const q = city.toLowerCase().trim();
+    const filtered = cities.filter((c) => c.name.toLowerCase().includes(q));
+    return [...filtered].sort((a, b) => {
+      const aL = a.name.toLowerCase();
+      const bL = b.name.toLowerCase();
+      if (aL === q) return -1;
+      if (bL === q) return 1;
+      const aS = aL.startsWith(q);
+      const bS = bL.startsWith(q);
+      if (aS && !bS) return -1;
+      if (!aS && bS) return 1;
+      return a.name.localeCompare(b.name, "uk");
     });
+  }, [city, cities]);
 
-    setFilteredCities(sorted);
-  }, [city, cities]); // Re-filter cities whenever `city` or `cities` changes
-
+  // Відділення — getWarehouses при вибраному місті; FindByString у запиті для вузького пошуку (номер відділення)
   useEffect(() => {
-    // Fetch available post offices when a city is selected
-    if (city) {
+    if (!isNpBranch || isShowroom || !city.trim()) {
+      setPostOffices([]);
+      setNpWarehouseHint(null);
+      return;
+    }
+
+    const timer = setTimeout(() => {
       setLoadingPostOffices(true);
+      setNpWarehouseHint(null);
 
-      // Fetch post offices with `fetch`
-      fetch("https://api.novaposhta.ua/v2.0/json/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          apiKey: process.env.NEXT_PUBLIC_NOVA_POSHTA_API_KEY, // Replace with your actual API Key
-          modelName: "AddressGeneral",
-          calledMethod: "getWarehouses",
-          methodProperties: {
-            CityName: city, // Use the selected city
-            FindByString: postOffice,
-            limit: 20,
-          },
-        }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          const postOfficeData = data.data || [];
-          setPostOffices(
-            postOfficeData.map(
-              (post: { Description: unknown }) => post.Description
-            )
-          );
-          // console.log(data);
+      const params = new URLSearchParams();
+      if (cityRef) params.set("cityRef", cityRef);
+      else params.set("cityName", city.trim());
+      const po = postOffice.trim();
+      if (po.length >= 1) params.set("q", po);
+
+      fetch(`/api/nova-poshta/warehouses?${params.toString()}`)
+        .then((res) => res.json())
+        .then((data: { warehouses?: NpWarehouseOption[]; error?: string | null }) => {
+          if (data.error) {
+            setPostOffices([]);
+            setNpWarehouseHint(data.error);
+            return;
+          }
+          setPostOffices(data.warehouses ?? []);
         })
         .catch(() => {
-          console.error("Error fetching post offices");
-          setError("Failed to load post offices.");
+          setPostOffices([]);
+          setNpWarehouseHint("Помилка при завантаженні відділень");
         })
-        .finally(() => {
-          setLoadingPostOffices(false);
-        });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [city]);
+        .finally(() => setLoadingPostOffices(false));
+    }, 350);
 
-  useEffect(() => {
-    // Filter and sort the post offices based on the current input
-    const filtered = postOffices.filter((postOfficeOption) =>
-      postOfficeOption.toLowerCase().includes(postOffice.toLowerCase())
-    );
+    return () => clearTimeout(timer);
+  }, [city, cityRef, postOffice, isNpBranch, isShowroom]);
 
-    // Sort: exact matches first, then starts with, then contains
-    const sorted = filtered.sort((a, b) => {
-      const aLower = a.toLowerCase();
-      const bLower = b.toLowerCase();
-      const searchLower = postOffice.toLowerCase();
-
-      // Exact match
-      if (aLower === searchLower) return -1;
-      if (bLower === searchLower) return 1;
-
-      // Starts with
-      const aStarts = aLower.startsWith(searchLower);
-      const bStarts = bLower.startsWith(searchLower);
-      if (aStarts && !bStarts) return -1;
-      if (!aStarts && bStarts) return 1;
-
-      // Alphabetical for remaining
-      return a.localeCompare(b);
+  const filteredPostOffices = useMemo(() => {
+    const q = postOffice.toLowerCase().trim();
+    if (!q) return postOffices;
+    const filtered = postOffices.filter((p) => p.description.toLowerCase().includes(q));
+    return [...filtered].sort((a, b) => {
+      const aL = a.description.toLowerCase();
+      const bL = b.description.toLowerCase();
+      if (aL === q) return -1;
+      if (bL === q) return 1;
+      const aS = aL.startsWith(q);
+      const bS = bL.startsWith(q);
+      if (aS && !bS) return -1;
+      if (!aS && bS) return 1;
+      return a.description.localeCompare(b.description, "uk");
     });
-
-    setFilteredPostOffices(sorted);
-  }, [postOffice, postOffices]); // Re-filter post offices whenever `postOffice` or `postOffices` changes
+  }, [postOffice, postOffices]);
 
   const handleCityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     handleCityChangeWithValidation(e.target.value);
-    setCityListVisible(true); // Show the city list while typing
+    setCityRef("");
+    setPostOffice("");
+    setPostOffices([]);
+    setCityListVisible(true);
   };
 
   const handlePostOfficeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     handlePostOfficeChangeWithValidation(e.target.value);
-    setPostOfficeListVisible(true); // Show the post office list while typing
+    setPostOfficeListVisible(true);
   };
 
-  const handleCitySelect = (cityOption: string) => {
-    handleCityChangeWithValidation(cityOption);
-    setCityListVisible(false); // Hide the city list after selecting an option
+  const handleCitySelect = (option: NpCityOption) => {
+    handleCityChangeWithValidation(option.name);
+    setCityRef(option.ref);
+    setPostOffice("");
+    setPostOffices([]);
+    setCityListVisible(false);
+    setPostOfficeListVisible(true);
   };
 
-  const handlePostOfficeSelect = (postOfficeOption: string) => {
-    handlePostOfficeChangeWithValidation(postOfficeOption);
-    setPostOfficeListVisible(false); // Hide the post office list after selecting an option
+  const handlePostOfficeSelect = (warehouse: NpWarehouseOption) => {
+    handlePostOfficeChangeWithValidation(warehouse.description);
+    setPostOfficeListVisible(false);
   };
 
   // STATE
@@ -848,321 +798,415 @@ export default function FinalCard() {
     );
   }
 
+  const checkoutCard =
+    "rounded-2xl border border-black/[0.06] bg-white p-5 shadow-[0_4px_20px_rgba(0,0,0,0.05)] sm:p-6";
+  const checkoutInput = (err?: string) =>
+    `w-full rounded-xl border bg-white px-4 py-3 font-['Montserrat'] text-sm text-black placeholder:text-black/35 transition-colors focus:border-[#8B5E3F]/45 focus:outline-none focus:ring-1 focus:ring-[#8B5E3F]/20 ${
+      err ? "border-red-400" : "border-black/10"
+    }`;
+  const deliveryCostDisplay = deliveryMethod === "nova_poshta_branch" ? DELIVERY_COST_BRANCH : 0;
+  const summarySubtotal = getSubtotal(items);
+  const summaryPromo = appliedPromo?.discountAmount ?? 0;
+  const summaryTotal = Math.max(0, summarySubtotal + deliveryCostDisplay - summaryPromo);
+
   return (
-    <section className="max-w-[1922px] w-full mx-auto relative overflow-hidden bg-[#FFFFFF] min-h-screen px-6 sm:px-10 md:px-12 lg:px-16 xl:px-20 py-10 sm:py-12">
+    <section className="min-h-screen bg-[#faf9f7] pb-16 pt-6 lg:pb-20">
+      <div className="mx-auto w-full max-w-[1920px] px-4 sm:px-6 lg:px-12">
       {!mounted ? (
-        <div className="py-12 sm:py-20 flex items-center justify-center w-full min-h-[400px]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+        <div className="flex min-h-[400px] w-full items-center justify-center py-12 sm:py-20">
+          <div
+            className="h-12 w-12 animate-spin rounded-full border-2 border-black/15 border-t-transparent"
+            style={{ borderTopColor: ACCENT }}
+          />
         </div>
       ) : items.length == 0 ? (
-        <div className="py-12 px-4 sm:py-20 flex flex-col items-center gap-10 sm:gap-14 w-full max-w-2xl mx-auto">
-          <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full bg-[#3D1A00]/5 flex items-center justify-center">
-            <svg className="w-16 h-16 sm:w-20 sm:h-20 text-[#3D1A00]/30" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+        <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-10 py-12 sm:gap-14 sm:py-20">
+          <div className="flex h-32 w-32 items-center justify-center rounded-full bg-black/[0.04] sm:h-40 sm:w-40">
+            <svg className="h-16 w-16 text-black/25 sm:h-20 sm:w-20" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
             </svg>
           </div>
-          <h2 className="text-center text-2xl sm:text-4xl md:text-5xl font-semibold font-['Montserrat'] text-[#3D1A00] uppercase tracking-tight leading-tight">
+          <h2 className="text-center font-['Montserrat'] text-2xl font-semibold leading-tight text-black sm:text-4xl md:text-5xl">
             Ваш кошик порожній
           </h2>
           <Link
             href="/catalog"
-            className="w-full sm:w-80 h-14 sm:h-16 px-6 py-3 rounded-xl bg-[#8B9A47] hover:bg-[#7a8940] text-white font-['Montserrat'] font-semibold text-base sm:text-lg uppercase tracking-tight inline-flex items-center justify-center text-center transition-colors"
+            className="inline-flex h-14 w-full max-w-sm items-center justify-center rounded-xl px-6 font-['Montserrat'] text-base font-semibold text-white transition-opacity hover:opacity-90 sm:h-16 sm:text-lg"
+            style={{ backgroundColor: ACCENT }}
           >
             Продовжити покупки
           </Link>
         </div>
       ) : (
         <>
-          {/* Breadcrumbs */}
-          <nav className="mb-6 pt-2" aria-label="Breadcrumb">
-            <ol className="flex items-center gap-2 text-sm font-['Montserrat'] font-normal text-[#3D1A00]/70">
-              <li><Link href="/" className="hover:text-[#3D1A00] transition-colors">Головна</Link></li>
-              <li aria-hidden className="text-[#3D1A00]/40">|</li>
-              <li className="text-[#3D1A00]/80">Оформлення замовлення</li>
+          <nav className="mb-4 font-['Montserrat'] text-sm text-black/45" aria-label="Breadcrumb">
+            <ol className="flex flex-wrap items-center gap-x-1 gap-y-1">
+              <li>
+                <Link href="/" className="hover:text-[#8B5E3F]">
+                  Головна
+                </Link>
+              </li>
+              <li className="text-black/30" aria-hidden>
+                &gt;
+              </li>
+              <li>
+                <Link href="/cart" className="hover:text-[#8B5E3F]">
+                  Кошик
+                </Link>
+              </li>
+              <li className="text-black/30" aria-hidden>
+                &gt;
+              </li>
+              <li className="text-black/70">Оформлення замовлення</li>
             </ol>
           </nav>
 
-          <h1 className="font-['Montserrat'] font-semibold text-2xl sm:text-3xl lg:text-4xl text-[#3D1A00] uppercase tracking-tight text-center mb-10 sm:mb-12">
-            ОФОРМЛЕННЯ ЗАМОВЛЕННЯ
+          <h1 className="mb-6 font-['Montserrat'] text-2xl font-semibold text-black sm:text-3xl lg:text-4xl">
+            Оформлення замовлення
           </h1>
 
-          <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-10">
-          <div className="flex flex-col lg:flex-row gap-12 lg:gap-16">
-            {/* Left column: forms */}
-            <div className="w-full lg:w-1/2 flex flex-col gap-6">
-              {/* ІНФОРМАЦІЯ ПРО ПОКУПЦЯ */}
-              <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
-                <h2 className="font-['Montserrat'] font-semibold text-[#3D1A00] uppercase text-sm tracking-wide mb-4">Інформація про покупця</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div className="flex flex-col gap-1.5">
-                    <label htmlFor="email" className="text-sm font-['Montserrat'] text-[#3D1A00]/80">E-mail</label>
-                    <input
-                      type="email"
-                      id="email"
-                      value={email}
-                      onChange={(e) => handleEmailChange(e.target.value)}
-                      onBlur={(e) => { const err = validateEmail(e.target.value); setFieldErrors((p) => ({ ...p, email: err || undefined })); }}
-                      className={`border border-gray-200 px-4 py-3 font-['Montserrat'] text-sm rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#3D1A00]/15 focus:border-[#3D1A00]/30 transition-colors ${fieldErrors.email ? "border-red-500" : ""}`}
-                      placeholder="example@email.com"
-                      autoComplete="email"
-                    />
-                    {fieldErrors.email && <p className="text-red-500 text-xs">{fieldErrors.email}</p>}
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label htmlFor="phone" className="text-sm font-['Montserrat'] text-[#3D1A00]/80">Телефон <span className="text-red-500">*</span></label>
-                    <input
-                      type="tel"
-                      id="phone"
-                      value={phoneNumber}
-                      onChange={(e) => handlePhoneChange(e.target.value)}
-                      onBlur={(e) => { const err = validatePhone(e.target.value); setFieldErrors((p) => ({ ...p, phone: err || undefined })); }}
-                      className={`border border-gray-200 px-4 py-3 font-['Montserrat'] text-sm rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#3D1A00]/15 focus:border-[#3D1A00]/30 transition-colors ${fieldErrors.phone ? "border-red-500" : ""}`}
-                      placeholder="+380 50 123 4567"
-                      required
-                      autoComplete="tel"
-                    />
-                    {fieldErrors.phone && <p className="text-red-500 text-xs">{fieldErrors.phone}</p>}
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label htmlFor="firstName" className="text-sm font-['Montserrat'] text-[#3D1A00]/80">Ім&apos;я <span className="text-red-500">*</span></label>
-                    <input
-                      type="text"
-                      id="firstName"
-                      value={firstName}
-                      onChange={(e) => handleFirstNameChange(e.target.value)}
-                      className={`border border-gray-200 px-4 py-3 font-['Montserrat'] text-sm rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#3D1A00]/15 focus:border-[#3D1A00]/30 transition-colors ${fieldErrors.firstName ? "border-red-500" : ""}`}
-                      required
-                      autoComplete="given-name"
-                    />
-                    {fieldErrors.firstName && <p className="text-red-500 text-xs">{fieldErrors.firstName}</p>}
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label htmlFor="lastName" className="text-sm font-['Montserrat'] text-[#3D1A00]/80">Прізвище <span className="text-red-500">*</span></label>
-                    <input
-                      type="text"
-                      id="lastName"
-                      value={lastName}
-                      onChange={(e) => handleLastNameChange(e.target.value)}
-                      className={`border border-gray-200 px-4 py-3 font-['Montserrat'] text-sm rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#3D1A00]/15 focus:border-[#3D1A00]/30 transition-colors ${fieldErrors.lastName ? "border-red-500" : ""}`}
-                      required
-                      autoComplete="family-name"
-                    />
-                    {fieldErrors.lastName && <p className="text-red-500 text-xs">{fieldErrors.lastName}</p>}
-                  </div>
-                </div>
+          <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-8 lg:gap-10">
+            {error && (
+              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 font-['Montserrat'] text-sm text-red-700">
+                <p className="whitespace-pre-line">{error}</p>
               </div>
-
-              {/* СПОСІБ ДОСТАВКИ */}
-              <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
-                <h2 className="font-['Montserrat'] font-semibold text-[#3D1A00] uppercase text-sm tracking-wide mb-4">Спосіб доставки</h2>
-                <div className="flex flex-col gap-3">
-                  <label className="flex items-center gap-3 cursor-pointer py-1 group">
-                    <input type="radio" name="delivery" value="nova_poshta_branch" checked={deliveryMethod === "nova_poshta_branch"} onChange={(e) => setDeliveryMethod(e.target.value)} className="sr-only" />
-                    <span className={`flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${deliveryMethod === "nova_poshta_branch" ? "border-[#3D1A00] bg-[#3D1A00]" : "border-[#3D1A00]/40 group-hover:border-[#3D1A00]"}`}>
-                      {deliveryMethod === "nova_poshta_branch" && <span className="w-2 h-2 rounded-full bg-white" />}
-                    </span>
-                    <span className="font-['Montserrat'] text-sm text-[#3D1A00]">Доставка у відділення</span>
-                  </label>
-                  <label className="flex items-center gap-3 cursor-pointer py-1 group">
-                    <input type="radio" name="delivery" value="nova_poshta_courier" checked={deliveryMethod === "nova_poshta_courier"} onChange={(e) => setDeliveryMethod(e.target.value)} className="sr-only" />
-                    <span className={`flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${deliveryMethod === "nova_poshta_courier" ? "border-[#3D1A00] bg-[#3D1A00]" : "border-[#3D1A00]/40 group-hover:border-[#3D1A00]"}`}>
-                      {deliveryMethod === "nova_poshta_courier" && <span className="w-2 h-2 rounded-full bg-white" />}
-                    </span>
-                    <span className="font-['Montserrat'] text-sm text-[#3D1A00]">Доставка кур&apos;єром</span>
-                  </label>
-                  <label className="flex items-center gap-3 cursor-pointer py-1 group">
-                    <input type="radio" name="delivery" value="showroom_pickup" checked={deliveryMethod === "showroom_pickup"} onChange={(e) => setDeliveryMethod(e.target.value)} className="sr-only" />
-                    <span className={`flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${deliveryMethod === "showroom_pickup" ? "border-[#3D1A00] bg-[#3D1A00]" : "border-[#3D1A00]/40 group-hover:border-[#3D1A00]"}`}>
-                      {deliveryMethod === "showroom_pickup" && <span className="w-2 h-2 rounded-full bg-white" />}
-                    </span>
-                    <span className="font-['Montserrat'] text-sm text-[#3D1A00]">Самовивіз з магазину</span>
-                  </label>
-                </div>
+            )}
+            {success && (
+              <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 font-['Montserrat'] text-sm text-green-700">
+                {success}
               </div>
+            )}
 
-              {/* АДРЕСА ДОСТАВКИ */}
-              {(deliveryMethod === "nova_poshta_branch" || deliveryMethod === "nova_poshta_courier" || deliveryMethod === "nova_poshta_locker") && (
-                <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
-                  <h2 className="font-['Montserrat'] font-semibold text-[#3D1A00] uppercase text-sm tracking-wide mb-4">Адреса доставки</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-10 xl:gap-14">
+              <div className="flex min-w-0 flex-1 flex-col gap-5 sm:gap-6">
+                <CartLineItems onGlobalError={setError} />
+
+                <div className={checkoutCard}>
+                  <h2 className="mb-4 font-['Montserrat'] text-base font-semibold text-black">Інформація про покупця</h2>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
                     <div className="flex flex-col gap-1.5">
-                      <label htmlFor="city" className="text-sm font-['Montserrat'] text-[#3D1A00]/80">Місто <span className="text-red-500">*</span></label>
+                      <label htmlFor="firstName" className="text-sm font-['Montserrat'] text-black/70">
+                        Ім&apos;я <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        id="firstName"
+                        value={firstName}
+                        onChange={(e) => handleFirstNameChange(e.target.value)}
+                        className={checkoutInput(fieldErrors.firstName)}
+                        required
+                        autoComplete="given-name"
+                      />
+                      {fieldErrors.firstName && <p className="text-xs text-red-500">{fieldErrors.firstName}</p>}
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label htmlFor="lastName" className="text-sm font-['Montserrat'] text-black/70">
+                        Прізвище <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        id="lastName"
+                        value={lastName}
+                        onChange={(e) => handleLastNameChange(e.target.value)}
+                        className={checkoutInput(fieldErrors.lastName)}
+                        required
+                        autoComplete="family-name"
+                      />
+                      {fieldErrors.lastName && <p className="text-xs text-red-500">{fieldErrors.lastName}</p>}
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label htmlFor="phone" className="text-sm font-['Montserrat'] text-black/70">
+                        Номер телефону <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="tel"
+                        id="phone"
+                        value={phoneNumber}
+                        onChange={(e) => handlePhoneChange(e.target.value)}
+                        onBlur={(e) => {
+                          const err = validatePhone(e.target.value);
+                          setFieldErrors((p) => ({ ...p, phone: err || undefined }));
+                        }}
+                        className={checkoutInput(fieldErrors.phone)}
+                        placeholder="+380 50 123 4567"
+                        required
+                        autoComplete="tel"
+                      />
+                      {fieldErrors.phone && <p className="text-xs text-red-500">{fieldErrors.phone}</p>}
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label htmlFor="email" className="text-sm font-['Montserrat'] text-black/70">
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        id="email"
+                        value={email}
+                        onChange={(e) => handleEmailChange(e.target.value)}
+                        onBlur={(e) => {
+                          const err = validateEmail(e.target.value);
+                          setFieldErrors((p) => ({ ...p, email: err || undefined }));
+                        }}
+                        className={checkoutInput(fieldErrors.email)}
+                        placeholder="example@email.com"
+                        autoComplete="email"
+                      />
+                      {fieldErrors.email && <p className="text-xs text-red-500">{fieldErrors.email}</p>}
+                    </div>
+                  </div>
+                </div>
+
+                <div className={checkoutCard}>
+                  <h2 className="mb-4 font-['Montserrat'] text-base font-semibold text-black">Доставка</h2>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
+                    <div className="flex flex-col gap-1.5">
+                      <label htmlFor="city" className="text-sm font-['Montserrat'] text-black/70">
+                        Місто {!isShowroom && <span className="text-red-500">*</span>}
+                      </label>
                       <input
                         type="text"
                         id="city"
                         value={city}
                         onChange={handleCityChange}
-                        onBlur={(e) => { const err = validateCity(e.target.value); setFieldErrors((p) => ({ ...p, city: err || undefined })); }}
-                        className={`border border-gray-200 px-4 py-3 font-['Montserrat'] text-sm rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#3D1A00]/15 focus:border-[#3D1A00]/30 transition-colors ${fieldErrors.city ? "border-red-500" : ""}`}
-                        placeholder="Київ"
-                        required
+                        onFocus={() => setCityListVisible(true)}
+                        onBlur={(e) => {
+                          const err = validateCity(e.target.value);
+                          setFieldErrors((p) => ({ ...p, city: err || undefined }));
+                          setTimeout(() => setCityListVisible(false), 150);
+                        }}
+                        readOnly={isShowroom}
+                        className={`${checkoutInput(fieldErrors.city)} ${isShowroom ? "cursor-not-allowed bg-black/[0.03]" : ""}`}
+                        placeholder="Почніть вводити місто"
+                        required={!isShowroom}
+                        autoComplete="off"
                       />
-                      {fieldErrors.city && <p className="text-red-500 text-xs">{fieldErrors.city}</p>}
-                      {cityListVisible && filteredCities.length > 0 && (
-                        <ul className="border border-gray-200 rounded-lg mt-1 max-h-32 overflow-y-auto bg-white shadow-lg py-1">
-                          {filteredCities.map((c, i) => (
-                            <li key={i} className="px-4 py-2.5 text-sm font-['Montserrat'] text-[#3D1A00] cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => handleCitySelect(c)}>{c}</li>
-                          ))}
-                        </ul>
+                      {fieldErrors.city && <p className="text-xs text-red-500">{fieldErrors.city}</p>}
+                      {npCityHint && isNovaPoshta && !isShowroom && (
+                        <p className="text-xs text-amber-700">{npCityHint}</p>
                       )}
+                      {loadingCities && isNovaPoshta && !isShowroom && (
+                        <p className="text-xs text-black/45">Завантаження міст…</p>
+                      )}
+                      {cityListVisible &&
+                        filteredCities.length > 0 &&
+                        !isShowroom &&
+                        isNovaPoshta && (
+                          <ul className="mt-1 max-h-48 overflow-y-auto rounded-xl border border-black/10 bg-white py-1 shadow-lg">
+                            {filteredCities.map((c) => (
+                              <li
+                                key={c.ref}
+                                className="cursor-pointer px-4 py-2.5 font-['Montserrat'] text-sm text-black hover:bg-black/[0.03]"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => handleCitySelect(c)}
+                              >
+                                {c.name}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <label htmlFor="postOffice" className="text-sm font-['Montserrat'] text-[#3D1A00]/80">{deliveryMethod === "nova_poshta_courier" ? "Адреса" : "Номер відділення"} <span className="text-red-500">*</span></label>
+                      <label htmlFor="deliveryMethod" className="text-sm font-['Montserrat'] text-black/70">
+                        Спосіб доставки <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        id="deliveryMethod"
+                        value={deliveryMethod}
+                        onChange={(e) => setDeliveryMethod(e.target.value)}
+                        className={checkoutInput()}
+                      >
+                        <option value="nova_poshta_branch">Доставка у відділення Нова Пошта</option>
+                        <option value="nova_poshta_courier">Доставка кур&apos;єром Нова Пошта</option>
+                        <option value="showroom_pickup">Самовивіз</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {!isShowroom && (
+                    <div className="mt-4 flex flex-col gap-1.5">
+                      <label htmlFor="postOffice" className="text-sm font-['Montserrat'] text-black/70">
+                        {isNpCourier ? "Адреса доставки" : "Відділення / поштомат"}{" "}
+                        <span className="text-red-500">*</span>
+                      </label>
                       <input
                         type="text"
                         id="postOffice"
                         value={postOffice}
                         onChange={handlePostOfficeChange}
-                        onBlur={(e) => { const err = validatePostOffice(e.target.value); setFieldErrors((p) => ({ ...p, postOffice: err || undefined })); }}
-                        className={`border border-gray-200 px-4 py-3 font-['Montserrat'] text-sm rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#3D1A00]/15 focus:border-[#3D1A00]/30 transition-colors ${fieldErrors.postOffice ? "border-red-500" : ""}`}
-                        placeholder={deliveryMethod === "nova_poshta_courier" ? "Вул., будинок, квартира" : "Відділення"}
+                        onFocus={() => {
+                          if (isNpBranch && city.trim()) setPostOfficeListVisible(true);
+                        }}
+                        onBlur={(e) => {
+                          const err = validatePostOffice(e.target.value);
+                          setFieldErrors((p) => ({ ...p, postOffice: err || undefined }));
+                          setTimeout(() => setPostOfficeListVisible(false), 150);
+                        }}
+                        className={checkoutInput(fieldErrors.postOffice)}
+                        placeholder={
+                          isNpCourier
+                            ? "Вул., будинок, квартира"
+                            : city.trim()
+                              ? "Номер або адреса відділення (напр. 342)"
+                              : "Спочатку оберіть місто"
+                        }
                         required
+                        disabled={isNpBranch && !city.trim()}
+                        autoComplete="off"
                       />
-                      {fieldErrors.postOffice && <p className="text-red-500 text-xs">{fieldErrors.postOffice}</p>}
-                      {postOfficeListVisible && filteredPostOffices.length > 0 && deliveryMethod !== "nova_poshta_courier" && (
-                        <ul className="border border-gray-200 rounded-lg mt-1 max-h-32 overflow-y-auto bg-white shadow-lg py-1">
-                          {filteredPostOffices.map((po, i) => (
-                            <li key={i} className="px-4 py-2.5 text-sm font-['Montserrat'] text-[#3D1A00] cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => handlePostOfficeSelect(po)}>{po}</li>
-                          ))}
-                        </ul>
+                      {fieldErrors.postOffice && <p className="text-xs text-red-500">{fieldErrors.postOffice}</p>}
+                      {npWarehouseHint && isNpBranch && !isShowroom && (
+                        <p className="text-xs text-amber-700">{npWarehouseHint}</p>
                       )}
+                      {isNpBranch && !city.trim() && (
+                        <p className="text-xs text-black/45">Спочатку вкажіть і оберіть місто зі списку</p>
+                      )}
+                      {loadingPostOffices && isNpBranch && city.trim() && (
+                        <p className="text-xs text-black/45">Завантаження відділень…</p>
+                      )}
+                      {postOfficeListVisible &&
+                        filteredPostOffices.length > 0 &&
+                        isNpBranch &&
+                        city.trim() && (
+                          <ul className="mt-1 max-h-48 overflow-y-auto rounded-xl border border-black/10 bg-white py-1 shadow-lg">
+                            {filteredPostOffices.map((w) => (
+                              <li
+                                key={w.ref}
+                                className="cursor-pointer px-4 py-2.5 font-['Montserrat'] text-sm text-black hover:bg-black/[0.03]"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => handlePostOfficeSelect(w)}
+                              >
+                                {w.description}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      {postOfficeListVisible &&
+                        !loadingPostOffices &&
+                        filteredPostOffices.length === 0 &&
+                        isNpBranch &&
+                        city.trim() &&
+                        postOffice.trim().length >= 1 && (
+                          <p className="text-xs text-black/45">Відділень не знайдено. Спробуйте інший номер.</p>
+                        )}
                     </div>
+                  )}
+
+                  {isShowroom && (
+                    <div className="mt-4 flex flex-col gap-1.5">
+                      <label htmlFor="pickupAddress" className="text-sm font-['Montserrat'] text-black/70">
+                        Адреса самовивозу
+                      </label>
+                      <input
+                        type="text"
+                        id="pickupAddress"
+                        readOnly
+                        value={postOffice}
+                        className={`${checkoutInput()} cursor-not-allowed bg-black/[0.03]`}
+                      />
+                    </div>
+                  )}
+
+                  <div className="mt-4 flex flex-col gap-1.5">
+                    <label htmlFor="orderComment" className="text-sm font-['Montserrat'] text-black/70">
+                      Коментар до замовлення (необов&apos;язково)
+                    </label>
+                    <textarea
+                      id="orderComment"
+                      value={comment}
+                      onChange={(e) => setComment(e.target.value)}
+                      rows={3}
+                      className={`${checkoutInput()} min-h-[88px] resize-y`}
+                      placeholder="Додаткові побажання…"
+                    />
                   </div>
                 </div>
-              )}
 
-              {deliveryMethod === "showroom_pickup" && (
-                <div className="text-sm font-['Montserrat'] text-[#3D1A00]/80 bg-white border border-gray-200 rounded-xl shadow-sm p-6">
-                  Самовивіз: Україна, 49069, Дніпропетровська обл., місто Дніпро, вулиця Січових Стрільців, будинок 127а
-                </div>
-              )}
-
-              {/* СПОСІБ ОПЛАТИ */}
-              <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
-                <h2 className="font-['Montserrat'] font-semibold text-[#3D1A00] uppercase text-sm tracking-wide mb-4">Спосіб оплати</h2>
-                <div className="flex flex-col gap-3">
-                  <label className="flex items-center gap-3 cursor-pointer py-1 group">
-                    <input type="radio" name="payment" value="full" checked={paymentType === "full"} onChange={(e) => handlePaymentTypeChange(e.target.value)} className="sr-only" />
-                    <span className={`flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${paymentType === "full" ? "border-[#3D1A00] bg-[#3D1A00]" : "border-[#3D1A00]/40 group-hover:border-[#3D1A00]"}`}>
-                      {paymentType === "full" && <span className="w-2 h-2 rounded-full bg-white" />}
-                    </span>
-                    <span className="font-['Montserrat'] text-sm text-[#3D1A00]">Онлайн оплата MonoPay</span>
-                  </label>
-                  <label className="flex items-center gap-3 cursor-pointer py-1 group">
-                    <input type="radio" name="payment" value="prepay" checked={paymentType === "prepay"} onChange={(e) => handlePaymentTypeChange(e.target.value)} className="sr-only" />
-                    <span className={`flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${paymentType === "prepay" ? "border-[#3D1A00] bg-[#3D1A00]" : "border-[#3D1A00]/40 group-hover:border-[#3D1A00]"}`}>
-                      {paymentType === "prepay" && <span className="w-2 h-2 rounded-full bg-white" />}
-                    </span>
-                    <span className="font-['Montserrat'] text-sm text-[#3D1A00]">Накладений платіж (оплата при отриманні)</span>
-                  </label>
-                </div>
-                {fieldErrors.paymentType && <p className="text-red-500 text-xs mt-1">{fieldErrors.paymentType}</p>}
-              </div>
-            </div>
-
-            {/* Right column: order summary */}
-            <div className="w-full lg:w-1/2 flex flex-col gap-5">
-              {items.map((item) => {
-                const displayPrice = item.discount_percentage ? Math.round(item.price * (1 - item.discount_percentage / 100)) : item.price;
-                return (
-                  <div key={`${item.id}-${item.size}`} className="bg-white border border-[#3D1A00]/15 rounded-xl p-5 sm:p-6 flex flex-row gap-4 sm:gap-6 relative">
-                    {/* Кнопка видалити — темно-коричневий X у правому верхньому куті картки */}
+                <div className={checkoutCard}>
+                  <h2 className="mb-4 font-['Montserrat'] text-base font-semibold text-black">Спосіб оплати</h2>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
                     <button
                       type="button"
-                      className="absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center rounded-full text-[#3D1A00] hover:bg-[#3D1A00]/5 transition-colors text-lg font-medium leading-none"
-                      onClick={() => removeItem(item.id, item.size)}
-                      aria-label="Видалити"
+                      onClick={() => handlePaymentTypeChange("prepay")}
+                      className={`rounded-xl px-4 py-3.5 font-['Montserrat'] text-sm font-semibold transition-colors sm:min-h-[52px] ${
+                        paymentType === "prepay"
+                          ? "text-white shadow-sm"
+                          : "border border-black/10 bg-white text-black hover:border-black/20"
+                      }`}
+                      style={paymentType === "prepay" ? { backgroundColor: ACCENT } : undefined}
                     >
-                      ×
+                      Накладений платіж
                     </button>
-
-                    {/* Ліва частина: назва, опис; знизу — кількість + ціна */}
-                    <div className="min-w-0 flex-1 flex flex-col pr-8 sm:pr-10">
-                      <p className="font-['Montserrat'] font-bold text-[#3D1A00] uppercase text-base sm:text-lg leading-tight">
-                        {item.name}
-                      </p>
-                      {(item as { subtitle?: string }).subtitle && (
-                        <p className="font-['Montserrat'] text-[#3D1A00]/70 text-sm leading-relaxed line-clamp-2 mt-1">
-                          {(item as { subtitle?: string }).subtitle}
-                        </p>
-                      )}
-                      <div className="flex flex-wrap items-center gap-4 mt-4 sm:mt-5">
-                        <div className="flex items-center border border-[#3D1A00]/12 rounded overflow-hidden shrink-0">
-                          <button
-                            type="button"
-                            className="w-8 h-8 flex items-center justify-center text-[#3D1A00] hover:bg-[#3D1A00]/5 disabled:opacity-50 transition-colors text-sm font-medium"
-                            onClick={async () => {
-                              try {
-                                await updateQuantity(item.id, item.size, item.quantity - 1);
-                              } catch (e) {
-                                console.error(e);
-                              }
-                            }}
-                            disabled={item.quantity <= 1}
-                          >
-                            −
-                          </button>
-                          <span className="w-10 h-8 flex items-center justify-center font-['Montserrat'] text-sm text-[#3D1A00] border-x border-[#3D1A00]/12 bg-transparent">
-                            {item.quantity}
-                          </span>
-                          <button
-                            type="button"
-                            className="w-8 h-8 flex items-center justify-center text-[#3D1A00] hover:bg-[#3D1A00]/5 transition-colors text-sm font-medium"
-                            onClick={async () => {
-                              try {
-                                await updateQuantity(item.id, item.size, item.quantity + 1);
-                              } catch (err) {
-                                setError(err instanceof Error ? err.message : "Недостатньо товару");
-                                setTimeout(() => setError(null), 5000);
-                              }
-                            }}
-                          >
-                            +
-                          </button>
-                        </div>
-                        <span className="font-['Montserrat'] font-semibold text-[#3D1A00] text-lg sm:text-xl">
-                          {displayPrice.toLocaleString("uk-UA")} грн
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Права частина: зображення товару — така сама структура на моб і комп */}
-                    <div className="shrink-0 flex items-center justify-end">
-                      <div className="w-28 h-36 sm:w-40 sm:h-48 relative rounded-lg overflow-hidden bg-[#fafafa]">
-                        <Image
-                          src={
-                            item.imageUrl
-                              ? item.imageUrl.startsWith("http") || item.imageUrl.startsWith("/")
-                                ? item.imageUrl
-                                : `/api/images/${item.imageUrl}`
-                              : "https://placehold.co/160x200/eee/999?text=No+Image"
-                          }
-                          alt={item.name}
-                          fill
-                          className="object-cover"
-                          sizes="160px"
-                        />
-                      </div>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handlePaymentTypeChange("full")}
+                      className={`rounded-xl px-4 py-3.5 font-['Montserrat'] text-sm font-semibold transition-colors sm:min-h-[52px] ${
+                        paymentType === "full"
+                          ? "text-white shadow-sm"
+                          : "border border-black/10 bg-white text-black hover:border-black/20"
+                      }`}
+                      style={paymentType === "full" ? { backgroundColor: ACCENT } : undefined}
+                    >
+                      Онлайн-оплата
+                    </button>
                   </div>
-                );
-              })}
+                  {fieldErrors.paymentType && <p className="mt-2 text-xs text-red-500">{fieldErrors.paymentType}</p>}
+                </div>
+              </div>
 
-              <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6 mt-2">
-                <div className="flex flex-col gap-1.5 mb-4">
-                  <label className="text-sm font-['Montserrat'] text-[#3D1A00]/80">Промокод:</label>
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <input
-                      type="text"
-                      value={promoCodeInput}
-                      onChange={(e) => {
-                        setPromoCodeInput(e.target.value);
-                        setPromoError(null);
-                        if (appliedPromo) setAppliedPromo(null);
-                      }}
-                      className="w-full sm:flex-1 border border-gray-200 px-4 py-3 font-['Montserrat'] text-sm rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#3D1A00]/15 focus:border-[#3D1A00]/30 transition-colors uppercase"
-                      placeholder="Введіть промокод"
-                    />
+            <aside className="w-full lg:w-[min(100%,380px)] lg:shrink-0 lg:sticky lg:top-[calc(var(--site-header-offset)+1rem)]">
+              <div className={checkoutCard}>
+                <h2 className="font-['Montserrat'] text-lg font-semibold text-black">Сума замовлення</h2>
+
+                <div className="mt-6 space-y-2 font-['Montserrat'] text-sm text-black">
+                  <div className="flex justify-between gap-3">
+                    <span className="text-black/60">Проміжний підсумок</span>
+                    <span className="font-medium">{Math.round(summarySubtotal).toLocaleString("uk-UA")} грн</span>
+                  </div>
+                  {summaryPromo > 0 && (
+                    <div className="flex justify-between gap-3 text-red-600">
+                      <span>Знижка (промокод)</span>
+                      <span className="font-medium">−{Math.round(summaryPromo).toLocaleString("uk-UA")} грн</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between gap-3">
+                    <span className="text-black/60">Вартість доставки</span>
+                    <span className="font-medium text-right">
+                      {deliveryMethod === "nova_poshta_branch"
+                        ? "За тарифами перевізника"
+                        : "0 грн"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between gap-3 border-t border-black/8 pt-3 text-base font-bold text-black">
+                    <span>Сума</span>
+                    <span>{Math.round(summaryTotal).toLocaleString("uk-UA")} грн</span>
+                  </div>
+                </div>
+
+                <div className="mt-5">
+                  <label className="mb-2 block font-['Montserrat'] text-xs font-medium text-black/60">Промокод</label>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
+                    <div className="relative min-w-0 flex-1">
+                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-black/35" aria-hidden>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                          <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" />
+                          <path d="M7 7h.01" />
+                        </svg>
+                      </span>
+                      <input
+                        type="text"
+                        value={promoCodeInput}
+                        onChange={(e) => {
+                          setPromoCodeInput(e.target.value);
+                          setPromoError(null);
+                          if (appliedPromo) {
+                            setAppliedPromo(null);
+                            clearCartPromo();
+                          }
+                        }}
+                        className={`${checkoutInput()} pl-10 uppercase`}
+                        placeholder="Додати промокод"
+                      />
+                    </div>
                     <button
                       type="button"
                       disabled={promoValidating || !promoCodeInput.trim()}
@@ -1190,105 +1234,99 @@ export default function FinalCard() {
                               discountAmount: data.discountAmount,
                               message: data.message,
                             });
+                            saveCartPromo({
+                              code: code,
+                              promoCodeId: data.promoCodeId,
+                              discountAmount: data.discountAmount,
+                              message: data.message,
+                            });
                           } else {
                             setAppliedPromo(null);
+                            clearCartPromo();
                             setPromoError(data.message || "Промокод не дійсний");
                           }
                         } catch {
                           setPromoError("Помилка перевірки промокоду");
                           setAppliedPromo(null);
+                          clearCartPromo();
                         } finally {
                           setPromoValidating(false);
                         }
                       }}
-                      className="w-full sm:w-auto sm:shrink-0 px-4 py-3 font-['Montserrat'] text-sm font-medium rounded-lg bg-[#3D1A00]/10 text-[#3D1A00] hover:bg-[#3D1A00]/20 disabled:opacity-50 transition-colors text-center"
+                      className="inline-flex shrink-0 items-center justify-center rounded-xl px-5 py-3 font-['Montserrat'] text-sm font-semibold text-white transition-opacity disabled:opacity-45 sm:px-6"
+                      style={{ backgroundColor: ACCENT }}
                     >
                       {promoValidating ? "Перевірка…" : "Застосувати"}
                     </button>
                   </div>
-                  {promoError && <p className="text-xs text-red-600 font-['Montserrat']">{promoError}</p>}
+                  {promoError && <p className="mt-2 text-xs text-red-600">{promoError}</p>}
                   {appliedPromo && (
-                    <p className="text-xs text-green-600 font-['Montserrat']">
+                    <p className="mt-2 text-xs text-emerald-700">
                       {appliedPromo.message} (−{appliedPromo.discountAmount.toLocaleString("uk-UA")} грн)
                     </p>
                   )}
                 </div>
-                {(() => {
-                  const subtotal = getSubtotal(items);
-                  const deliveryCostVal = deliveryMethod === "nova_poshta_branch" ? DELIVERY_COST_BRANCH : 0;
-                  const discount = appliedPromo?.discountAmount ?? 0;
-                  const total = Math.max(0, subtotal + deliveryCostVal - discount);
-                  return (
-                    <div className="space-y-2 font-['Montserrat'] text-[#3D1A00] text-sm">
-                      {deliveryMethod === "nova_poshta_branch" && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Доставка у відділення</span>
-                          <span className="text-gray-600">за тарифами перевізника</span>
-                        </div>
+
+                <div className="mt-6 border-t border-black/8 pt-5">
+                  <p className="mb-3 font-['Montserrat'] text-xs font-semibold uppercase tracking-wide text-black/55">
+                    Обов&apos;язково
+                  </p>
+                  <label className="flex cursor-pointer items-start gap-3">
+                    <span
+                      className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors ${
+                        agreedToPolicy ? "border-transparent text-white" : "border-black/25 hover:border-black/40"
+                      }`}
+                      style={agreedToPolicy ? { backgroundColor: ACCENT } : undefined}
+                      onClick={() => setAgreedToPolicy(!agreedToPolicy)}
+                    >
+                      {agreedToPolicy && (
+                        <svg viewBox="0 0 12 10" fill="none" className="h-3 w-3" aria-hidden>
+                          <path d="M1 5l3 3 7-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
                       )}
-                      {discount > 0 && (
-                        <div className="flex justify-between text-green-600">
-                          <span>Знижка (промокод)</span>
-                          <span>−{discount.toLocaleString("uk-UA")} грн</span>
-                        </div>
-                      )}
-                      <div className="flex justify-between font-semibold pt-1 border-t border-gray-100"><span>Всього:</span><span>{Math.round(total).toLocaleString("uk-UA")} грн</span></div>
-                    </div>
-                  );
-                })()}
+                    </span>
+                    <span
+                      className="font-['Montserrat'] text-sm leading-relaxed text-black/70"
+                      onClick={() => setAgreedToPolicy(!agreedToPolicy)}
+                    >
+                      Я приймаю умови{" "}
+                      <Link href="/terms-of-service" className="underline decoration-black/30 underline-offset-2 hover:text-black">
+                        Публічної оферти
+                      </Link>{" "}
+                      та надаю згоду на обробку персональних даних згідно з{" "}
+                      <Link href="/privacy-policy" className="underline decoration-black/30 underline-offset-2 hover:text-black">
+                        Політикою конфіденційності
+                      </Link>
+                    </span>
+                  </label>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading || !agreedToPolicy}
+                  className="mt-6 flex w-full items-center justify-center gap-2 rounded-full py-4 font-['Montserrat'] text-base font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-45"
+                  style={{ backgroundColor: ACCENT }}
+                >
+                  {loading ? (
+                    "Обробка…"
+                  ) : paymentType === "full" ? (
+                    <>
+                      Оплатити <span aria-hidden>→</span>
+                    </>
+                  ) : (
+                    <>
+                      Оформити замовлення <span aria-hidden>→</span>
+                    </>
+                  )}
+                </button>
               </div>
-            </div>
+            </aside>
           </div>
 
-          {/* Обов'язково: Політика конфіденційності (галочка) + Публічна оферта */}
-          <div className="pt-6">
-            <p className="text-sm font-['Montserrat'] font-semibold text-[#3D1A00] mb-3">Обов&apos;язково:</p>
-            <label className="flex items-start gap-3 cursor-pointer group">
-              <span
-                className={`mt-0.5 w-5 h-5 flex-shrink-0 border rounded-sm transition-colors flex items-center justify-center ${
-                  agreedToPolicy
-                    ? "bg-[#3D1A00] border-[#3D1A00]"
-                    : "border-[#3D1A00]/40 group-hover:border-[#3D1A00]"
-                }`}
-                onClick={() => setAgreedToPolicy(!agreedToPolicy)}
-              >
-                {agreedToPolicy && (
-                  <svg viewBox="0 0 12 10" fill="none" className="w-3 h-3">
-                    <path d="M1 5l3 3 7-7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                )}
-              </span>
-              <span
-                className="text-[#3D1A00]/80 text-sm font-['Montserrat'] leading-relaxed"
-                onClick={() => setAgreedToPolicy(!agreedToPolicy)}
-              >
-                Я приймаю умови{" "}
-                <Link href="/terms-of-service" className="underline hover:text-[#3D1A00] transition-colors">
-                  Публічної оферти
-                </Link>{" "}
-                та надаю згоду на обробку персональних даних згідно з{" "}
-                <Link href="/privacy-policy" className="underline hover:text-[#3D1A00] transition-colors">
-                  Політикою конфіденційності
-                </Link>
-              </span>
-            </label>
-          </div>
-
-          <div className="flex justify-center pt-8 pb-16">
-            <button
-              type="submit"
-              disabled={loading || !agreedToPolicy}
-              className="w-full sm:w-auto min-w-[300px] max-w-md py-4 px-10 bg-[#D7D799] hover:bg-[#c5c58a] text-[#3D1A00] font-['Montserrat'] font-semibold uppercase text-base tracking-tight rounded-lg shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? "Обробка..." : "ОФОРМИТИ ЗАМОВЛЕННЯ"}
-            </button>
-          </div>
-
-          {error && <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2.5 rounded text-sm font-['Montserrat'] mb-4"><p className="whitespace-pre-line">{error}</p></div>}
-          {success && <div className="bg-green-50 border border-green-200 text-green-700 px-3 py-2.5 rounded text-sm font-['Montserrat'] mb-4">{success}</div>}
           </form>
         </>
       )}
+      </div>
     </section>
   );
 }

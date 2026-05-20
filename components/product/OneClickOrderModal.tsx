@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getDiscountedPrice } from "@/lib/pricing";
+import { useBodyScrollLock } from "@/lib/useBodyScrollLock";
 
 const DEFAULT_SIZE = "—";
 
@@ -38,6 +39,8 @@ export default function OneClickOrderModal({
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useBodyScrollLock(open);
 
   useEffect(() => {
     if (!open) return;

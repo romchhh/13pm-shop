@@ -5,6 +5,8 @@ import {
   SITE_STORE_NAME,
   siteFooterLead,
 } from "@/lib/siteBrand";
+import { siteContact } from "@/lib/siteContact";
+import { DEFAULT_OG_IMAGE_PATH, productCanonicalPath } from "@/lib/seo";
 
 interface ProductStructuredDataProps {
   product: {
@@ -68,7 +70,7 @@ export function WebSiteStructuredData({
       name: SITE_STORE_NAME,
       logo: {
         "@type": "ImageObject",
-        url: `${normalizedBaseUrl}/images/browser-open.png`,
+        url: `${normalizedBaseUrl}${DEFAULT_OG_IMAGE_PATH}`,
       },
     },
   };
@@ -85,8 +87,8 @@ export function ProductStructuredData({ product, baseUrl = defaultBaseUrl, slug 
   const normalizedBaseUrl = normalizeBaseUrl(baseUrl);
   const imageUrl = product.first_media
     ? `${normalizedBaseUrl}/api/images/${product.first_media.url}`
-    : `${normalizedBaseUrl}/images/browser-open.png`;
-  const productUrl = slug ? `${normalizedBaseUrl}/product/${slug}` : `${normalizedBaseUrl}/product/${product.id}`;
+    : `${normalizedBaseUrl}${DEFAULT_OG_IMAGE_PATH}`;
+  const productUrl = `${normalizedBaseUrl}${productCanonicalPath(slug ?? null, product.id)}`;
 
   const isInStock =
     product.in_stock !== false &&
@@ -108,7 +110,7 @@ export function ProductStructuredData({ product, baseUrl = defaultBaseUrl, slug 
     name: product.name,
     description:
       product.description ||
-      `${product.name} — оригінальна продукція ${SITE_PRODUCT_BRAND}, ${SITE_STORE_NAME}`,
+      `${product.name} — дерев'яний декор та подарунок від ${SITE_PRODUCT_BRAND}, ${SITE_STORE_NAME}`,
     image: imageUrl,
     brand: {
       "@type": "Brand",
@@ -119,9 +121,9 @@ export function ProductStructuredData({ product, baseUrl = defaultBaseUrl, slug 
       name: SITE_STORE_NAME,
       url: normalizedBaseUrl,
     },
-    category: product.category_name || "Wellness",
+    category: product.category_name || "Подарунки з фанери",
     offers: offer,
-    sku: `forbodyspace-${product.id}`,
+    sku: `plywood-present-${product.id}`,
   };
 
   return (
@@ -138,18 +140,27 @@ export function OrganizationStructuredData({
   logo,
   baseUrl = defaultBaseUrl,
 }: OrganizationStructuredDataProps) {
+  const normalizedBase = normalizeBaseUrl(baseUrl);
   const structuredData = {
     "@context": "https://schema.org",
-    "@type": "Organization",
+    "@type": ["Organization", "OnlineStore"],
     name,
-    url: url || baseUrl,
-    logo: logo || `${baseUrl}/images/browser-open.png`,
+    url: url || normalizedBase,
+    logo: logo || `${normalizedBase}/images/logos/logo_brown.svg`,
+    image: `${normalizedBase}${DEFAULT_OG_IMAGE_PATH}`,
+    description: siteFooterLead,
     sameAs: [
-      "https://www.instagram.com/my_choice_mari",
+      siteContact.instagramUrl,
+      siteContact.tiktokUrl,
+      siteContact.telegramUrl,
     ],
+    email: siteContact.email,
+    telephone: siteContact.phones.map((p) => p.tel),
     contactPoint: {
       "@type": "ContactPoint",
       contactType: "Customer Service",
+      telephone: siteContact.phoneTel,
+      email: siteContact.email,
       availableLanguage: ["Ukrainian"],
     },
   };

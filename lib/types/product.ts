@@ -1,7 +1,4 @@
-/**
- * Shared product type for catalog, product page, admin, and API.
- * Keeps snake_case for API/DB compatibility.
- */
+import type { ProductColorOption, ProductSizeVariant } from "@/lib/productOptions";
 
 export interface ProductMedia {
   url: string;
@@ -38,6 +35,7 @@ export interface Product {
   category_name?: string | null;
   category_slug?: string | null;
   category_description?: string | null;
+  subcategory_name?: string | null;
   priority?: number;
   top_sale?: boolean;
   limited_edition?: boolean;
@@ -46,6 +44,9 @@ export interface Product {
   is_promo?: boolean;
   /** Плашка «безкоштовна доставка від 2000 грн» на картці / сторінці товару */
   free_delivery_badge?: boolean;
+  is_new?: boolean;
+  color_options?: ProductColorOption[];
+  size_variants?: ProductSizeVariant[];
   gift_product?: {
     id: number;
     name: string;

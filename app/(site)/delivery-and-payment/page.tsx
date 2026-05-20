@@ -1,38 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SITE_STORE_NAME } from "@/lib/siteBrand";
+import { buildPageMetadata } from "@/lib/seo";
 
-const baseUrl =
-  process.env.PUBLIC_URL || process.env.NEXT_PUBLIC_PUBLIC_URL || "http://localhost:3000";
-
-export const metadata: Metadata = {
-  title: `Доставка та оплата | ${SITE_STORE_NAME}`,
-  description:
-    "Оплата карткою, Google Pay, Apple Pay, на карту ФОП, післяплата в НП. Доставка Новою Поштою (відділення, поштомат, кур'єром) та Укрпоштою. Терміни та тарифи.",
-  openGraph: {
-    title: `Доставка та оплата | ${SITE_STORE_NAME}`,
-    description:
-      "Умови доставки Новою Поштою та Укрпоштою, усі способи оплати, післяплата та комісії перевізника.",
-    type: "article",
-    locale: "uk_UA",
-    url: `${baseUrl}/delivery-and-payment`,
-    images: [
-      {
-        url: `${baseUrl}/images/tg_image_3614117882.png`,
-        width: 1200,
-        height: 630,
-        alt: `${SITE_STORE_NAME} — доставка та оплата`,
-      },
-    ],
-    siteName: SITE_STORE_NAME,
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: `Доставка та оплата | ${SITE_STORE_NAME}`,
-    description: `Умови доставки та оплати для замовлень в інтернет-магазині ${SITE_STORE_NAME}.`,
-    images: [`${baseUrl}/images/tg_image_3614117882.png`],
-  },
-};
+export const metadata: Metadata = buildPageMetadata({
+  title: "Доставка та оплата",
+  description: `Доставка дерев'яних подарунків і декору з фанери від ${SITE_STORE_NAME}: Нова Пошта, оплата карткою, Apple Pay, Google Pay, накладений платіж. Тарифи та терміни.`,
+  path: "/delivery-and-payment",
+});
 
 export default function DeliveryAndPaymentPage() {
   return (
