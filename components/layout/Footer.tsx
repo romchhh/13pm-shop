@@ -113,7 +113,7 @@ export default function Footer() {
       className="relative z-0 w-full text-[#1a1a1a] border-t border-[#3D1A00]/15"
       style={{ backgroundColor: FOOTER_BG }}
     >
-      <div className="max-w-[1920px] mx-auto px-6 pt-20 pb-10 sm:pt-24 sm:pb-12 lg:px-12 lg:pt-28 lg:pb-14">
+      <div className="max-w-[1920px] mx-auto px-6 pt-24 pb-10 sm:pt-28 sm:pb-12 lg:px-12 lg:pt-32 lg:pb-14">
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-4 lg:gap-10 xl:gap-16">
           {/* Бренд */}
           <div className="flex flex-col items-center gap-4 text-center lg:items-start lg:gap-5 lg:text-left max-w-md lg:max-w-none mx-auto lg:mx-0">

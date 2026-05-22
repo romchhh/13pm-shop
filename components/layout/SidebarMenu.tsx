@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useCategories } from "@/lib/CategoriesProvider";
 import { siteContact } from "@/lib/siteContact";
+import { getMainNavHashId, mainNavLinks } from "@/lib/siteNav";
 import { useBodyScrollLock } from "@/lib/useBodyScrollLock";
 
 interface SidebarMenuProps {
@@ -182,61 +183,38 @@ export default function SidebarMenu({
             </div>
           )}
 
-          {/* Information Section */}
+          {/* Навігація — ті самі пункти, що в десктопному меню */}
           <div className="px-6 py-4">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-[#3D1A00]/60 mb-4 font-['Montserrat']">
-              ІНФОРМАЦІЯ
+            <h3 className="mb-4 font-['Montserrat'] text-sm font-semibold uppercase tracking-wider text-[#3D1A00]/60">
+              Меню
             </h3>
             <nav className="space-y-1">
               <Link
-                href="/#about"
-                className="block py-2 text-base text-[#3D1A00] hover:text-[#3D1A00]/70 transition-colors font-['Montserrat']"
+                href="/catalog"
+                className="block py-2 font-['Montserrat'] text-base text-[#3D1A00] transition-colors hover:text-[#3D1A00]/70"
                 onClick={() => setIsOpen(false)}
               >
-                ПРО БРЕНД
+                Каталог товарів
               </Link>
-              <Link
-                href="/#reviews"
-                className="block py-2 text-base text-[#3D1A00] hover:text-[#3D1A00]/70 transition-colors font-['Montserrat']"
-                onClick={() => setIsOpen(false)}
-              >
-                ВІДГУКИ
-              </Link>
-              <Link
-                href="/delivery-and-payment"
-                className="block py-2 text-base text-[#3D1A00] hover:text-[#3D1A00]/70 transition-colors font-['Montserrat']"
-                onClick={() => setIsOpen(false)}
-              >
-                ДОСТАВКА ТА ОПЛАТА
-              </Link>
-              <Link
-                href="/returns-and-exchange"
-                className="block py-2 text-base text-[#3D1A00] hover:text-[#3D1A00]/70 transition-colors font-['Montserrat']"
-                onClick={() => setIsOpen(false)}
-              >
-                ПОВЕРНЕННЯ ТА ОБМІН
-              </Link>
-              <Link
-                href="/#faq"
-                className="block py-2 text-base text-[#3D1A00] hover:text-[#3D1A00]/70 transition-colors font-['Montserrat']"
-                onClick={() => setIsOpen(false)}
-              >
-                FAQ
-              </Link>
-              <Link
-                href="/contacts"
-                className="block py-2 text-base text-[#3D1A00] hover:text-[#3D1A00]/70 transition-colors font-['Montserrat']"
-                onClick={() => setIsOpen(false)}
-              >
-                Контакти
-              </Link>
-              <Link
-                href="/catalog?promo=1"
-                className="block py-2 text-base text-[#3D1A00] hover:text-[#3D1A00]/70 transition-colors font-['Montserrat']"
-                onClick={() => setIsOpen(false)}
-              >
-                АКЦІЇ
-              </Link>
+              {mainNavLinks.map((link) => {
+                const hashId = getMainNavHashId(link.href);
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="block py-2 font-['Montserrat'] text-base text-[#3D1A00] transition-colors hover:text-[#3D1A00]/70"
+                    onClick={(e) => {
+                      if (hashId) {
+                        handleAnchorClick(e, `#${hashId}`);
+                      } else {
+                        setIsOpen(false);
+                      }
+                    }}
+                  >
+                    {link.label}
+                  </Link>
+                );
+              })}
             </nav>
           </div>
 

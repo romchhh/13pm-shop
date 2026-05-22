@@ -45,9 +45,9 @@ export default function NewsletterSubscribe() {
   return (
     <section className="relative w-full" aria-labelledby="newsletter-heading">
       {/* Тільки біле тло зверху й по боках картки — без «світло-коричневого» body; низ прозорий → футер не перекривається білим */}
-      <div className="w-full bg-white px-4 pt-6 sm:px-6 sm:pt-8 lg:px-12 lg:pt-10">
+      <div className="w-full bg-white px-4 pt-2 sm:px-6 sm:pt-4 lg:px-12 lg:pt-6">
         <div className="mx-auto max-w-[1920px]">
-          <div className="relative z-10 rounded-2xl bg-[#8B5E3F] px-5 py-8 shadow-lg sm:px-8 sm:py-10 lg:flex lg:items-center lg:justify-between lg:gap-12 lg:rounded-3xl lg:px-12 lg:py-12 -mb-[4.5rem] sm:-mb-24 lg:-mb-28">
+          <div className="relative z-10 rounded-2xl bg-[#8B5E3F] px-5 py-8 shadow-lg sm:px-8 sm:py-10 lg:flex lg:items-center lg:justify-between lg:gap-12 lg:rounded-3xl lg:px-12 lg:py-12 -mb-16 sm:-mb-20 lg:-mb-24">
             <h2
               id="newsletter-heading"
               className="font-['Montserrat'] text-xl font-bold uppercase leading-tight tracking-tight text-white sm:text-2xl lg:max-w-[min(42%,520px)] lg:text-[clamp(1.5rem,2.2vw,2.25rem)]"

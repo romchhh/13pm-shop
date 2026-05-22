@@ -12,6 +12,7 @@ import SidebarSearch from "./SidebarSearch";
 import SidebarMenu from "./SidebarMenu";
 import { siteContact } from "@/lib/siteContact";
 import { LABEL_FREE_DELIVERY_FROM_2000 } from "@/lib/siteBrand";
+import { getMainNavHashId, mainNavLinks } from "@/lib/siteNav";
 
 interface Subcategory {
   id: number;
@@ -110,14 +111,6 @@ function TopContactBar({ className = "" }: { className?: string }) {
     </div>
   );
 }
-
-const mainNavLinks = [
-  { label: "Новинки", href: "/catalog?new=1" },
-  { label: "Хіти", href: "/catalog?hits=1" },
-  { label: "Про нас", href: "/#about" },
-  { label: "Контакти", href: "/contacts" },
-  { label: "Відгуки", href: "/#reviews" },
-] as const;
 
 export default function Header() {
   const {
@@ -331,13 +324,10 @@ export default function Header() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  onClick={
-                    link.href === "/#reviews"
-                      ? (e) => handleHomeAnchorClick(e, "reviews")
-                      : link.href === "/#about"
-                        ? (e) => handleHomeAnchorClick(e, "about")
-                        : undefined
-                  }
+                  onClick={(e) => {
+                    const hashId = getMainNavHashId(link.href);
+                    if (hashId) handleHomeAnchorClick(e, hashId);
+                  }}
                   className="whitespace-nowrap hover:text-[#8B5E3F] transition-colors"
                 >
                   {link.label}
