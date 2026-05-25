@@ -13,8 +13,17 @@ import ToggleSwitch from "@/components/admin/form/ToggleSwitch";
 import ColorPaletteEditor, { type ColorRow } from "@/components/admin/ColorPaletteEditor";
 import BoughtTogetherPicker from "@/components/admin/BoughtTogetherPicker";
 import SizeGroupPicker from "@/components/admin/SizeGroupPicker";
-import Image from "next/image";
+import ProductMediaOrderEditor from "@/components/admin/ProductMediaOrderEditor";
 import { parseProductPageText } from "@/lib/parseProductFile";
+import {
+  appendFilesToSlots,
+  removeSlotAt,
+  resolveSlotsToMedia,
+  revokeNewSlotPreviews,
+  slotPreviewSrc,
+  slotsFromExisting,
+  type ProductMediaSlot,
+} from "@/lib/adminProductMediaSlots";
 import { parseColorOptions, parseSizeVariants, serializeColorOptions } from "@/lib/productOptions";
 import { formatAdminProductPrice } from "@/lib/formatAdminProductPrice";
 import {
@@ -26,9 +35,6 @@ interface Category {
   id: number;
   name: string;
 }
-
-type ExistingMedia = { type: string; url: string };
-type NewMediaFile = { file: File; type: "photo" | "video"; preview: string };
 
 export default function EditProductPage() {
   const params = useParams();
@@ -49,8 +55,7 @@ export default function EditProductPage() {
   const [boughtTogetherIds, setBoughtTogetherIds] = useState<number[]>([]);
   const [sizeGroupOrderedIds, setSizeGroupOrderedIds] = useState<number[]>([]);
 
-  const [existingMedia, setExistingMedia] = useState<ExistingMedia[]>([]);
-  const [newMediaFiles, setNewMediaFiles] = useState<NewMediaFile[]>([]);
+  const [mediaSlots, setMediaSlots] = useState<ProductMediaSlot[]>([]);
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
@@ -81,11 +86,13 @@ export default function EditProductPage() {
         const categoryData: Category[] = categoriesRes.ok ? await categoriesRes.json() : [];
 
         const mediaArray = Array.isArray(productData.media) ? productData.media : [];
-        setExistingMedia(
-          mediaArray.map((item: { url: string; type: string }) => ({
-            type: item.type,
-            url: item.url,
-          }))
+        setMediaSlots(
+          slotsFromExisting(
+            mediaArray.map((item: { url: string; type: string }) => ({
+              type: item.type,
+              url: item.url,
+            }))
+          )
         );
 
         const allCategoryIds: number[] = Array.isArray(productData.category_ids)
@@ -208,31 +215,7 @@ export default function EditProductPage() {
   };
 
   const handleDrop = (files: File[]) => {
-    const added: NewMediaFile[] = files.map((file) => {
-      const isVideo =
-        file.type.startsWith("video/") ||
-        [".webm", ".mp4", ".mov", ".avi", ".mkv"].some((ext) =>
-          file.name.toLowerCase().endsWith(ext)
-        );
-      return {
-        file,
-        type: (isVideo ? "video" : "photo") as NewMediaFile["type"],
-        preview: URL.createObjectURL(file),
-      };
-    });
-    setNewMediaFiles((prev) => [...prev, ...added]);
-  };
-
-  const removeExistingMedia = (index: number) => {
-    setExistingMedia((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const removeNewMedia = (index: number) => {
-    setNewMediaFiles((prev) => {
-      const item = prev[index];
-      if (item?.preview) URL.revokeObjectURL(item.preview);
-      return prev.filter((_, i) => i !== index);
-    });
+    setMediaSlots((prev) => appendFilesToSlots(prev, files));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -241,15 +224,7 @@ export default function EditProductPage() {
     setSuccess(null);
     setError(null);
     try {
-      let uploadedMedia: { type: "photo" | "video"; url: string }[] = [];
-      if (newMediaFiles.length > 0) {
-        const uploadForm = new FormData();
-        newMediaFiles.forEach((m) => uploadForm.append("images", m.file));
-        const uploadRes = await fetch("/api/images", { method: "POST", body: uploadForm });
-        if (!uploadRes.ok) throw new Error("Не вдалося завантажити файли");
-        const uploadData = await uploadRes.json();
-        uploadedMedia = uploadData.media || [];
-      }
+      const resolvedMedia = await resolveSlotsToMedia(mediaSlots);
 
       const allCategoryIds = Array.from(new Set(selectedCategoryIds));
       const allSubcategoryIds = Array.from(new Set(selectedSubcategoryIds));
@@ -304,7 +279,7 @@ export default function EditProductPage() {
               : undefined,
           category_id: primaryCategoryId,
           subcategory_id: primarySubcategoryId,
-          media: [...existingMedia, ...uploadedMedia],
+          media: resolvedMedia,
           category_ids: allCategoryIds,
           subcategory_ids: allSubcategoryIds,
           color_options: serializeColorOptions(colors),
@@ -331,7 +306,10 @@ export default function EditProductPage() {
       }
 
       setSuccess("Товар успішно оновлено!");
-      setNewMediaFiles([]);
+      setMediaSlots((prev) => {
+        revokeNewSlotPreviews(prev);
+        return slotsFromExisting(resolvedMedia);
+      });
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Помилка");
@@ -522,71 +500,25 @@ export default function EditProductPage() {
 
               <ComponentCard title="Медіа">
                 <DropzoneComponent onDrop={handleDrop} />
-                <div className="mt-4 flex flex-wrap gap-3">
-                  {existingMedia.map((media, i) => {
-                    const isVideo = media.type === "video";
-                    return (
-                      <div key={`ex-${media.url}-${i}`} className="relative inline-block">
-                        {isVideo ? (
-                          <video
-                            src={`/api/images/${media.url}`}
-                            width={160}
-                            height={160}
-                            className="rounded object-cover"
-                            muted
-                            playsInline
-                          />
-                        ) : (
-                          <Image
-                            src={`/api/images/${media.url}`}
-                            alt=""
-                            width={160}
-                            height={160}
-                            className="rounded object-cover"
-                            unoptimized
-                          />
-                        )}
-                        <button
-                          type="button"
-                          className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-xs text-white"
-                          onClick={() => removeExistingMedia(i)}
-                        >
-                          ×
-                        </button>
-                      </div>
+                <ProductMediaOrderEditor
+                  items={mediaSlots.map((slot) => ({
+                    key: slot.key,
+                    type: (slot.kind === "new" ? slot.type : slot.type === "video" ? "video" : "photo") as
+                      | "photo"
+                      | "video",
+                    src: slotPreviewSrc(slot),
+                    label: slot.kind === "new" ? "Нове (збережеться після «Зберегти»)" : undefined,
+                  }))}
+                  onReorder={(items) => {
+                    const byKey = new Map(mediaSlots.map((s) => [s.key, s]));
+                    setMediaSlots(
+                      items
+                        .map((it) => byKey.get(it.key))
+                        .filter((s): s is ProductMediaSlot => s != null)
                     );
-                  })}
-                  {newMediaFiles.map((media, i) => (
-                    <div key={`new-${i}`} className="relative inline-block">
-                      {media.type === "video" ? (
-                        <video
-                          src={media.preview}
-                          width={160}
-                          height={160}
-                          className="rounded object-cover"
-                          muted
-                          playsInline
-                        />
-                      ) : (
-                        <Image
-                          src={media.preview}
-                          alt=""
-                          width={160}
-                          height={160}
-                          className="rounded object-cover"
-                          unoptimized
-                        />
-                      )}
-                      <button
-                        type="button"
-                        className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-xs text-white"
-                        onClick={() => removeNewMedia(i)}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                  }}
+                  onRemove={(index) => setMediaSlots((prev) => removeSlotAt(prev, index))}
+                />
               </ComponentCard>
 
               <ComponentCard title="Плашки на картці">

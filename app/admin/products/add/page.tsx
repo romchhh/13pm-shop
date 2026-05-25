@@ -12,8 +12,16 @@ import ToggleSwitch from "@/components/admin/form/ToggleSwitch";
 import ColorPaletteEditor, { type ColorRow } from "@/components/admin/ColorPaletteEditor";
 import BoughtTogetherPicker from "@/components/admin/BoughtTogetherPicker";
 import SizeGroupPicker from "@/components/admin/SizeGroupPicker";
-import Image from "next/image";
+import ProductMediaOrderEditor from "@/components/admin/ProductMediaOrderEditor";
 import { parseProductPageText } from "@/lib/parseProductFile";
+import {
+  appendFilesToSlots,
+  removeSlotAt,
+  resolveSlotsToMedia,
+  revokeNewSlotPreviews,
+  slotPreviewSrc,
+  type ProductMediaSlot,
+} from "@/lib/adminProductMediaSlots";
 import { serializeColorOptions } from "@/lib/productOptions";
 import { formatAdminProductPrice } from "@/lib/formatAdminProductPrice";
 import { VIRTUAL_STOCK_WHEN_IN_STOCK } from "@/lib/productAvailability";
@@ -55,8 +63,7 @@ export default function AddProductPage() {
   const [parseFileError, setParseFileError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  type MediaFile = { file: File; type: "photo" | "video" };
-  const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
+  const [mediaSlots, setMediaSlots] = useState<ProductMediaSlot[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -109,15 +116,7 @@ export default function AddProductPage() {
   };
 
   const handleDrop = (files: File[]) => {
-    const newMedia = files.map((file) => {
-      const isVideo =
-        file.type.startsWith("video/") ||
-        [".webm", ".mp4", ".mov", ".avi", ".mkv"].some((ext) =>
-          file.name.toLowerCase().endsWith(ext)
-        );
-      return { file, type: (isVideo ? "video" : "photo") as MediaFile["type"] };
-    });
-    setMediaFiles((prev) => [...prev, ...newMedia]);
+    setMediaSlots((prev) => appendFilesToSlots(prev, files));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -126,14 +125,8 @@ export default function AddProductPage() {
     setSuccess(null);
     setError(null);
     try {
-      let uploadedMedia: { type: "photo" | "video"; url: string }[] = [];
-      if (mediaFiles.length > 0) {
-        const uploadForm = new FormData();
-        mediaFiles.forEach((m) => uploadForm.append("images", m.file));
-        const uploadRes = await fetch("/api/images", { method: "POST", body: uploadForm });
-        const uploadData = await uploadRes.json();
-        uploadedMedia = uploadData.media || [];
-      }
+      const uploadedMedia =
+        mediaSlots.length > 0 ? await resolveSlotsToMedia(mediaSlots) : [];
 
       const allCategoryIds = Array.from(new Set(selectedCategoryIds));
       const allSubcategoryIds = Array.from(new Set(selectedSubcategoryIds));
@@ -217,7 +210,10 @@ export default function AddProductPage() {
       setPrice("");
       setOldPrice("");
       setDiscountPercentage("");
-      setMediaFiles([]);
+      setMediaSlots((prev) => {
+        revokeNewSlotPreviews(prev);
+        return [];
+      });
       setIsHit(false);
       setIsNew(false);
       setInStock(true);
@@ -396,35 +392,22 @@ export default function AddProductPage() {
 
             <ComponentCard title="Медіа">
               <DropzoneComponent onDrop={handleDrop} />
-              <div className="mt-4 flex flex-wrap gap-3">
-                {mediaFiles.map((media, i) => {
-                  const previewUrl = URL.createObjectURL(media.file);
-                  const isVideo = media.type === "video";
-                  return (
-                    <div key={i} className="relative inline-block">
-                      {isVideo ? (
-                        <video src={previewUrl} width={160} height={160} className="rounded object-cover" muted />
-                      ) : (
-                        <Image
-                          src={previewUrl}
-                          alt=""
-                          width={160}
-                          height={160}
-                          className="rounded object-cover"
-                          unoptimized
-                        />
-                      )}
-                      <button
-                        type="button"
-                        className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-xs text-white"
-                        onClick={() => setMediaFiles((p) => p.filter((_, j) => j !== i))}
-                      >
-                        ×
-                      </button>
-                    </div>
+              <ProductMediaOrderEditor
+                items={mediaSlots.map((slot) => ({
+                  key: slot.key,
+                  type: slot.kind === "new" ? slot.type : slot.type === "video" ? "video" : "photo",
+                  src: slotPreviewSrc(slot),
+                }))}
+                onReorder={(items) => {
+                  const byKey = new Map(mediaSlots.map((s) => [s.key, s]));
+                  setMediaSlots(
+                    items
+                      .map((it) => byKey.get(it.key))
+                      .filter((s): s is ProductMediaSlot => s != null)
                   );
-                })}
-              </div>
+                }}
+                onRemove={(index) => setMediaSlots((prev) => removeSlotAt(prev, index))}
+              />
             </ComponentCard>
 
             <ComponentCard title="Плашки на картці">

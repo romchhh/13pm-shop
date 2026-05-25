@@ -405,7 +405,7 @@ export default function ProductClient({ product }: ProductClientProps) {
                     role="region"
                     aria-roledescription="carousel"
                     aria-label="Галерея зображень товару"
-                    className="-mx-4 flex w-full min-w-0 snap-x snap-mandatory overflow-x-auto overflow-y-hidden scroll-smooth pb-2 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                    className="flex w-full min-w-0 snap-x snap-mandatory overflow-x-auto overflow-y-hidden scroll-smooth pb-2 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                     onScroll={(e) => {
                       const el = e.currentTarget;
                       const w = el.clientWidth;
@@ -418,12 +418,12 @@ export default function ProductClient({ product }: ProductClientProps) {
                     {media.map((item, i) => (
                       <div
                         key={`mobile-slide-${item.url}-${i}`}
-                        className="flex w-full min-w-full shrink-0 snap-center snap-always items-center justify-center px-4"
+                        className="flex w-full min-w-full shrink-0 snap-center snap-always items-center justify-center"
                       >
                         <button
                           type="button"
                           onClick={() => openLightbox(i)}
-                          className="relative aspect-[3/4] w-full max-w-[min(420px,calc(100vw-2rem))] shrink-0 overflow-hidden rounded-2xl border-0 bg-transparent p-0 mx-auto shadow-none outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[#8B5E3F]/40 focus-visible:ring-offset-2"
+                          className="relative aspect-[3/4] w-full max-w-[min(400px,90vw)] shrink-0 overflow-hidden rounded-2xl border-0 bg-transparent p-0 shadow-none outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[#8B5E3F]/40 focus-visible:ring-offset-2"
                           aria-label={`Відкрити фото ${i + 1} у повному розмірі`}
                         >
                           {renderMediaSlide(item, `${product.name} — ${i + 1}`, i === 0)}

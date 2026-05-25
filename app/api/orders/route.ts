@@ -567,7 +567,7 @@ export async function POST(req: NextRequest) {
         comment: comment || "Оплата замовлення",
         basketOrder,
       },
-      redirectUrl: `${PUBLIC_URL_FULL}/success`,
+      redirectUrl: `${PUBLIC_URL_FULL}/success?orderReference=${orderId}&monoRef=${orderId}`,
       webHookUrl: `${PUBLIC_URL_FULL}/api/mono-webhook`,
       validity: 3600,
       paymentType: "debit",
@@ -608,6 +608,7 @@ export async function POST(req: NextRequest) {
     await sqlPostOrder({
       ...orderPayload,
       invoice_id: monoInvoiceId,
+      merchant_reference: orderId,
       payment_status: "pending",
     });
 

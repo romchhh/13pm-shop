@@ -233,6 +233,7 @@ model Order {
   comment       String?
   paymentType   String      @map("payment_type") // "prepay" or "full"
   invoiceId     String      @unique @map("invoice_id")
+  merchantReference String?  @unique @map("merchant_reference") // Внутрішній UUID для пошуку до отримання monoInvoiceId
   paymentStatus String      @default("pending") @map("payment_status") // "pending" | "paid" | "canceled"
   bonusPointsSpent Int      @default(0) @map("bonus_points_spent") // скільки бонусів списано при оформленні
   loyaltyDiscountAmount Decimal? @map("loyalty_discount_amount") @db.Decimal(10, 2) // знижка по програмі лояльності (грн)

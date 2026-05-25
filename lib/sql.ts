@@ -1091,6 +1091,22 @@ export async function sqlGetAllOrders() {
   const orders = await prisma.order.findMany({
     where: { paymentStatus: "paid" },
     orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      customerName: true,
+      phoneNumber: true,
+      email: true,
+      deliveryMethod: true,
+      city: true,
+      postOffice: true,
+      comment: true,
+      paymentType: true,
+      invoiceId: true,
+      paymentStatus: true,
+      status: true,
+      createdAt: true,
+      novaPoshtaTtn: true,
+    },
   });
 
   return orders.map((o) => ({
@@ -1106,6 +1122,7 @@ export async function sqlGetAllOrders() {
     invoice_id: o.invoiceId,
     payment_status: o.paymentStatus,
     status: o.status,
+    nova_poshta_ttn: o.novaPoshtaTtn ?? null,
     created_at: o.createdAt,
   }));
 }
@@ -1165,6 +1182,7 @@ type OrderInput = {
   comment?: string;
   payment_type: "prepay" | "full" | "pay_after" | "test_payment" | "installment" | "crypto";
   invoice_id: string;
+  merchant_reference?: string | null;
   payment_status: "pending" | "paid" | "canceled";
   bonus_points_spent?: number;
   loyalty_discount_amount?: number;
@@ -1189,18 +1207,48 @@ export async function sqlPostOrder(order: OrderInput) {
     let rows: [{ id: number }];
     try {
       rows = await tx.$queryRaw<[{ id: number }]>`
-        INSERT INTO orders (customer_name, phone_number, email, delivery_method, city, post_office, comment, payment_type, invoice_id, payment_status, user_id)
-        VALUES (${order.customer_name}, ${order.phone_number}, ${order.email ?? null}, ${order.delivery_method}, ${order.city}, ${order.post_office}, ${order.comment ?? null}, ${order.payment_type}, ${order.invoice_id}, ${order.payment_status}, ${order.user_id ?? null})
+        INSERT INTO orders (customer_name, phone_number, email, delivery_method, city, post_office, comment, payment_type, invoice_id, merchant_reference, payment_status, user_id)
+        VALUES (${order.customer_name}, ${order.phone_number}, ${order.email ?? null}, ${order.delivery_method}, ${order.city}, ${order.post_office}, ${order.comment ?? null}, ${order.payment_type}, ${order.invoice_id}, ${order.merchant_reference ?? null}, ${order.payment_status}, ${order.user_id ?? null})
         RETURNING id
       `;
     } catch (err) {
       const msg = String((err as Error).message ?? "");
       if (msg.includes("user_id") && msg.includes("does not exist")) {
-        rows = await tx.$queryRaw<[{ id: number }]>`
-          INSERT INTO orders (customer_name, phone_number, email, delivery_method, city, post_office, comment, payment_type, invoice_id, payment_status)
-          VALUES (${order.customer_name}, ${order.phone_number}, ${order.email ?? null}, ${order.delivery_method}, ${order.city}, ${order.post_office}, ${order.comment ?? null}, ${order.payment_type}, ${order.invoice_id}, ${order.payment_status})
-          RETURNING id
-        `;
+        try {
+          rows = await tx.$queryRaw<[{ id: number }]>`
+            INSERT INTO orders (customer_name, phone_number, email, delivery_method, city, post_office, comment, payment_type, invoice_id, merchant_reference, payment_status)
+            VALUES (${order.customer_name}, ${order.phone_number}, ${order.email ?? null}, ${order.delivery_method}, ${order.city}, ${order.post_office}, ${order.comment ?? null}, ${order.payment_type}, ${order.invoice_id}, ${order.merchant_reference ?? null}, ${order.payment_status})
+            RETURNING id
+          `;
+        } catch (innerErr) {
+          const innerMsg = String((innerErr as Error).message ?? "");
+          if (innerMsg.includes("merchant_reference") && innerMsg.includes("does not exist")) {
+            // Fall back to without merchant_reference if column doesn't exist
+            rows = await tx.$queryRaw<[{ id: number }]>`
+              INSERT INTO orders (customer_name, phone_number, email, delivery_method, city, post_office, comment, payment_type, invoice_id, payment_status)
+              VALUES (${order.customer_name}, ${order.phone_number}, ${order.email ?? null}, ${order.delivery_method}, ${order.city}, ${order.post_office}, ${order.comment ?? null}, ${order.payment_type}, ${order.invoice_id}, ${order.payment_status})
+              RETURNING id
+            `;
+          } else {
+            throw innerErr;
+          }
+        }
+      } else if (msg.includes("merchant_reference") && msg.includes("does not exist")) {
+        // Fall back to without merchant_reference if column doesn't exist
+        try {
+          rows = await tx.$queryRaw<[{ id: number }]>`
+            INSERT INTO orders (customer_name, phone_number, email, delivery_method, city, post_office, comment, payment_type, invoice_id, payment_status, user_id)
+            VALUES (${order.customer_name}, ${order.phone_number}, ${order.email ?? null}, ${order.delivery_method}, ${order.city}, ${order.post_office}, ${order.comment ?? null}, ${order.payment_type}, ${order.invoice_id}, ${order.payment_status}, ${order.user_id ?? null})
+            RETURNING id
+          `;
+        } catch (fallbackErr) {
+          // Final fallback without both user_id and merchant_reference
+          rows = await tx.$queryRaw<[{ id: number }]>`
+            INSERT INTO orders (customer_name, phone_number, email, delivery_method, city, post_office, comment, payment_type, invoice_id, payment_status)
+            VALUES (${order.customer_name}, ${order.phone_number}, ${order.email ?? null}, ${order.delivery_method}, ${order.city}, ${order.post_office}, ${order.comment ?? null}, ${order.payment_type}, ${order.invoice_id}, ${order.payment_status})
+            RETURNING id
+          `;
+        }
       } else {
         throw err;
       }
@@ -1409,7 +1457,7 @@ export async function sqlUpdatePaymentStatus(
 
 // Get order by invoice ID for webhook processing (same imageUrl shape as basket/FinalCard)
 export async function sqlGetOrderByInvoiceId(invoiceId: string) {
-  const order = await prisma.order.findUnique({
+  let order = await prisma.order.findUnique({
     where: { invoiceId },
     include: {
       items: {
@@ -1431,6 +1479,37 @@ export async function sqlGetOrderByInvoiceId(invoiceId: string) {
       },
     },
   });
+
+  // If not found by invoiceId, try merchantReference (internal UUID before Monobank response)
+  if (!order) {
+    try {
+      order = await prisma.order.findUnique({
+        where: { merchantReference: invoiceId },
+        include: {
+          items: {
+            include: {
+              product: {
+                select: {
+                  id: true,
+                  name: true,
+                  category: { select: { name: true } },
+                  subcategory: { select: { name: true } },
+                  media: {
+                    orderBy: { id: "asc" },
+                    take: 5,
+                    select: { url: true, type: true },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+    } catch (err) {
+      // merchantReference column might not exist yet on production
+      console.warn("merchantReference column not found, skipping fallback lookup");
+    }
+  }
 
   if (!order) return null;
 
