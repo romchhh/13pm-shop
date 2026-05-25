@@ -36,6 +36,7 @@
     "@prisma/client": "^6.19.0",
     "apexcharts": "^5.3.5",
     "bcryptjs": "^3.0.2",
+    "heic-convert": "^2.1.0",
     "mammoth": "^1.11.0",
     "next": "^16.2.6",
     "next-auth": "5.0.0-beta.30",

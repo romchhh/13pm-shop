@@ -1,42 +1,19 @@
-import { mkdir, writeFile, unlink } from "fs/promises";
+import { mkdir } from "fs/promises";
 import path from "path";
 import crypto from "crypto";
+import { writeFile } from "fs/promises";
 import { NextRequest, NextResponse } from "next/server";
-import sharp from "sharp";
 import { createLogger } from "@/lib/logger";
+import {
+  getMediaFileType,
+  MAX_IMAGE_UPLOAD_BYTES,
+  savePhotoBufferAsWebP,
+} from "@/lib/imageUpload";
 
 const log = createLogger("POST /api/images");
 
 export const runtime = "nodejs";
-export const maxDuration = 300; // seconds
-
-// Convert uploaded image to WebP
-async function convertToWebP(
-  inputPath: string,
-  outputDir: string
-): Promise<string> {
-  const newName = `${crypto.randomUUID()}.webp`;
-  const outputPath = path.join(outputDir, newName);
-
-  await sharp(inputPath)
-    .rotate() // auto-orient
-    .webp({ quality: 80 })
-    .toFile(outputPath);
-
-  await unlink(inputPath).catch((err) => {
-    log.warn("Failed to remove original after WebP conversion:", err);
-  });
-  return newName;
-}
-
-const VIDEO_EXTENSIONS = ["mp4", "webm", "ogg", "mov", "avi", "mkv", "flv", "wmv"];
-
-function getFileType(mimeType: string, filename: string): "photo" | "video" {
-  if (mimeType.startsWith("video/")) return "video";
-  const ext = filename.split(".").pop()?.toLowerCase();
-  if (ext && VIDEO_EXTENSIONS.includes(ext)) return "video";
-  return "photo";
-}
+export const maxDuration = 300;
 
 export async function POST(req: NextRequest) {
   try {
@@ -50,38 +27,39 @@ export async function POST(req: NextRequest) {
     const uploadDir = path.join(process.cwd(), "product-images");
     await mkdir(uploadDir, { recursive: true });
 
-    const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15 MB
     const savedMedia: { type: "photo" | "video"; url: string }[] = [];
 
     for (const file of files) {
-      if (file.size > MAX_FILE_SIZE) {
+      if (file.size > MAX_IMAGE_UPLOAD_BYTES) {
         return NextResponse.json(
           { error: "Max file size is 15MB" },
           { status: 413 }
         );
       }
 
-      const ext = file.name.split(".").pop();
-      const uniqueName = `${crypto.randomUUID()}.${ext}`;
-      const filePath = path.join(uploadDir, uniqueName);
-
       log.debug("Uploading file:", file.name, "MIME:", file.type, "Size:", file.size);
 
       const buffer = Buffer.from(await file.arrayBuffer());
-      await writeFile(filePath, buffer);
+      const fileType = getMediaFileType(file.type, file.name);
 
-      const fileType = getFileType(file.type, file.name);
-      let finalFileName = uniqueName;
-
-      if (fileType === "photo") {
-        try {
-          finalFileName = await convertToWebP(filePath, uploadDir);
-        } catch (error) {
-          log.warn("Failed to convert image, keeping original:", error);
-        }
+      if (fileType === "video") {
+        const ext = file.name.split(".").pop() || "mp4";
+        const uniqueName = `${crypto.randomUUID()}.${ext}`;
+        await writeFile(path.join(uploadDir, uniqueName), buffer);
+        savedMedia.push({ type: fileType, url: uniqueName });
+        continue;
       }
 
-      savedMedia.push({ type: fileType, url: finalFileName });
+      try {
+        const finalFileName = await savePhotoBufferAsWebP(buffer, file.name, uploadDir);
+        savedMedia.push({ type: "photo", url: finalFileName });
+      } catch (error) {
+        log.warn("Failed to convert image, keeping original:", file.name, error);
+        const ext = file.name.split(".").pop() || "bin";
+        const uniqueName = `${crypto.randomUUID()}.${ext}`;
+        await writeFile(path.join(uploadDir, uniqueName), buffer);
+        savedMedia.push({ type: "photo", url: uniqueName });
+      }
     }
 
     return NextResponse.json({ media: savedMedia }, { status: 201 });

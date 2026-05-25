@@ -1,25 +1,14 @@
-import { mkdir, writeFile, unlink } from "fs/promises";
+import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import crypto from "crypto";
-import sharp from "sharp";
+import {
+  getMediaFileType,
+  MAX_IMAGE_UPLOAD_BYTES,
+  normalizeImageBuffer,
+  savePhotoBufferAsWebP,
+} from "@/lib/imageUpload";
 
-const VIDEO_EXTENSIONS = ["mp4", "webm", "ogg", "mov", "avi", "mkv", "flv", "wmv"];
-const MAX_FILE_SIZE = 15 * 1024 * 1024;
-
-export function getMediaFileType(mimeType: string, filename: string): "photo" | "video" {
-  if (mimeType.startsWith("video/")) return "video";
-  const ext = filename.split(".").pop()?.toLowerCase();
-  if (ext && VIDEO_EXTENSIONS.includes(ext)) return "video";
-  return "photo";
-}
-
-async function convertToWebP(inputPath: string, outputDir: string): Promise<string> {
-  const newName = `${crypto.randomUUID()}.webp`;
-  const outputPath = path.join(outputDir, newName);
-  await sharp(inputPath).rotate().webp({ quality: 80 }).toFile(outputPath);
-  await unlink(inputPath).catch(() => {});
-  return newName;
-}
+export { getMediaFileType } from "@/lib/imageUpload";
 
 /**
  * Зберігає файли в product-images/ (ті самі, що /api/images).
@@ -35,28 +24,32 @@ export async function uploadProductMediaFiles(
   const savedMedia: { type: "photo" | "video"; url: string }[] = [];
 
   for (const file of files) {
-    if (file.size > MAX_FILE_SIZE) {
+    if (file.size > MAX_IMAGE_UPLOAD_BYTES) {
       throw new Error(`Файл ${file.name} перевищує 15 МБ`);
     }
 
-    const ext = file.name.split(".").pop() || "bin";
-    const uniqueName = `${crypto.randomUUID()}.${ext}`;
-    const filePath = path.join(uploadDir, uniqueName);
-    const buffer = Buffer.from(await file.arrayBuffer());
-    await writeFile(filePath, buffer);
-
     const fileType = getMediaFileType(file.type, file.name);
-    let finalFileName = uniqueName;
+    const buffer = Buffer.from(await file.arrayBuffer());
 
-    if (fileType === "photo") {
-      try {
-        finalFileName = await convertToWebP(filePath, uploadDir);
-      } catch {
-        // залишаємо оригінал
-      }
+    if (fileType === "video") {
+      const ext = file.name.split(".").pop() || "mp4";
+      const uniqueName = `${crypto.randomUUID()}.${ext}`;
+      await writeFile(path.join(uploadDir, uniqueName), buffer);
+      savedMedia.push({ type: "video", url: uniqueName });
+      continue;
     }
 
-    savedMedia.push({ type: fileType, url: finalFileName });
+    try {
+      const finalFileName = await savePhotoBufferAsWebP(buffer, file.name, uploadDir);
+      savedMedia.push({ type: "photo", url: finalFileName });
+    } catch (err) {
+      const normalized = await normalizeImageBuffer(buffer, file.name).catch(() => buffer);
+      const ext = file.name.split(".").pop() || "jpg";
+      const fallbackName = `${crypto.randomUUID()}.${ext}`;
+      await writeFile(path.join(uploadDir, fallbackName), normalized);
+      savedMedia.push({ type: "photo", url: fallbackName });
+      console.warn("[uploadProductMedia] WebP failed, kept original:", file.name, err);
+    }
   }
 
   return savedMedia;

@@ -2,6 +2,10 @@
 
 import Image from "next/image";
 import { useDropzone } from "react-dropzone";
+import {
+  IMAGE_ONLY_DROPZONE_ACCEPT,
+  adminImageOnlyDropzoneValidator,
+} from "@/lib/imageUploadAccept";
 
 type HeroImageDropzoneProps = {
   label: string;
@@ -20,11 +24,8 @@ export default function HeroImageDropzone({
 }: HeroImageDropzoneProps) {
   const { getRootProps, getInputProps, isDragActive, fileRejections } = useDropzone({
     onDrop: (accepted) => onFile(accepted[0] ?? null),
-    accept: {
-      "image/jpeg": [".jpg", ".jpeg"],
-      "image/png": [".png"],
-      "image/webp": [".webp"],
-    },
+    accept: IMAGE_ONLY_DROPZONE_ACCEPT,
+    validator: adminImageOnlyDropzoneValidator,
     maxFiles: 1,
     maxSize: 15 * 1024 * 1024,
   });

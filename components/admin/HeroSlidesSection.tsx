@@ -228,7 +228,7 @@ export default function HeroSlidesSection() {
           <div className="grid gap-6 md:grid-cols-2">
             <HeroImageDropzone
               label="Фото — десктоп (широкий банер)"
-              hint="JPG, PNG або WebP, до 15 МБ"
+              hint="JPG, PNG, WebP або HEIC, до 15 МБ"
               previewUrl={desktopPreview}
               aspectClassName="aspect-[16/9] max-w-md"
               onFile={(file) => onFileChange("desktop", file)}

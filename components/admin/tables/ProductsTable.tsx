@@ -83,10 +83,19 @@ export default function ProductsTable() {
 
   const productsPerPage = 10;
 
-  const selectedCategoryId = parseCategoryParam(searchParams.get("category"));
-  const currentPage = parsePageParam(searchParams.get("page"));
+  const categoryFromUrl = parseCategoryParam(searchParams.get("category"));
+  const pageFromUrl = parsePageParam(searchParams.get("page"));
 
-  const listQueryString = searchParams.toString();
+  const [filterCategoryId, setFilterCategoryId] = useState<number | null>(categoryFromUrl);
+  const [filterPage, setFilterPage] = useState(pageFromUrl);
+
+  useEffect(() => {
+    setFilterCategoryId(categoryFromUrl);
+  }, [categoryFromUrl]);
+
+  useEffect(() => {
+    setFilterPage(pageFromUrl);
+  }, [pageFromUrl]);
 
   const updateListUrl = useCallback(
     (page: number, categoryId: number | null) => {
@@ -94,10 +103,29 @@ export default function ProductsTable() {
       if (page > 1) params.set("page", String(page));
       if (categoryId != null) params.set("category", String(categoryId));
       const q = params.toString();
-      router.replace(q ? `${pathname}?${q}` : pathname, { scroll: false });
+      const href = q ? `${pathname}?${q}` : pathname;
+      router.replace(href, { scroll: false });
     },
     [pathname, router]
   );
+
+  const handleCategoryChange = (value: string) => {
+    const categoryId =
+      value === "all"
+        ? null
+        : (() => {
+            const n = parseInt(value, 10);
+            return Number.isFinite(n) && n > 0 ? n : null;
+          })();
+    setFilterCategoryId(categoryId);
+    setFilterPage(1);
+    updateListUrl(1, categoryId);
+  };
+
+  const handlePageChange = (page: number) => {
+    setFilterPage(page);
+    updateListUrl(page, filterCategoryId);
+  };
 
   const categoriesById = useMemo(
     () => new Map(categories.map((c) => [c.id, c.name])),
@@ -107,9 +135,9 @@ export default function ProductsTable() {
   const filteredProducts = useMemo(
     () =>
       products.filter((p) =>
-        productMatchesCategory(p, selectedCategoryId, categoriesById)
+        productMatchesCategory(p, filterCategoryId, categoriesById)
       ),
-    [products, selectedCategoryId, categoriesById]
+    [products, filterCategoryId, categoriesById]
   );
 
   const totalPages = useMemo(
@@ -120,10 +148,10 @@ export default function ProductsTable() {
   const paginatedProducts = useMemo(
     () =>
       filteredProducts.slice(
-        (currentPage - 1) * productsPerPage,
-        currentPage * productsPerPage
+        (filterPage - 1) * productsPerPage,
+        filterPage * productsPerPage
       ),
-    [filteredProducts, currentPage, productsPerPage]
+    [filteredProducts, filterPage, productsPerPage]
   );
 
   const sizeGroupLabelById = useMemo(
@@ -135,10 +163,12 @@ export default function ProductsTable() {
   );
 
   useEffect(() => {
-    if (currentPage > totalPages) {
-      updateListUrl(totalPages, selectedCategoryId);
+    if (filterPage > totalPages) {
+      const nextPage = totalPages;
+      setFilterPage(nextPage);
+      updateListUrl(nextPage, filterCategoryId);
     }
-  }, [currentPage, totalPages, selectedCategoryId, updateListUrl]);
+  }, [filterPage, totalPages, filterCategoryId, updateListUrl]);
 
   // Функція для очищення кешу
   const clearCache = () => {
@@ -207,9 +237,13 @@ export default function ProductsTable() {
     fetchData();
   }, []);
 
-  const returnTo = listQueryString
-    ? `${pathname}?${listQueryString}`
-    : pathname;
+  const returnTo = useMemo(() => {
+    const params = new URLSearchParams();
+    if (filterPage > 1) params.set("page", String(filterPage));
+    if (filterCategoryId != null) params.set("category", String(filterCategoryId));
+    const q = params.toString();
+    return q ? `${pathname}?${q}` : pathname;
+  }, [filterPage, filterCategoryId, pathname]);
 
   return (
     <div className="overflow-hidden rounded-xl border border-gray-300 bg-white shadow-sm">
@@ -221,25 +255,21 @@ export default function ProductsTable() {
               <label className="flex items-center gap-2 text-sm text-gray-700">
                 <span className="font-medium whitespace-nowrap">Категорія:</span>
                 <select
-                  value={selectedCategoryId ?? "all"}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    updateListUrl(
-                      1,
-                      v === "all" ? null : parseInt(v, 10)
-                    );
-                  }}
+                  value={
+                    filterCategoryId != null ? String(filterCategoryId) : "all"
+                  }
+                  onChange={(e) => handleCategoryChange(e.target.value)}
                   className="min-w-[180px] rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 >
                   <option value="all">Усі категорії</option>
                   {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
+                    <option key={cat.id} value={String(cat.id)}>
                       {cat.name}
                     </option>
                   ))}
                 </select>
               </label>
-              {selectedCategoryId != null && (
+              {filterCategoryId != null && (
                 <span className="text-sm text-gray-500">
                   {filteredProducts.length}{" "}
                   {filteredProducts.length === 1 ? "товар" : "товарів"}
@@ -255,11 +285,7 @@ export default function ProductsTable() {
                 🔄 Оновити
               </button>
               <Link
-                href={
-                  listQueryString
-                    ? `/admin/products/add?return=${encodeURIComponent(returnTo)}`
-                    : "/admin/products/add"
-                }
+                href={`/admin/products/add?return=${encodeURIComponent(returnTo)}`}
                 className="inline-block rounded-md bg-green-500 px-4 py-2 text-white text-sm font-medium hover:bg-green-600 transition shadow-sm"
               >
                 + Додати продукт
@@ -355,7 +381,7 @@ export default function ProductsTable() {
                     colSpan={11}
                     className="text-center py-6 text-gray-600"
                   >
-                    {selectedCategoryId != null
+                    {filterCategoryId != null
                       ? "У цій категорії товарів не знайдено."
                       : "Продуктів не знайдено."}
                   </TableCell>
@@ -445,9 +471,9 @@ export default function ProductsTable() {
           {!loading && filteredProducts.length > productsPerPage && (
             <div className="flex justify-end px-5 py-4 border-t border-gray-200 bg-gray-50">
               <Pagination
-                currentPage={currentPage}
+                currentPage={filterPage}
                 totalPages={totalPages}
-                onPageChange={(page) => updateListUrl(page, selectedCategoryId)}
+                onPageChange={handlePageChange}
               />
             </div>
           )}

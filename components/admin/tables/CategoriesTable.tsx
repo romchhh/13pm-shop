@@ -277,7 +277,7 @@ export default function CategoriesTable() {
                           </label>
                           <input
                             type="file"
-                            accept="image/*,video/*"
+                            accept="image/*,video/*,.heic,.heif"
                             onChange={(e) => {
                               const files = Array.from(e.target.files || []);
                               if (files.length > 0) {

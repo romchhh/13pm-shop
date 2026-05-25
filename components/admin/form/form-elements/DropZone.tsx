@@ -2,6 +2,10 @@
 import React from "react";
 import ComponentCard from "@/components/admin/ComponentCard";
 import { useDropzone } from "react-dropzone";
+import {
+  IMAGE_DROPZONE_ACCEPT,
+  adminDropzoneFileValidator,
+} from "@/lib/imageUploadAccept";
 
 interface DropzoneComponentProps {
   onDrop?: (acceptedFiles: File[]) => void;
@@ -24,20 +28,8 @@ const DropzoneComponent: React.FC<DropzoneComponentProps> = ({
       
       onDrop(acceptedFiles);
     },
-    accept: {
-      "image/png": [".png"],
-      "image/jpeg": [".jpg", ".jpeg"],
-      "image/webp": [".webp"],
-      "image/svg+xml": [".svg"],
-      "video/mp4": [".mp4"],
-      "video/webm": [".webm"],
-      "video/ogg": [".ogg"],
-      "video/quicktime": [".mov"],
-      "video/x-msvideo": [".avi"],
-      "video/x-matroska": [".mkv"],
-      "video/x-flv": [".flv"],
-      "video/x-ms-wmv": [".wmv"],
-    },
+    accept: IMAGE_DROPZONE_ACCEPT,
+    validator: adminDropzoneFileValidator,
     maxSize: 15 * 1024 * 1024, // 15MB
   });
 
@@ -101,7 +93,7 @@ const DropzoneComponent: React.FC<DropzoneComponentProps> = ({
             </h4>
 
             <span className="text-center mb-5 block w-full max-w-[290px] text-sm text-gray-700">
-              Drag and drop your PNG, JPG, WebP, SVG images or MP4, WebM videos here or browse
+              Drag and drop PNG, JPG, WebP, HEIC, SVG or MP4, WebM videos here or browse
             </span>
 
             <span className="font-medium underline text-theme-sm text-blue-600">

@@ -3,9 +3,7 @@
 import { NextResponse } from "next/server";
 import { sqlGetAllProducts, sqlPostProduct, sqlSyncSizeVariantsOrdered } from "@/lib/sql";
 import { revalidateProducts } from "@/lib/revalidate";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
-import crypto from "crypto";
+import { uploadProductMediaFiles } from "@/lib/uploadProductMedia";
 import { apiLogger } from "@/lib/logger";
 
 // Helper function to determine file type
@@ -260,27 +258,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const uploadDir = path.join(process.cwd(), "product-images");
-    await mkdir(uploadDir, { recursive: true });
-
-    const savedMedia: { type: "photo" | "video"; url: string }[] = [];
-
-    for (const image of images) {
-      const arrayBuffer = await image.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-
-      const ext = image.name.split(".").pop();
-      const uniqueName = `${crypto.randomUUID()}.${ext}`;
-      const filePath = path.join(uploadDir, uniqueName);
-
-      await writeFile(filePath, buffer);
-
-      const fileType = getFileType(image.type, image.name);
-      apiLogger.info("POST", `/api/products`, `File: ${image.name}, MIME: ${image.type}, Type: ${fileType}`);
-
-      savedMedia.push({ type: fileType, url: uniqueName });
-    }
-
+    const savedMedia = await uploadProductMediaFiles(images);
     apiLogger.info("POST", `/api/products`, `Media to save: ${savedMedia.length} files`);
 
     const product = await sqlPostProduct({
