@@ -371,11 +371,11 @@ export default function EditProductPage() {
                   </div>
                   <div>
                     <Label>Короткий опис (на сторінці товару)</Label>
-                    <TextArea value={shortDescription} onChange={setShortDescription} rows={3} />
+                    <TextArea value={description} onChange={setDescription} rows={3} />
                   </div>
                   <div>
                     <Label>Детальний опис</Label>
-                    <TextArea value={description} onChange={setDescription} rows={6} />
+                    <TextArea value={shortDescription} onChange={setShortDescription} rows={6} />
                   </div>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                     <div>

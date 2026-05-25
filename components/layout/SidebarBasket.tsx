@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useBasket } from "@/lib/BasketProvider";
 import Link from "next/link";
 import Image from "next/image";
-import { getItemSubtotal } from "@/lib/pricing";
+import { getBasketUnitPrice, getItemSubtotal } from "@/lib/pricing";
 import { useBodyScrollLock } from "@/lib/useBodyScrollLock";
 
 interface SidebarBasketProps {
@@ -27,7 +27,14 @@ export default function SidebarBasket({
   const [quantityError, setQuantityError] = useState<Record<string, string>>({});
 
   const total = items.reduce(
-    (sum, item) => sum + getItemSubtotal(item.price, item.quantity, item.discount_percentage),
+    (sum, item) =>
+      sum +
+      getItemSubtotal(
+        item.price,
+        item.quantity,
+        item.discount_percentage,
+        item.color_surcharge_uah
+      ),
     0
   );
 
@@ -79,9 +86,11 @@ export default function SidebarBasket({
           )}
 
           {items.map((item) => {
-            const displayPrice = item.discount_percentage
-              ? Math.round(item.price * (1 - item.discount_percentage / 100))
-              : item.price;
+            const displayPrice = getBasketUnitPrice(
+              item.price,
+              item.discount_percentage,
+              item.color_surcharge_uah
+            );
             return (
               <div
                 key={`${item.id}-${item.size}`}

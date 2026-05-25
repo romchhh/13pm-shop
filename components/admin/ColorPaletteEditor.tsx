@@ -1,6 +1,7 @@
 "use client";
 
 import Input from "@/components/admin/form/input/InputField";
+import { isWhiteColorOption, WHITE_COLOR_SURCHARGE_UAH } from "@/lib/colorPricing";
 
 export type ColorRow = { hex: string; name: string };
 
@@ -46,7 +47,8 @@ export default function ColorPaletteEditor({ rows, onChange }: Props) {
   return (
     <div className="space-y-3">
       <p className="text-[11px] text-gray-500">
-        Оберіть колір з палітри або вкажіть HEX. Назва показується на сайті.
+        Оберіть колір з палітри або вкажіть HEX. Назва показується на сайті. Для виробів з
+        фанери: білий колір на сайті дає +{WHITE_COLOR_SURCHARGE_UAH} грн до ціни.
       </p>
       <div className="flex flex-wrap gap-2">
         {PRESET_SWATCHES.map((hex) => (
@@ -87,12 +89,20 @@ export default function ColorPaletteEditor({ rows, onChange }: Props) {
               onChange={(e) => updateRow(i, { hex: normalizeHexInput(e.target.value) })}
               placeholder="#000000"
             />
-            <Input
-              className="min-w-[120px] flex-1"
-              value={row.name}
-              onChange={(e) => updateRow(i, { name: e.target.value })}
-              placeholder="Назва кольору"
-            />
+            <div className="min-w-[120px] flex-1">
+              <Input
+                className="w-full"
+                value={row.name}
+                onChange={(e) => updateRow(i, { name: e.target.value })}
+                placeholder="Назва кольору"
+              />
+              {row.name.trim() &&
+                isWhiteColorOption({ hex: row.hex, name: row.name }) && (
+                  <p className="mt-0.5 text-[10px] font-medium text-amber-800">
+                    +{WHITE_COLOR_SURCHARGE_UAH} грн на сайті
+                  </p>
+                )}
+            </div>
             <button
               type="button"
               className="rounded bg-red-100 px-2 py-1 text-sm text-red-700"

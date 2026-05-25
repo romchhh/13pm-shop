@@ -14,10 +14,18 @@ function getSubtotal(
     price: number;
     quantity: number;
     discount_percentage?: number | null;
+    color_surcharge_uah?: number;
   }[]
 ) {
   return items.reduce(
-    (sum, item) => sum + getItemSubtotal(item.price, item.quantity, item.discount_percentage),
+    (sum, item) =>
+      sum +
+      getItemSubtotal(
+        item.price,
+        item.quantity,
+        item.discount_percentage,
+        item.color_surcharge_uah
+      ),
     0
   );
 }

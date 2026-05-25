@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useMemo } from "react";
 import { useBasket } from "@/lib/BasketProvider";
 import Link from "next/link";
 import CartLineItems from "@/components/cart/CartLineItems";
-import { getDiscountedPrice, getItemSubtotal } from "@/lib/pricing";
+import { getBasketUnitPrice, getItemSubtotal } from "@/lib/pricing";
 import { clearCartPromo, loadCartPromo, saveCartPromo } from "@/lib/cartPromoStorage";
 import {
   GA4_BRAND,
@@ -16,7 +16,14 @@ import {
 /** Calculate order subtotal from basket items */
 const ACCENT = "#8B5E3F";
 
-function getSubtotal(items: { price: number | string; quantity: number; discount_percentage?: number | string }[]) {
+function getSubtotal(
+  items: {
+    price: number | string;
+    quantity: number;
+    discount_percentage?: number | string;
+    color_surcharge_uah?: number;
+  }[]
+) {
   return items.reduce((total, item) => {
     const itemPrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
     const discount = item.discount_percentage
@@ -24,8 +31,11 @@ function getSubtotal(items: { price: number | string; quantity: number; discount
         ? parseFloat(item.discount_percentage)
         : item.discount_percentage
       : 0;
-    const price = discount > 0 ? itemPrice * (1 - discount / 100) : itemPrice;
-    return total + price * item.quantity;
+    const surcharge = item.color_surcharge_uah ?? 0;
+    return (
+      total +
+      getItemSubtotal(itemPrice, item.quantity, discount || null, surcharge)
+    );
   }, 0);
 }
 
@@ -69,14 +79,7 @@ export default function FinalCard() {
   // Track InitiateCheckout event for Meta Pixel when component mounts with items
   useEffect(() => {
     if (items.length > 0 && typeof window !== 'undefined' && window.fbq) {
-      const totalValue = items.reduce((total, item) => {
-        const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-        const discount = item.discount_percentage 
-          ? (typeof item.discount_percentage === 'string' ? parseFloat(item.discount_percentage) : item.discount_percentage)
-          : 0;
-        const price = discount > 0 ? itemPrice * (1 - discount / 100) : itemPrice;
-        return total + price * item.quantity;
-      }, 0);
+      const totalValue = getSubtotal(items);
 
       window.fbq('track', 'InitiateCheckout', {
         content_ids: items.map(item => String(item.id)),
@@ -99,7 +102,11 @@ export default function FinalCard() {
     if (typeof window === "undefined") return;
 
     const itemsForGA4 = items.map((item) => {
-      const unitPrice = getDiscountedPrice(item.price, item.discount_percentage);
+      const unitPrice = getBasketUnitPrice(
+        item.price,
+        item.discount_percentage,
+        item.color_surcharge_uah
+      );
       return {
         item_id: String(item.id),
         item_name: item.name,
@@ -374,9 +381,11 @@ export default function FinalCard() {
         ? (typeof item.discount_percentage === 'string' ? parseFloat(item.discount_percentage) : item.discount_percentage)
         : 0;
       
-      const discountedPrice = discount > 0
-        ? itemPrice * (1 - discount / 100)
-        : itemPrice;
+      const discountedPrice = getBasketUnitPrice(
+        itemPrice,
+        discount || null,
+        item.color_surcharge_uah
+      );
 
       return {
         product_id: item.id,

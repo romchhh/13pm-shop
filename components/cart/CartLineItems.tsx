@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { useBasket } from "@/lib/BasketProvider";
-import { getDiscountedPrice, getItemSubtotal } from "@/lib/pricing";
+import { getBasketUnitPrice, getItemSubtotal } from "@/lib/pricing";
 
 export function getCartImageSrc(imageUrl: string): string {
   if (!imageUrl) return "https://placehold.co/100x150/cccccc/666666?text=No+Image";
@@ -48,8 +48,17 @@ export default function CartLineItems({
       <div className="overflow-hidden rounded-2xl border border-black/[0.06] bg-white shadow-[0_4px_20px_rgba(0,0,0,0.05)]">
         {items.map((item, itemIndex) => {
           const key = `${item.id}-${item.size}-${item.color ?? ""}`;
-          const unit = getDiscountedPrice(item.price, item.discount_percentage);
-          const lineTotal = getItemSubtotal(item.price, item.quantity, item.discount_percentage);
+          const unit = getBasketUnitPrice(
+            item.price,
+            item.discount_percentage,
+            item.color_surcharge_uah
+          );
+          const lineTotal = getItemSubtotal(
+            item.price,
+            item.quantity,
+            item.discount_percentage,
+            item.color_surcharge_uah
+          );
           const sizeLabel =
             item.size && item.size !== "—" && item.size.trim() ? item.size : null;
           const colorLabel = item.color?.trim() || null;
@@ -89,6 +98,9 @@ export default function CartLineItems({
                       {colorLabel && (
                         <p className="font-['Montserrat'] text-sm text-black/50">
                           Колір: {colorLabel}
+                          {item.color_surcharge_uah
+                            ? ` (+${item.color_surcharge_uah.toLocaleString("uk-UA")} грн)`
+                            : ""}
                         </p>
                       )}
                       {quantityError[key] && (

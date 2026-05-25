@@ -16,12 +16,27 @@ export function getDiscountedPrice(
 }
 
 /**
- * Returns subtotal for an item: (price after discount) * quantity.
+ * Ціна одиниці зі знижкою та опційною доплатою за колір (напр. білий +150 грн).
+ */
+export function getBasketUnitPrice(
+  price: number,
+  discountPercentage?: number | null,
+  colorSurchargeUah?: number | null
+): number {
+  return (
+    Math.round(getDiscountedPrice(price, discountPercentage)) +
+    Math.max(0, colorSurchargeUah ?? 0)
+  );
+}
+
+/**
+ * Returns subtotal for an item: (price after discount + color surcharge) * quantity.
  */
 export function getItemSubtotal(
   price: number,
   quantity: number,
-  discountPercentage?: number | null
+  discountPercentage?: number | null,
+  colorSurchargeUah?: number | null
 ): number {
-  return getDiscountedPrice(price, discountPercentage) * quantity;
+  return getBasketUnitPrice(price, discountPercentage, colorSurchargeUah) * quantity;
 }

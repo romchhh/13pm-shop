@@ -8,7 +8,7 @@ import React, {
   ReactNode,
   useRef,
 } from "react";
-import { getDiscountedPrice, getItemSubtotal } from "@/lib/pricing";
+import { getBasketUnitPrice, getItemSubtotal } from "@/lib/pricing";
 import {
   GA4_BRAND,
   GA4_CURRENCY,
@@ -24,6 +24,8 @@ interface BasketItem {
   quantity: number;
   imageUrl: string;
   color?: string;
+  /** Доплата за колір, грн (напр. +150 за білий на виробах з фанери) */
+  color_surcharge_uah?: number;
   discount_percentage?: number;
   category_name?: string | null;
   /** Короткий опис для відображення в кошику (напр. з product.main_info) */
@@ -142,7 +144,8 @@ export function BasketProvider({ children }: { children: ReactNode }) {
           const value = getItemSubtotal(
             newItem.price,
             newItem.quantity,
-            newItem.discount_percentage
+            newItem.discount_percentage,
+            newItem.color_surcharge_uah
           );
           window.fbq("track", "AddToCart", {
             content_name: newItem.name,
@@ -154,9 +157,10 @@ export function BasketProvider({ children }: { children: ReactNode }) {
         }
 
         // GA4 eCommerce via GTM dataLayer
-        const unitPrice = getDiscountedPrice(
+        const unitPrice = getBasketUnitPrice(
           newItem.price,
-          newItem.discount_percentage
+          newItem.discount_percentage,
+          newItem.color_surcharge_uah
         );
         pushGA4EcommerceEvent("add_to_cart", {
           currency: GA4_CURRENCY,
@@ -241,7 +245,8 @@ export function BasketProvider({ children }: { children: ReactNode }) {
           const value = getItemSubtotal(
             newItem.price,
             newItem.quantity,
-            newItem.discount_percentage
+            newItem.discount_percentage,
+            newItem.color_surcharge_uah
           );
           window.fbq("track", "AddToCart", {
             content_name: newItem.name,
@@ -253,9 +258,10 @@ export function BasketProvider({ children }: { children: ReactNode }) {
         }
 
         // GA4 eCommerce via GTM dataLayer
-        const unitPrice = getDiscountedPrice(
+        const unitPrice = getBasketUnitPrice(
           newItem.price,
-          newItem.discount_percentage
+          newItem.discount_percentage,
+          newItem.color_surcharge_uah
         );
         pushGA4EcommerceEvent("add_to_cart", {
           currency: GA4_CURRENCY,
@@ -327,9 +333,10 @@ export function BasketProvider({ children }: { children: ReactNode }) {
   function removeItem(id: number, size: string) {
     const removed = items.find((item) => item.id === id && item.size === size);
     if (removed) {
-      const unitPrice = getDiscountedPrice(
+      const unitPrice = getBasketUnitPrice(
         removed.price,
-        removed.discount_percentage
+        removed.discount_percentage,
+        removed.color_surcharge_uah
       );
       pushGA4EcommerceEvent("remove_from_cart", {
         currency: GA4_CURRENCY,

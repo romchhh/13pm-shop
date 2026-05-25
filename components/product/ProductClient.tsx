@@ -8,7 +8,12 @@ import Link from "next/link";
 import Alert from "@/components/shared/Alert";
 import CartAlert from "@/components/shared/CartAlert";
 import { getFirstProductImage } from "@/lib/getFirstProductImage";
-import { getDiscountedPrice } from "@/lib/pricing";
+import {
+  getWhiteColorSurcharge,
+  getUnitPriceWithColor,
+  productOffersWhiteColor,
+  WHITE_COLOR_SURCHARGE_UAH,
+} from "@/lib/colorPricing";
 import {
   GA4_BRAND,
   GA4_CURRENCY,
@@ -21,6 +26,7 @@ import {
 import type { ProductColorOption, ProductSizeVariant } from "@/lib/productOptions";
 import OneClickOrderModal from "@/components/product/OneClickOrderModal";
 import ProductDeliveryPaymentTab from "@/components/product/ProductDeliveryPaymentTab";
+import { ProductDetailDescription } from "@/components/product/ProductDetailDescription";
 import ProductMediaLightbox from "@/components/product/ProductMediaLightbox";
 import YouMightLike from "@/components/product/YouMightLike";
 import AddToCartButton from "@/components/shared/AddToCartButton";
@@ -124,6 +130,10 @@ export default function ProductClient({ product }: ProductClientProps) {
       ? colors[selectedColorIndex].name
       : undefined;
 
+  const colorSurchargeUah = getWhiteColorSurcharge(selectedColorName, colors);
+  const hasWhiteColorOption = productOffersWhiteColor(colors);
+  const analyticsCategory = product.subcategory_name ?? product.category_name ?? null;
+
   const handleAddToCart = async () => {
     if (isAddingToCartRef.current) return;
     if (!addItem) {
@@ -146,6 +156,7 @@ export default function ProductClient({ product }: ProductClientProps) {
         discount_percentage: product.discount_percentage ?? undefined,
         subtitle: product.subtitle || product.short_description || undefined,
         color: selectedColorName,
+        color_surcharge_uah: colorSurchargeUah > 0 ? colorSurchargeUah : undefined,
         category_name: analyticsCategory,
       });
       setShowCartAlert(true);
@@ -167,11 +178,12 @@ export default function ProductClient({ product }: ProductClientProps) {
     in_stock: product.in_stock,
     stock: product.stock,
   });
-  const displayPrice = product.discount_percentage
-    ? Math.round(product.price * (1 - product.discount_percentage / 100))
-    : Math.round(product.price);
-
-  const analyticsCategory = product.subcategory_name ?? product.category_name ?? null;
+  const displayPrice = getUnitPriceWithColor(
+    product.price,
+    product.discount_percentage,
+    selectedColorName,
+    colors
+  );
 
   const categorySlug =
     product.category_slug ?? (product.category_name ? encodeURIComponent(product.category_name) : null);
@@ -187,7 +199,12 @@ export default function ProductClient({ product }: ProductClientProps) {
     if (lastViewItemIdRef.current === product.id) return;
 
     lastViewItemIdRef.current = product.id;
-    const unitPrice = getDiscountedPrice(product.price, product.discount_percentage);
+    const unitPrice = getUnitPriceWithColor(
+      product.price,
+      product.discount_percentage,
+      selectedColorName,
+      colors
+    );
 
     pushGA4EcommerceEvent("view_item", {
       currency: GA4_CURRENCY,
@@ -211,12 +228,14 @@ export default function ProductClient({ product }: ProductClientProps) {
     product.id,
     product.name,
     product.price,
+    selectedColorName,
+    colors,
   ]);
 
   if (!isMounted) return null;
 
   const shortText =
-    product.short_description || product.main_info || product.subtitle || "";
+    product.description || product.main_info || product.subtitle || "";
 
   const onSizeClick = (v: ProductSizeVariant) => {
     if (v.productId === product.id) return;
@@ -505,8 +524,13 @@ export default function ProductClient({ product }: ProductClientProps) {
 
             {colors.length > 0 && (
               <div className="border-t border-black/10 pt-5">
-                <p className="mb-3 text-sm text-black/45">Оберіть колір</p>
-                <div className="flex flex-wrap gap-3">
+                <p className="mb-1 text-sm text-black/45">Оберіть колір</p>
+                {hasWhiteColorOption && (
+                  <p className="mb-3 text-sm text-black/70">
+                    Білий колір — +{WHITE_COLOR_SURCHARGE_UAH.toLocaleString("uk-UA")} грн до ціни
+                  </p>
+                )}
+                <div className={`flex flex-wrap gap-3 ${hasWhiteColorOption ? "" : "mt-2"}`}>
                   {colors.map((c, i) => (
                     <button
                       key={`${c.hex}-${c.name}-${i}`}
@@ -709,10 +733,8 @@ export default function ProductClient({ product }: ProductClientProps) {
           </div>
           <div className="min-h-[100px] pt-4">
             {activeTab === "details" ? (
-              product.description ? (
-                <div className="whitespace-pre-line font-['Montserrat'] text-sm leading-relaxed text-black/80 sm:text-base">
-                  {product.description}
-                </div>
+              product.short_description ? (
+                <ProductDetailDescription content={product.short_description} />
               ) : (
                 <p className="font-['Montserrat'] text-sm text-black/45">Детальний опис відсутній.</p>
               )
