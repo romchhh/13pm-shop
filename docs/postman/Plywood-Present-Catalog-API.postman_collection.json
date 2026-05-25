@@ -1,0 +1,236 @@
+{
+  "info": {
+    "_postman_id": "plywood-present-catalog-api",
+    "name": "Plywood Present — Catalog API",
+    "description": "Адмін API: товари, категорії, підкатегорії, завантаження медіа.\n\n1. Спочатку виконайте «Admin Login».\n2. Увімкніть збереження cookies в Postman.\n3. Змінні: baseUrl, adminUser, adminPass.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "adminUser", "value": "admin" },
+    { "key": "adminPass", "value": "password" },
+    { "key": "productId", "value": "1" },
+    { "key": "categorySlug", "value": "ramky" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Admin Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Login OK', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{adminUser}}\",\n  \"password\": \"{{adminPass}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Media",
+      "item": [
+        {
+          "name": "Upload product images",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "images", "type": "file", "src": [] },
+                { "key": "images", "type": "file", "src": [] }
+              ]
+            },
+            "url": "{{baseUrl}}/api/images"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "Create product (JSON)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const j = pm.response.json();",
+                  "  if (j.id) pm.collectionVariables.set('productId', String(j.id));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Тестовий товар API\",\n  \"subtitle\": \"30×40 см\",\n  \"short_description\": \"Короткий опис\",\n  \"description\": \"Повний опис\",\n  \"price\": 890,\n  \"old_price\": 990,\n  \"discount_percentage\": 10,\n  \"in_stock\": true,\n  \"stock\": 50,\n  \"is_new\": true,\n  \"is_hit\": false,\n  \"priority\": 0,\n  \"category_id\": 1,\n  \"category_ids\": [1],\n  \"subcategory_ids\": [],\n  \"bought_together_ids\": [],\n  \"pair_together_ids\": [],\n  \"color_options\": [{ \"hex\": \"#8B5E3F\", \"name\": \"Дуб\" }],\n  \"size_variants\": [],\n  \"season\": [],\n  \"media\": []\n}"
+            },
+            "url": "{{baseUrl}}/api/admin/catalog/products"
+          }
+        },
+        {
+          "name": "Create product (multipart + images)",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "data",
+                  "value": "{\"name\":\"Товар з фото\",\"price\":1200,\"category_ids\":[1],\"in_stock\":true}",
+                  "type": "text"
+                },
+                { "key": "images", "type": "file", "src": [] },
+                { "key": "images", "type": "file", "src": [] }
+              ]
+            },
+            "url": "{{baseUrl}}/api/admin/catalog/products"
+          }
+        },
+        {
+          "name": "Get product by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/admin/catalog/products/{{productId}}"
+          }
+        },
+        {
+          "name": "Update product (JSON)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Тестовий товар API (оновлено)\",\n  \"price\": 950,\n  \"in_stock\": true,\n  \"bought_together_ids\": [2, 3],\n  \"pair_together_ids\": [4],\n  \"media\": []\n}"
+            },
+            "url": "{{baseUrl}}/api/admin/catalog/products/{{productId}}"
+          }
+        },
+        {
+          "name": "Delete product",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/admin/catalog/products/{{productId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Categories",
+      "item": [
+        {
+          "name": "Create category (JSON)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const j = pm.response.json();",
+                  "  if (j.category && j.category.slug) {",
+                  "    pm.collectionVariables.set('categorySlug', j.category.slug);",
+                  "  }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Нова категорія API\",\n  \"priority\": 5,\n  \"description\": \"Опис категорії\"\n}"
+            },
+            "url": "{{baseUrl}}/api/admin/catalog/categories"
+          }
+        },
+        {
+          "name": "Create category (multipart + image)",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "data",
+                  "value": "{\"name\":\"Категорія з фото\",\"priority\":10}",
+                  "type": "text"
+                },
+                { "key": "image", "type": "file", "src": [] }
+              ]
+            },
+            "url": "{{baseUrl}}/api/admin/catalog/categories"
+          }
+        },
+        {
+          "name": "Get category by slug",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/admin/catalog/categories/{{categorySlug}}"
+          }
+        },
+        {
+          "name": "Update category",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Нова категорія API\",\n  \"priority\": 15,\n  \"description\": \"Оновлений опис\"\n}"
+            },
+            "url": "{{baseUrl}}/api/admin/catalog/categories/{{categorySlug}}"
+          }
+        },
+        {
+          "name": "List categories (public)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/categories?revalidate=1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Subcategories",
+      "item": [
+        {
+          "name": "Create subcategory",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Підкатегорія API\",\n  \"category_id\": 1\n}"
+            },
+            "url": "{{baseUrl}}/api/admin/catalog/subcategories"
+          }
+        }
+      ]
+    }
+  ]
+}

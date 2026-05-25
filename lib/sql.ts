@@ -1,5 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "./prisma";
+import { applyCategoryMediaFallback } from "@/lib/categoryMediaFallback";
 import { unlink } from "fs/promises";
 import path from "path";
 import { unstable_cache } from "next/cache";
@@ -664,6 +665,7 @@ export async function sqlPostProduct(product: {
   color_options?: unknown;
   size_variants?: unknown;
   is_new?: boolean;
+  season?: string[];
   stock?: number;
   category_id?: number | null;
   subcategory_id?: number | null;
@@ -714,6 +716,7 @@ export async function sqlPostProduct(product: {
       colorOptions: (product.color_options as Prisma.InputJsonValue) ?? [],
       sizeVariants: (product.size_variants as Prisma.InputJsonValue) ?? [],
       isNew: product.is_new ?? false,
+      season: product.season ?? [],
       stock: product.stock ?? 0,
       categoryId: product.category_id ?? null,
       subcategoryId: product.subcategory_id ?? null,
@@ -801,6 +804,7 @@ export async function sqlPutProduct(
     color_options?: unknown;
     size_variants?: unknown;
     is_new?: boolean;
+    season?: string[];
     stock?: number;
     category_id?: number | null;
     subcategory_id?: number | null;
@@ -874,6 +878,7 @@ export async function sqlPutProduct(
             ? undefined
             : (update.size_variants as Prisma.InputJsonValue),
         isNew: update.is_new ?? undefined,
+        season: update.season === undefined ? undefined : update.season,
         stock: update.stock ?? undefined,
         // null має явно записуватись у БД; ?? undefined перетворював null на «не змінювати» і лишав старий categoryId
         categoryId:
@@ -1478,7 +1483,7 @@ async function _sqlGetAllCategories() {
       description: (c as any).description ?? null,
     });
   }
-  return result;
+  return applyCategoryMediaFallback(result);
 }
 
 // Cached version with 20 minute revalidation
@@ -1499,15 +1504,18 @@ export async function sqlGetCategory(id: number) {
 
   if (!category) return null;
 
-  return {
-    id: category.id,
-    name: category.name,
-    slug: category.slug ?? null,
-    priority: category.priority,
-    mediaType: category.mediaType || null,
-    mediaUrl: category.mediaUrl || null,
-    description: (category as any).description ?? null,
-  };
+  const [enriched] = await applyCategoryMediaFallback([
+    {
+      id: category.id,
+      name: category.name,
+      slug: category.slug ?? null,
+      priority: category.priority,
+      mediaType: category.mediaType || null,
+      mediaUrl: category.mediaUrl || null,
+      description: (category as any).description ?? null,
+    },
+  ]);
+  return enriched;
 }
 
 // Get a single category by slug (ЧПУ)
@@ -1516,15 +1524,18 @@ export async function sqlGetCategoryBySlug(slug: string) {
     where: { slug: slug || undefined },
   });
   if (!category) return null;
-  return {
-    id: category.id,
-    name: category.name,
-    slug: category.slug ?? null,
-    priority: category.priority,
-    mediaType: category.mediaType || null,
-    mediaUrl: category.mediaUrl || null,
-    description: (category as any).description ?? null,
-  };
+  const [enriched] = await applyCategoryMediaFallback([
+    {
+      id: category.id,
+      name: category.name,
+      slug: category.slug ?? null,
+      priority: category.priority,
+      mediaType: category.mediaType || null,
+      mediaUrl: category.mediaUrl || null,
+      description: (category as any).description ?? null,
+    },
+  ]);
+  return enriched;
 }
 
 // Get products by category slug
