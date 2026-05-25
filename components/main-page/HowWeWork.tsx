@@ -56,13 +56,13 @@ export default function HowWeWork() {
   return (
     <section
       id="about"
-      className="scroll-mt-[var(--site-header-offset)] site-section site-section--white"
+      className="scroll-mt-[var(--site-header-offset)] w-full bg-white"
       aria-labelledby="how-we-work-heading"
     >
       <div className={`max-w-[1920px] mx-auto px-6 lg:px-10 ${homeSectionOuterClass}`}>
         <h2
           id="how-we-work-heading"
-          className="site-heading mb-6 text-2xl lg:mb-8 lg:text-3xl"
+          className="mb-6 font-['Montserrat'] text-2xl font-semibold tracking-tight text-black lg:mb-8 lg:text-3xl"
         >
           Як ми працюємо?
         </h2>

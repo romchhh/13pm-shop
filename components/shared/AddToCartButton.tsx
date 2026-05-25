@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 
-import { SITE_ACCENT, SITE_ACCENT_DARK } from "@/lib/siteColors";
+const ACCENT = "#8B5E3F";
 
 type AddToCartButtonProps = {
   onClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
@@ -32,7 +32,7 @@ export default function AddToCartButton({
       className={`inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full font-['Montserrat'] font-semibold text-white transition-opacity ${
         size === "sm" ? "h-9 px-3 text-xs sm:h-10 sm:px-4 sm:text-sm" : "h-12 flex-1 px-5 text-sm sm:text-base"
       } ${isDisabled ? "cursor-not-allowed opacity-45" : "hover:opacity-90 active:opacity-95"} ${className}`}
-      style={{ background: `linear-gradient(135deg, ${SITE_ACCENT} 0%, ${SITE_ACCENT_DARK} 100%)` }}
+      style={{ backgroundColor: ACCENT }}
       aria-label={isDisabled ? "Немає в наявності" : label}
     >
       <Image
