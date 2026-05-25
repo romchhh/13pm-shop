@@ -17,7 +17,7 @@ export const siteContact = {
   telegramUrl: "https://t.me/+380932595149",
   email: "plywood_@ukr.net",
   scheduleLines: [
-    "Пн.-Пт.: 11.00 - 18.00",
+    "Пн.-Пт.: 09.00 - 18.00",
     "Сб.-Нд.: за попередньою домовленістю",
   ] as const,
   instagramUrl: "https://www.instagram.com/plywood_present",
