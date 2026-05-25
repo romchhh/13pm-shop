@@ -53,7 +53,7 @@ export function useProducts(options: UseProductsOptions = {}) {
         setLoading(true);
         setError(null);
 
-        let url = "/api/products";
+        let url = "/api/products/catalog";
         let cacheKey = CACHE_KEYS.PRODUCTS;
 
         if (topSale) {

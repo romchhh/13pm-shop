@@ -25,6 +25,8 @@ import {
   getCatalogAlignedVisibleCount,
 } from "@/lib/catalogVisibleCount";
 import { isCatalogPromoProduct } from "@/lib/isCatalogPromoProduct";
+import { productMatchesColorFilter } from "@/lib/catalogColorFilter";
+import type { ProductColorOption } from "@/lib/productOptions";
 
 interface Product {
   id: number;
@@ -54,6 +56,7 @@ interface Product {
   in_stock?: boolean;
   package_weight?: string | null;
   course?: string | null;
+  color_options?: ProductColorOption[];
 }
 
 interface Category {
@@ -115,6 +118,8 @@ export default function CatalogClient({
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
   const [minPriceInput, setMinPriceInput] = useState("");
   const [maxPriceInput, setMaxPriceInput] = useState("");
+  const [selectedColorInput, setSelectedColorInput] = useState<string | null>(null);
+  const [selectedColorFilter, setSelectedColorFilter] = useState<string | null>(null);
   const [isFiltering, setIsFiltering] = useState(false);
   const [basketError, setBasketError] = useState<string | null>(null);
   const initializedFromQueryRef = useRef(false);
@@ -258,6 +263,10 @@ export default function CatalogClient({
       const matchesPromo = !promoOnly || isCatalogPromoProduct(product);
       const matchesHits = !hitsOnly || product.is_hit === true;
       const matchesNew = !newOnly || product.is_new === true;
+      const matchesColor = productMatchesColorFilter(
+        product.color_options,
+        selectedColorFilter
+      );
       return (
         matchesCategory &&
         matchesSubcategory &&
@@ -265,16 +274,37 @@ export default function CatalogClient({
         matchesMaxPrice &&
         matchesPromo &&
         matchesHits &&
-        matchesNew
+        matchesNew &&
+        matchesColor
       );
     });
-  }, [initialProducts, minPrice, maxPrice, selectedCategories, selectedSubcategories, promoOnly, hitsOnly, newOnly]);
+  }, [
+    initialProducts,
+    minPrice,
+    maxPrice,
+    selectedCategories,
+    selectedSubcategories,
+    promoOnly,
+    hitsOnly,
+    newOnly,
+    selectedColorFilter,
+  ]);
 
   useEffect(() => {
     setIsFiltering(true);
     const timer = setTimeout(() => setIsFiltering(false), 200);
     return () => clearTimeout(timer);
-  }, [selectedCategories, selectedSubcategories, minPrice, maxPrice, sortOrder, promoOnly, hitsOnly, newOnly]);
+  }, [
+    selectedCategories,
+    selectedSubcategories,
+    minPrice,
+    maxPrice,
+    sortOrder,
+    promoOnly,
+    hitsOnly,
+    newOnly,
+    selectedColorFilter,
+  ]);
 
   const hasPromoProducts = useMemo(() => {
     return initialProducts.some((p) => isCatalogPromoProduct(p));
@@ -435,6 +465,7 @@ export default function CatalogClient({
   const handleApplyFilters = () => {
     setMinPrice(minPriceInput ? Number(minPriceInput) : null);
     setMaxPrice(maxPriceInput ? Number(maxPriceInput) : null);
+    setSelectedColorFilter(selectedColorInput);
     setMobileFiltersOpen(false);
   };
 
@@ -445,6 +476,8 @@ export default function CatalogClient({
     setMaxPrice(null);
     setMinPriceInput("");
     setMaxPriceInput("");
+    setSelectedColorInput(null);
+    setSelectedColorFilter(null);
     setPromoOnly(false);
     setHitsOnly(false);
     setNewOnly(false);
@@ -591,6 +624,8 @@ export default function CatalogClient({
                 promoOnly={promoOnly}
                 setPromoOnly={setPromoOnly}
                 hasPromoProducts={hasPromoProducts}
+                selectedColorInput={selectedColorInput}
+                setSelectedColorInput={setSelectedColorInput}
                 onClear={handleClearFilters}
                 onSave={handleApplyFilters}
                 onClose={() => setMobileFiltersOpen(false)}
@@ -620,6 +655,8 @@ export default function CatalogClient({
                 promoOnly={promoOnly}
                 setPromoOnly={setPromoOnly}
                 hasPromoProducts={hasPromoProducts}
+                selectedColorInput={selectedColorInput}
+                setSelectedColorInput={setSelectedColorInput}
                 onClear={handleClearFilters}
                 onSave={handleApplyFilters}
               />

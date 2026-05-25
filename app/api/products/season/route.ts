@@ -1,4 +1,4 @@
-import { sqlGetAllProducts } from "@/lib/sql";
+import { sqlGetCatalogProducts } from "@/lib/sql";
 import { NextResponse } from "next/server";
 import { apiLogger } from "@/lib/logger";
 
@@ -6,7 +6,7 @@ export const revalidate = 1200;
 
 export async function GET() {
   try {
-    const products = await sqlGetAllProducts();
+    const products = await sqlGetCatalogProducts();
     return NextResponse.json(products, {
       headers: {
         "Cache-Control": "public, s-maxage=1200, stale-while-revalidate=2400",

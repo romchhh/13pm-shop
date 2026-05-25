@@ -1,4 +1,4 @@
-import { sqlGetAllProducts, sqlGetProductsByCategory } from "@/lib/sql";
+import { sqlGetCatalogProducts, sqlGetProductsByCategory } from "@/lib/sql";
 import { NextResponse } from "next/server";
 import { apiLogger } from "@/lib/logger";
 
@@ -14,7 +14,7 @@ export async function GET(request: Request) {
     if (category) {
       products = await sqlGetProductsByCategory(category);
     } else {
-      products = await sqlGetAllProducts();
+      products = await sqlGetCatalogProducts();
     }
 
     return NextResponse.json(products, {

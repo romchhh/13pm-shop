@@ -2,7 +2,7 @@ import ProductServer from "@/components/product/ProductServer";
 import YouMightLike from "@/components/product/YouMightLike";
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { sqlGetProductBySlug, sqlGetProduct, sqlGetAllProducts } from "@/lib/sql";
+import { sqlGetProductBySlug, sqlGetProduct, sqlGetCatalogProducts, sqlGetAllProducts } from "@/lib/sql";
 import { SITE_STORE_NAME } from "@/lib/siteBrand";
 import { buildProductMetadata, productCanonicalPath } from "@/lib/seo";
 import { redirect, notFound } from "next/navigation";
@@ -80,9 +80,9 @@ export default async function Page({ params }: PageProps) {
     ? ((product as any).pair_together_ids as number[])
     : [];
 
-  // Схожі товари — спочатку з тієї ж підкатегорії, потім з тієї ж категорії, потім інші випадкові
-  const allProducts = await sqlGetAllProducts();
-  const others = allProducts.filter((p) => p.id !== product.id);
+  // Схожі товари — без дублів груп розмірів
+  const catalogProducts = await sqlGetCatalogProducts();
+  const others = catalogProducts.filter((p) => p.id !== product.id);
 
   // Допоміжний шифл
   const shuffle = <T,>(arr: T[]): T[] => {
@@ -166,8 +166,9 @@ export default async function Page({ params }: PageProps) {
     stock: (p as { stock?: number }).stock,
   }));
 
+  const allProductsForLinks = await sqlGetAllProducts();
   const boughtTogetherProducts = boughtTogetherIds.length
-    ? allProducts
+    ? allProductsForLinks
         .filter((p) => boughtTogetherIds.includes(p.id))
         .slice(0, 12)
         .map((p) => ({
@@ -190,7 +191,7 @@ export default async function Page({ params }: PageProps) {
     : [];
 
   const pairProducts = pairTogetherIds.length
-    ? allProducts
+    ? allProductsForLinks
         .filter((p) => pairTogetherIds.includes(p.id))
         .slice(0, 12)
         .map((p) => ({

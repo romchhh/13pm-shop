@@ -1,6 +1,7 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "./prisma";
 import { applyCategoryMediaFallback } from "@/lib/categoryMediaFallback";
+import { dedupeCatalogBySizeGroup } from "@/lib/dedupeCatalogBySizeGroup";
 import { unlink } from "fs/promises";
 import path from "path";
 import { unstable_cache } from "next/cache";
@@ -119,6 +120,7 @@ async function _sqlGetAllProducts() {
     first_media: p.media[0] ? { type: p.media[0].type, url: p.media[0].url } : null,
     is_new: (p as any).isNew ?? false,
     size_variants: (p as any).sizeVariants ?? [],
+    color_options: parseColorOptions((p as any).colorOptions ?? []),
   }));
 }
 
@@ -128,6 +130,21 @@ export const sqlGetAllProducts = unstable_cache(
   ['all-products'],
   {
     revalidate: 1200, // 20 minutes
+    tags: ['products'],
+  }
+);
+
+/** Каталог: один представник на групу розмірів (перший у size_variants). */
+async function _sqlGetCatalogProducts() {
+  const products = await _sqlGetAllProducts();
+  return dedupeCatalogBySizeGroup(products);
+}
+
+export const sqlGetCatalogProducts = unstable_cache(
+  _sqlGetCatalogProducts,
+  ['catalog-products-list'],
+  {
+    revalidate: 1200,
     tags: ['products'],
   }
 );
@@ -389,7 +406,7 @@ export async function sqlGetProductsByCategory(categoryName: string) {
         } as any,
       })) as any[];
 
-      return products.map((p: any) => ({
+      const mapped = products.map((p: any) => ({
         id: p.id,
         name: p.name,
         slug: p.slug ?? null,
@@ -422,7 +439,10 @@ export async function sqlGetProductsByCategory(categoryName: string) {
         course: p.course ?? null,
         first_media: p.media[0] ? { type: p.media[0].type, url: p.media[0].url } : null,
         is_new: (p as any).isNew ?? false,
+        size_variants: (p as any).sizeVariants ?? [],
+        color_options: parseColorOptions((p as any).colorOptions ?? []),
       }));
+      return dedupeCatalogBySizeGroup(mapped);
     },
     [`products-by-category-${categoryName}`],
     {
@@ -486,7 +506,7 @@ export async function sqlGetProductsBySubcategoryName(name: string) {
         } as any,
       })) as any[];
 
-      return products.map((p: any) => ({
+      const mapped = products.map((p: any) => ({
         id: p.id,
         name: p.name,
         slug: p.slug ?? null,
@@ -527,7 +547,10 @@ export async function sqlGetProductsBySubcategoryName(name: string) {
         course: p.course ?? null,
         first_media: p.media[0] ? { type: p.media[0].type, url: p.media[0].url } : null,
         is_new: (p as any).isNew ?? false,
+        size_variants: (p as any).sizeVariants ?? [],
+        color_options: parseColorOptions((p as any).colorOptions ?? []),
       }));
+      return dedupeCatalogBySizeGroup(mapped);
     },
     [`products-by-subcategory-${name}`],
     {
@@ -586,6 +609,7 @@ function mapHomeCarouselProduct(p: {
     category_name: p.category?.name || null,
     subcategory_name: p.subcategory?.name || null,
     first_media: p.media[0] ? { type: p.media[0].type, url: p.media[0].url } : null,
+    size_variants: (p as { sizeVariants?: unknown }).sizeVariants ?? [],
   };
 }
 
@@ -597,7 +621,7 @@ async function _sqlGetTopSaleProducts() {
     include: homeCarouselProductInclude,
   });
 
-  return products.map((p) => mapHomeCarouselProduct(p));
+  return dedupeCatalogBySizeGroup(products.map((p) => mapHomeCarouselProduct(p)));
 }
 
 // Cached version with 20 minute revalidation
@@ -618,7 +642,7 @@ async function _sqlGetLimitedEditionProducts() {
     include: homeCarouselProductInclude,
   });
 
-  return products.map((p) => mapHomeCarouselProduct(p));
+  return dedupeCatalogBySizeGroup(products.map((p) => mapHomeCarouselProduct(p)));
 }
 
 // Cached version with 20 minute revalidation

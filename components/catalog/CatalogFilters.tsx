@@ -31,6 +31,8 @@ interface CatalogFiltersProps {
   promoOnly: boolean;
   setPromoOnly: (v: boolean | ((b: boolean) => boolean)) => void;
   hasPromoProducts: boolean;
+  selectedColorInput: string | null;
+  setSelectedColorInput: (id: string | null) => void;
   onClear: () => void;
   onSave: () => void;
   onClose?: () => void;
@@ -79,6 +81,8 @@ export default function CatalogFilters({
   promoOnly,
   setPromoOnly,
   hasPromoProducts,
+  selectedColorInput,
+  setSelectedColorInput,
   onClear,
   onSave,
   onClose,
@@ -86,7 +90,6 @@ export default function CatalogFilters({
   const [openPrice, setOpenPrice] = useState(true);
   const [openColors, setOpenColors] = useState(true);
   const [openMaterial, setOpenMaterial] = useState(true);
-  const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [selectedMaterials, setSelectedMaterials] = useState<Set<string>>(new Set(["wood"]));
 
   const sliderMinBound = priceRange.min;
@@ -249,18 +252,20 @@ export default function CatalogFilters({
           <button
             key={c.id}
             type="button"
-            onClick={() => setSelectedColor((prev) => (prev === c.id ? null : c.id))}
+            onClick={() =>
+              setSelectedColorInput(selectedColorInput === c.id ? null : c.id)
+            }
             className={`flex h-10 w-10 items-center justify-center rounded-full ${c.className} shadow-inner ring-2 ring-offset-2 ${
-              selectedColor === c.id ? "ring-[#8B5E3F]" : "ring-transparent"
+              selectedColorInput === c.id ? "ring-[#8B5E3F]" : "ring-transparent"
             }`}
             aria-label={c.id}
           >
-            {selectedColor === c.id && c.id !== "white" && (
+            {selectedColorInput === c.id && c.id !== "white" && (
               <svg className="h-5 w-5 text-white" viewBox="0 0 12 10" fill="none">
                 <path d="M1 5l3 3 7-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             )}
-            {selectedColor === c.id && c.id === "white" && (
+            {selectedColorInput === c.id && c.id === "white" && (
               <svg className="h-5 w-5 text-black" viewBox="0 0 12 10" fill="none">
                 <path d="M1 5l3 3 7-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>

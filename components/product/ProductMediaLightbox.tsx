@@ -103,7 +103,7 @@ export default function ProductMediaLightbox({
               type="button"
               onClick={goPrev}
               disabled={activeIndex <= 0}
-              className="absolute left-1 z-20 flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-sm transition-opacity hover:bg-white/25 disabled:pointer-events-none disabled:opacity-25 sm:left-3 sm:h-12 sm:w-12"
+              className="absolute left-1 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-sm transition-opacity hover:bg-white/25 disabled:pointer-events-none disabled:opacity-25 sm:left-3 sm:h-12 sm:w-12"
               aria-label="Попереднє фото"
             >
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
@@ -164,7 +164,7 @@ export default function ProductMediaLightbox({
               type="button"
               onClick={goNext}
               disabled={activeIndex >= media.length - 1}
-              className="absolute right-1 z-20 flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-sm transition-opacity hover:bg-white/25 disabled:pointer-events-none disabled:opacity-25 sm:right-3 sm:h-12 sm:w-12"
+              className="absolute right-1 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-sm transition-opacity hover:bg-white/25 disabled:pointer-events-none disabled:opacity-25 sm:right-3 sm:h-12 sm:w-12"
               aria-label="Наступне фото"
             >
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>

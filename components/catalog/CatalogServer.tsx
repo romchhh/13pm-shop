@@ -1,10 +1,10 @@
 import CatalogClient from "./CatalogClient";
 import { SITE_STORE_NAME, SITE_PRODUCT_BRAND } from "@/lib/siteBrand";
-import { 
-  sqlGetAllProducts, 
-  sqlGetProductsByCategory, 
+import {
+  sqlGetCatalogProducts,
+  sqlGetProductsByCategory,
   sqlGetProductsBySubcategoryName,
-  sqlGetAllCategories
+  sqlGetAllCategories,
 } from "@/lib/sql";
 import { CollectionPageStructuredData, BreadcrumbStructuredData } from "@/components/shared/StructuredData";
 
@@ -46,7 +46,7 @@ async function getProducts(params: CatalogServerProps): Promise<Product[]> {
     } else if (category) {
       return await sqlGetProductsByCategory(category);
     }
-    return await sqlGetAllProducts();
+    return await sqlGetCatalogProducts();
   } catch (error) {
     console.error("Error fetching products:", error);
     return [];

@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import PageBreadcrumb from "@/components/admin/PageBreadCrumb";
+import AdminProductsBackLink from "@/components/admin/AdminProductsBackLink";
 import ComponentCard from "@/components/admin/ComponentCard";
 import Label from "@/components/admin/form/Label";
 import DropzoneComponent from "@/components/admin/form/form-elements/DropZone";
@@ -341,6 +342,7 @@ export default function EditProductPage() {
 
   return (
     <div className="min-w-0">
+      <AdminProductsBackLink />
       <PageBreadcrumb pageTitle="Редагувати товар" />
       <input
         ref={fileInputRef}

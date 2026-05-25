@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Table,
   TableBody,
@@ -36,31 +37,93 @@ interface Product {
   top_sale?: boolean;
   limited_edition?: boolean;
   category_name?: string;
+  category_ids?: number[];
   color: string;
   first_media?: { url: string; type: string } | null;
   size_variants?: unknown;
 }
 
+interface CategoryOption {
+  id: number;
+  name: string;
+}
+
+function parsePageParam(value: string | null): number {
+  const n = parseInt(value || "1", 10);
+  return Number.isFinite(n) && n >= 1 ? n : 1;
+}
+
+function parseCategoryParam(value: string | null): number | null {
+  if (!value || value === "all") return null;
+  const n = parseInt(value, 10);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+function productMatchesCategory(
+  product: Product,
+  categoryId: number | null,
+  categoriesById: Map<number, string>
+): boolean {
+  if (categoryId === null) return true;
+  const ids = product.category_ids ?? [];
+  if (ids.includes(categoryId)) return true;
+  const catName = categoriesById.get(categoryId);
+  if (catName && product.category_name === catName) return true;
+  return false;
+}
+
 export default function ProductsTable() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
   const productsPerPage = 10;
 
+  const selectedCategoryId = parseCategoryParam(searchParams.get("category"));
+  const currentPage = parsePageParam(searchParams.get("page"));
+
+  const listQueryString = searchParams.toString();
+
+  const updateListUrl = useCallback(
+    (page: number, categoryId: number | null) => {
+      const params = new URLSearchParams();
+      if (page > 1) params.set("page", String(page));
+      if (categoryId != null) params.set("category", String(categoryId));
+      const q = params.toString();
+      router.replace(q ? `${pathname}?${q}` : pathname, { scroll: false });
+    },
+    [pathname, router]
+  );
+
+  const categoriesById = useMemo(
+    () => new Map(categories.map((c) => [c.id, c.name])),
+    [categories]
+  );
+
+  const filteredProducts = useMemo(
+    () =>
+      products.filter((p) =>
+        productMatchesCategory(p, selectedCategoryId, categoriesById)
+      ),
+    [products, selectedCategoryId, categoriesById]
+  );
+
   const totalPages = useMemo(
-    () => Math.ceil(products.length / productsPerPage),
-    [products.length]
+    () => Math.max(1, Math.ceil(filteredProducts.length / productsPerPage)),
+    [filteredProducts.length, productsPerPage]
   );
 
   const paginatedProducts = useMemo(
     () =>
-      products.slice(
+      filteredProducts.slice(
         (currentPage - 1) * productsPerPage,
         currentPage * productsPerPage
       ),
-    [products, currentPage, productsPerPage]
+    [filteredProducts, currentPage, productsPerPage]
   );
 
   const sizeGroupLabelById = useMemo(
@@ -71,12 +134,11 @@ export default function ProductsTable() {
     [products]
   );
 
-  // Reset to first page if orders are changed (e.g., after deletion)
   useEffect(() => {
     if (currentPage > totalPages) {
-      setCurrentPage(totalPages || 1);
+      updateListUrl(totalPages, selectedCategoryId);
     }
-  }, [products, currentPage, totalPages]);
+  }, [currentPage, totalPages, selectedCategoryId, updateListUrl]);
 
   // Функція для очищення кешу
   const clearCache = () => {
@@ -117,11 +179,14 @@ export default function ProductsTable() {
   }
 
   useEffect(() => {
-    async function fetchProducts() {
+    async function fetchData() {
       try {
-        const res = await fetch("/api/products", { cache: "no-store" });
-        if (!res.ok) throw new Error("Failed to fetch products");
-        const data = await res.json();
+        const [productsRes, categoriesRes] = await Promise.all([
+          fetch("/api/products", { cache: "no-store" }),
+          fetch("/api/categories", { cache: "no-store" }),
+        ]);
+        if (!productsRes.ok) throw new Error("Failed to fetch products");
+        const data = await productsRes.json();
         setProducts(data);
         const now = Date.now();
         localStorage.setItem(CACHE_KEY, JSON.stringify(data));
@@ -129,23 +194,58 @@ export default function ProductsTable() {
           CACHE_EXPIRY_KEY,
           (now + CACHE_DURATION).toString()
         );
+        if (categoriesRes.ok) {
+          const cats: CategoryOption[] = await categoriesRes.json();
+          setCategories(cats);
+        }
       } catch (error) {
         console.error("Error fetching products:", error);
       } finally {
         setLoading(false);
       }
     }
-    fetchProducts();
+    fetchData();
   }, []);
+
+  const returnTo = listQueryString
+    ? `${pathname}?${listQueryString}`
+    : pathname;
 
   return (
     <div className="overflow-hidden rounded-xl border border-gray-300 bg-white shadow-sm">
       <div className="overflow-x-auto">
         <div className="min-w-[1200px]">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 bg-gray-50">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Продукти
-            </h2>
+          <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-gray-200 bg-gray-50">
+            <div className="flex flex-wrap items-center gap-3">
+              <h2 className="text-lg font-semibold text-gray-900">Продукти</h2>
+              <label className="flex items-center gap-2 text-sm text-gray-700">
+                <span className="font-medium whitespace-nowrap">Категорія:</span>
+                <select
+                  value={selectedCategoryId ?? "all"}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    updateListUrl(
+                      1,
+                      v === "all" ? null : parseInt(v, 10)
+                    );
+                  }}
+                  className="min-w-[180px] rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="all">Усі категорії</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {selectedCategoryId != null && (
+                <span className="text-sm text-gray-500">
+                  {filteredProducts.length}{" "}
+                  {filteredProducts.length === 1 ? "товар" : "товарів"}
+                </span>
+              )}
+            </div>
             <div className="flex gap-2">
               <button
                 onClick={clearCache}
@@ -155,7 +255,11 @@ export default function ProductsTable() {
                 🔄 Оновити
               </button>
               <Link
-                href="/admin/products/add"
+                href={
+                  listQueryString
+                    ? `/admin/products/add?return=${encodeURIComponent(returnTo)}`
+                    : "/admin/products/add"
+                }
                 className="inline-block rounded-md bg-green-500 px-4 py-2 text-white text-sm font-medium hover:bg-green-600 transition shadow-sm"
               >
                 + Додати продукт
@@ -245,13 +349,15 @@ export default function ProductsTable() {
                     Завантаження...
                   </TableCell>
                 </TableRow>
-              ) : products.length === 0 ? (
+              ) : filteredProducts.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={11}
                     className="text-center py-6 text-gray-600"
                   >
-                    Продуктів не знайдено.
+                    {selectedCategoryId != null
+                      ? "У цій категорії товарів не знайдено."
+                      : "Продуктів не знайдено."}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -316,7 +422,7 @@ export default function ProductsTable() {
                     </TableCell>
                     <TableCell className="px-5 py-4 space-x-2">
                       <Link
-                        href={`/admin/products/${product.id}/edit`}
+                        href={`/admin/products/${product.id}/edit?return=${encodeURIComponent(returnTo)}`}
                         scroll={false}
                         className="inline-block rounded-md bg-blue-500 px-3 py-1.5 text-white text-sm font-medium hover:bg-blue-600 transition shadow-sm"
                       >
@@ -336,12 +442,12 @@ export default function ProductsTable() {
           </Table>
 
           {/* Pagination */}
-          {!loading && products.length > productsPerPage && (
+          {!loading && filteredProducts.length > productsPerPage && (
             <div className="flex justify-end px-5 py-4 border-t border-gray-200 bg-gray-50">
               <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}
-                onPageChange={(page) => setCurrentPage(page)}
+                onPageChange={(page) => updateListUrl(page, selectedCategoryId)}
               />
             </div>
           )}

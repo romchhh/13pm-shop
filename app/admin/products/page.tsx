@@ -1,7 +1,7 @@
 import PageBreadcrumb from "@/components/admin/PageBreadCrumb";
 import ProductsTable from "@/components/admin/tables/ProductsTable";
 import { Metadata } from "next";
-import React from "react";
+import React, { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "Next.js Basic Table | TailAdmin - Next.js Dashboard Template",
@@ -15,7 +15,15 @@ export default function BasicTables() {
     <div>
       <PageBreadcrumb pageTitle="Таблиця Продуктів" />
       <div className="space-y-6">
+        <Suspense
+          fallback={
+            <div className="rounded-xl border border-gray-300 bg-white px-5 py-8 text-center text-gray-600">
+              Завантаження таблиці…
+            </div>
+          }
+        >
           <ProductsTable />
+        </Suspense>
       </div>
     </div>
   );

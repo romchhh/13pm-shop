@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import PageBreadcrumb from "@/components/admin/PageBreadCrumb";
+import AdminProductsBackLink from "@/components/admin/AdminProductsBackLink";
 import ComponentCard from "@/components/admin/ComponentCard";
 import Label from "@/components/admin/form/Label";
 import DropzoneComponent from "@/components/admin/form/form-elements/DropZone";
@@ -237,6 +238,7 @@ export default function AddProductPage() {
 
   return (
     <div className="min-w-0">
+      <AdminProductsBackLink />
       <PageBreadcrumb pageTitle="Додати товар" />
       <input
         ref={fileInputRef}
