@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import ProductClient from "./ProductClient";
 import type { Product } from "@/lib/types/product";
+import { scrollPageToTopReliable } from "@/lib/scrollPageToTop";
 
 interface ProductClientWrapperProps {
   product: Product;
@@ -15,10 +16,8 @@ export default function ProductClientWrapper({ product }: ProductClientWrapperPr
     setIsMounted(true);
   }, []);
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-    }
+  useLayoutEffect(() => {
+    scrollPageToTopReliable();
   }, [product.id]);
 
   // Only render ProductClient after component is mounted on client

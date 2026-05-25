@@ -34,6 +34,7 @@ import CategoryDescriptionMarkdown from "@/components/shared/CategoryDescription
 import { isProductOutOfStock } from "@/lib/productAvailability";
 import { productToFavoriteSnapshot } from "@/lib/favoritesStorage";
 import FavoriteButton from "@/components/shared/FavoriteButton";
+import { scrollPageToTopReliable } from "@/lib/scrollPageToTop";
 
 const ACCENT = "#8B5E3F";
 
@@ -253,7 +254,8 @@ export default function ProductClient({ product }: ProductClientProps) {
 
   const onSizeClick = (v: ProductSizeVariant) => {
     if (v.productId === product.id) return;
-    router.push(productHref(v.slug, v.productId));
+    scrollPageToTopReliable();
+    router.push(productHref(v.slug, v.productId), { scroll: true });
   };
 
   const thumbWrap =

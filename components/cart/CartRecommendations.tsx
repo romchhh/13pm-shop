@@ -51,14 +51,14 @@ export default function CartRecommendations() {
       )}
       <HomeSectionCarousel title="Вам також може сподобатися" catalogHref="/catalog">
         {filtered.map((product, index) => (
-          <div key={product.id} className={homeCarouselItemClass}>
+          <div key={product.id} className={`${homeCarouselItemClass} flex self-stretch`}>
             <CatalogProductCard
               product={product}
               showSubtitle={false}
               onAddToCart={handleAddToCart}
               imagePriority={index < 2}
               imageLoading={index < 4 ? "eager" : "lazy"}
-              className="h-full"
+              className="h-full w-full min-h-full"
             />
           </div>
         ))}

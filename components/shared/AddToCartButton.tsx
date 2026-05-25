@@ -29,8 +29,10 @@ export default function AddToCartButton({
       type="button"
       onClick={onClick}
       disabled={isDisabled}
-      className={`inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full font-['Montserrat'] font-semibold text-white transition-opacity ${
-        size === "sm" ? "h-9 px-3 text-xs sm:h-10 sm:px-4 sm:text-sm" : "h-12 flex-1 px-5 text-sm sm:text-base"
+      className={`flex items-center justify-center gap-1.5 rounded-full font-['Montserrat'] font-semibold text-white transition-opacity ${
+        size === "sm"
+          ? "h-9 min-h-9 px-3 text-xs lg:h-10 lg:px-4 lg:text-sm"
+          : "h-12 min-h-12 flex-1 px-5 text-sm sm:text-base"
       } ${isDisabled ? "cursor-not-allowed opacity-45" : "hover:opacity-90 active:opacity-95"} ${className}`}
       style={{ backgroundColor: ACCENT }}
       aria-label={isDisabled ? "Немає в наявності" : label}

@@ -79,8 +79,9 @@ export function productCardTitleClass(hasSubtitle: boolean): string {
   );
 }
 
+/** До lg картка вузька (2 в ряд у каталозі / каруселі) — ціна над кнопкою. */
 export function productCardPriceRowClass(): string {
-  return "mt-auto flex flex-col items-start gap-2 pt-4 sm:flex-row sm:items-end sm:justify-between sm:gap-3";
+  return "mt-auto flex w-full flex-col items-stretch gap-2 pt-4 lg:flex-row lg:items-end lg:justify-between lg:gap-3";
 }
 
 export function productCardStrikePriceClass(): string {

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import { scrollPageToTopReliable } from "@/lib/scrollPageToTop";
 
 interface MainContentProps {
   children: React.ReactNode;
@@ -24,9 +25,8 @@ export default function MainContent({ children, id }: MainContentProps) {
     }
   }, []);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  useLayoutEffect(() => {
+    scrollPageToTopReliable();
   }, [pathname]);
 
   return (

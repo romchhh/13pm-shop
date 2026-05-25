@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { getProductImageSrc } from "@/lib/getFirstProductImage";
+import { scrollPageToTopReliable } from "@/lib/scrollPageToTop";
 import { useProducts } from "@/lib/useProducts";
 import { useBodyScrollLock } from "@/lib/useBodyScrollLock";
 
@@ -139,7 +140,6 @@ function ProductResultRow({
     <li>
       <Link
         href={href}
-        scroll={false}
         onClick={(e) => {
           e.preventDefault();
           onSelect();
@@ -321,7 +321,8 @@ export default function SearchSidebar({
       setShowSuggestions(false);
       setSelectedSuggestionIndex(-1);
       setIsOpen(false);
-      router.push(`/product/${product.slug ?? product.id}`);
+      scrollPageToTopReliable();
+      router.push(`/product/${product.slug ?? product.id}`, { scroll: true });
     },
     [router, setIsOpen]
   );

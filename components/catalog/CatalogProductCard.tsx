@@ -103,12 +103,7 @@ export default function CatalogProductCard({
   return (
     <Link
       href={href}
-      scroll={false}
-      onClick={() => {
-        if (typeof window !== "undefined") {
-          window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-        }
-      }}
+      scroll
       className={productCardRootClass(className)}
     >
       <div className={productCardMediaWrapClass()}>
@@ -205,10 +200,11 @@ export default function CatalogProductCard({
               {displayPrice.toLocaleString("uk-UA")} ₴
             </p>
           </div>
-          <div className="shrink-0 w-full sm:w-auto">
+          <div className="w-full shrink-0 lg:w-auto">
             <AddToCartButton
               size="sm"
               disabled={outOfStock}
+              className="w-full lg:w-auto"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();

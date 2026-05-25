@@ -1,4 +1,5 @@
 import ProductServer from "@/components/product/ProductServer";
+import ProductRouteScrollToTop from "@/components/product/ProductRouteScrollToTop";
 import YouMightLike from "@/components/product/YouMightLike";
 import { Suspense } from "react";
 import type { Metadata } from "next";
@@ -218,6 +219,7 @@ export default async function Page({ params }: PageProps) {
 
   return (
     <main className="min-h-screen bg-[#FFFFFF]">
+      <ProductRouteScrollToTop />
       <Suspense fallback={<div className="text-center py-20 text-lg">Завантаження товару...</div>}>
         <ProductServer product={product} />
       </Suspense>
