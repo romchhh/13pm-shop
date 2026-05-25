@@ -28,14 +28,14 @@ export default function ReviewsCarousel({ media }: ReviewsCarouselProps) {
   return (
     <section
       id="reviews"
-      className="scroll-mt-[var(--site-header-offset)] w-full bg-white"
+      className="scroll-mt-[var(--site-header-offset)] site-section site-section--alt"
       aria-labelledby="reviews-heading"
     >
       <div className={`max-w-[1920px] mx-auto px-6 lg:px-10 ${homeSectionOuterClass}`}>
         <div className={homeSectionHeaderRowClass}>
           <h2
             id="reviews-heading"
-            className="font-['Montserrat'] text-2xl font-semibold tracking-tight text-black lg:text-3xl"
+            className="site-heading text-2xl lg:text-3xl"
           >
             Відгуки
           </h2>
@@ -43,7 +43,7 @@ export default function ReviewsCarousel({ media }: ReviewsCarouselProps) {
             <button
               type="button"
               onClick={() => scroll("left")}
-              className="p-2 text-[#8B5E3F] hover:opacity-70 transition-opacity"
+              className="rounded-full p-2 text-[var(--brand-olive)] transition-opacity hover:bg-white/60 hover:opacity-80"
               aria-label="Попередній відгук"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -53,7 +53,7 @@ export default function ReviewsCarousel({ media }: ReviewsCarouselProps) {
             <button
               type="button"
               onClick={() => scroll("right")}
-              className="p-2 text-[#8B5E3F] hover:opacity-70 transition-opacity"
+              className="rounded-full p-2 text-[var(--brand-olive)] transition-opacity hover:bg-white/60 hover:opacity-80"
               aria-label="Наступний відгук"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -73,7 +73,7 @@ export default function ReviewsCarousel({ media }: ReviewsCarouselProps) {
               key={item.src}
               className="flex-shrink-0 w-[min(85vw,320px)] sm:w-[340px] lg:w-[380px]"
             >
-              <div className="overflow-hidden rounded-2xl">
+              <div className="site-media-frame overflow-hidden">
                 {item.type === "video" ? (
                   <video
                     src={item.src}

@@ -73,8 +73,8 @@ export default function Hero({ slides }: HeroProps) {
           onClick={() => setActiveSlide(i)}
           className={`rounded-full transition-all ${
             i === activeSlide
-              ? "h-2.5 w-2.5 bg-[#8B5E3F] lg:bg-white"
-              : "h-2 w-2 border-2 border-[#8B5E3F] bg-transparent lg:border-white/90"
+              ? "h-2.5 w-2.5 bg-[var(--brand-olive)] lg:bg-white"
+              : "h-2 w-2 border-2 border-[var(--brand-olive)] bg-transparent lg:border-white/90"
           } cursor-pointer`}
           aria-label={i === activeSlide ? `Слайд ${i + 1}` : `Перейти до слайду ${i + 1}`}
           aria-current={i === activeSlide ? "true" : undefined}
@@ -117,7 +117,7 @@ export default function Hero({ slides }: HeroProps) {
             </div>
           ))}
           <div
-            className="pointer-events-none absolute inset-0 hidden bg-gradient-to-r from-[#E8E4DC]/92 via-[#E8E4DC]/55 to-transparent lg:block lg:max-w-[62%] lg:from-[#E8E4DC]/88 lg:via-[#E8E4DC]/35"
+            className="pointer-events-none absolute inset-0 hidden bg-gradient-to-r from-[var(--background-color-light)]/95 via-[var(--background-color-light)]/60 to-transparent lg:block lg:max-w-[65%] lg:from-[var(--background-color-light)]/92 lg:via-[var(--brand-olive-soft)]/40"
             aria-hidden
           />
           <div
@@ -165,10 +165,10 @@ export default function Hero({ slides }: HeroProps) {
 
         <div className="relative z-10 flex min-h-0 flex-1 flex-col px-6 pb-8 pt-[calc(var(--site-nav-height)+0.75rem)] lg:hidden">
           <div className="max-w-[340px] space-y-3">
-            <h1 className="text-left text-black" style={heroTitleStyleMobile}>
+            <h1 className="text-left text-[var(--brand-olive-dark)]" style={heroTitleStyleMobile}>
               {slide.title}
             </h1>
-            <p className="text-left text-black/90" style={heroSubtitleStyle}>
+            <p className="text-left text-[var(--brand-olive-dark)]/85" style={heroSubtitleStyle}>
               {slide.subtitle}
             </p>
           </div>
@@ -177,7 +177,7 @@ export default function Hero({ slides }: HeroProps) {
 
           <Link
             href="/catalog"
-            className="flex w-full items-center justify-center rounded-full bg-white py-4 font-['Montserrat'] text-base font-medium text-black shadow-sm transition-colors hover:bg-[#FFF9F0]"
+            className="site-btn-primary flex w-full py-4 font-['Montserrat'] text-base"
             style={{ letterSpacing: "-0.02em" }}
           >
             Переглянути каталог
@@ -187,16 +187,16 @@ export default function Hero({ slides }: HeroProps) {
         <div className="relative z-10 mx-auto hidden h-full min-h-full w-full max-w-[1920px] items-center px-14 pb-20 pt-[calc(var(--site-nav-height)+0.5rem)] xl:px-20 lg:flex">
           <div className="flex w-full max-w-[600px] flex-col items-start gap-8 xl:max-w-[720px]">
             <div className="space-y-5 xl:space-y-6">
-              <h1 className="text-left text-black" style={heroTitleStyleDesktop}>
+              <h1 className="text-left text-[var(--brand-olive-dark)]" style={heroTitleStyleDesktop}>
                 {slide.title}
               </h1>
-              <p className="max-w-xl text-left text-black/90" style={heroSubtitleStyle}>
+              <p className="max-w-xl text-left text-[var(--brand-olive-dark)]/85" style={heroSubtitleStyle}>
                 {slide.subtitle}
               </p>
             </div>
             <Link
               href="/catalog"
-              className="inline-flex min-h-[60px] items-center justify-center rounded-full bg-white px-16 py-5 font-['Montserrat'] text-2xl font-medium text-black shadow-md transition-colors hover:bg-[#FFF9F0] xl:min-h-[64px] xl:px-[4.5rem] xl:py-5 xl:text-[26px]"
+              className="site-btn-primary inline-flex min-h-[60px] px-16 py-5 font-['Montserrat'] text-2xl xl:min-h-[64px] xl:px-[4.5rem] xl:py-5 xl:text-[26px]"
               style={{ letterSpacing: "-0.02em" }}
             >
               Переглянути каталог
@@ -212,7 +212,7 @@ export default function Hero({ slides }: HeroProps) {
       </div>
 
       {pagination && (
-        <div className="relative z-20 flex shrink-0 items-center justify-center bg-white py-3.5 lg:hidden">
+        <div className="relative z-20 flex shrink-0 items-center justify-center bg-[var(--background-color-light)] py-3.5 lg:hidden">
           {pagination}
         </div>
       )}

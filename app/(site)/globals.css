@@ -1,80 +1,77 @@
 @import "tailwindcss";
 
 :root {
-  --background-color-light: #FFF9F0;
-  --background-warm-yellow: #FFF9F0;
-  --text-color-light: #1e1e1e;
-  
-  /* Extended spacing scale for consistency */
-  --spacing-xs: 0.25rem;    /* 4px */
-  --spacing-sm: 0.5rem;     /* 8px */
-  --spacing-md: 1rem;       /* 16px */
-  --spacing-lg: 1.5rem;     /* 24px */
-  --spacing-xl: 2rem;       /* 32px */
-  --spacing-2xl: 3rem;      /* 48px */
-  --spacing-3xl: 4rem;      /* 64px */
-  --spacing-4xl: 6rem;      /* 96px */
-  
-  /* Extended color palette */
-  --color-primary: #000000;
-  --color-primary-hover: #1a1a1a;
-  --color-primary-light: #333333;
+  /* Оливкова елітна айдентика */
+  --brand-olive: #5c6b4a;
+  --brand-olive-elite: #4a5840;
+  --brand-olive-dark: #2e3826;
+  --brand-olive-muted: #7a8b68;
+  --brand-olive-light: #e8ede2;
+  --brand-olive-soft: #f3f5f0;
+  --brand-cream: #eeebe4;
+  --brand-footer: #d4dac8;
+
+  /* Світлий фон */
+  --background-color-light: #fafbf8;
+  --background-warm-yellow: #f5f3ee;
+
+  --text-color-light: #2a3324;
+  --color-primary: var(--brand-olive-dark);
+  --color-primary-hover: var(--brand-olive-elite);
   --color-secondary: #ffffff;
-  --color-secondary-hover: #f5f5f5;
-  --color-border: rgba(0, 0, 0, 0.1);
-  --color-border-hover: rgba(0, 0, 0, 0.2);
-  --color-text: #1e1e1e;
-  --color-text-muted: rgba(0, 0, 0, 0.6);
-  --color-text-light: rgba(0, 0, 0, 0.4);
-  --color-error: #dc2626;
-  --color-success: #16a34a;
-  --color-warning: #ea580c;
-  --color-info: #2563eb;
-  
-  /* Typography scale */
-  --font-size-xs: 0.75rem;    /* 12px */
-  --font-size-sm: 0.875rem;   /* 14px */
-  --font-size-base: 1rem;     /* 16px */
-  --font-size-lg: 1.125rem;   /* 18px */
-  --font-size-xl: 1.25rem;    /* 20px */
-  --font-size-2xl: 1.5rem;    /* 24px */
-  --font-size-3xl: 1.875rem; /* 30px */
-  --font-size-4xl: 2.25rem;  /* 36px */
-  --font-size-5xl: 3rem;      /* 48px */
-  --font-size-6xl: 3.75rem;  /* 60px */
-  
+  --color-border: rgba(74, 88, 64, 0.12);
+  --color-border-hover: rgba(74, 88, 64, 0.22);
+  --color-text: var(--text-color-light);
+  --color-text-muted: rgba(42, 51, 36, 0.62);
+  --color-text-light: rgba(42, 51, 36, 0.42);
+
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+  --spacing-3xl: 4rem;
+  --spacing-4xl: 6rem;
+
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+  --font-size-4xl: 2.25rem;
+  --font-size-5xl: 3rem;
+  --font-size-6xl: 3.75rem;
+
   --font-weight-light: 300;
   --font-weight-normal: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
-  
+
   --line-height-tight: 1.25;
   --line-height-normal: 1.5;
   --line-height-relaxed: 1.75;
-  
-  /* Border radius scale */
-  --radius-sm: 0.25rem;   /* 4px */
-  --radius-md: 0.5rem;    /* 8px */
-  --radius-lg: 0.75rem;   /* 12px */
-  --radius-xl: 1rem;      /* 16px */
-  --radius-2xl: 1.5rem;   /* 24px */
-  --radius-full: 9999px;
-  
-  /* Shadow scale */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  
-  /* Transitions */
-  --transition-fast: 150ms ease-in-out;
-  --transition-base: 200ms ease-in-out;
-  --transition-slow: 300ms ease-in-out;
-  --transition-slower: 500ms ease-in-out;
-  
-  /* Z-index scale */
+
+  /* М’якіші радіуси — менше «квадратності» */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.75rem;
+  --radius-3xl: 2.25rem;
+  --radius-pill: 9999px;
+
+  --shadow-soft: 0 4px 24px rgba(74, 88, 64, 0.08);
+  --shadow-card: 0 8px 32px rgba(74, 88, 64, 0.1);
+  --shadow-elevated: 0 16px 48px rgba(74, 88, 64, 0.12);
+
+  --transition-fast: 150ms ease;
+  --transition-base: 220ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 360ms cubic-bezier(0.4, 0, 0.2, 1);
+
   --z-base: 0;
   --z-dropdown: 1000;
   --z-sticky: 1020;
@@ -84,14 +81,10 @@
   --z-popover: 1060;
   --z-tooltip: 1070;
 
-  /* Контактна смуга (#8B5E3F) — hero починається одразу під нею */
   --site-contact-bar-height: 2.5rem;
-  /* Висота рядка навігації (лого + меню) */
   --site-nav-height: 4rem;
-  /* Повний хедер — для інших сторінок і відступу контенту */
   --site-header-offset: calc(var(--site-contact-bar-height) + var(--site-nav-height));
 
-  /* Шари хедера та оверлеїв (пошук, кошик, меню) */
   --z-site-header: 50;
   --z-site-contact-bar: 60;
   --z-site-overlay-backdrop: 65;
@@ -108,9 +101,10 @@
 body {
   background-color: var(--background-color-light);
   color: var(--text-color-light);
-  font-family: 'Montserrat', sans-serif;
+  font-family: "Montserrat", sans-serif;
   font-weight: 400;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.015em;
+  -webkit-font-smoothing: antialiased;
 }
 
 html {
@@ -118,20 +112,89 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Ensure all text elements use Montserrat by default */
 * {
   font-family: inherit;
   letter-spacing: inherit;
 }
 
-/* Force Montserrat font for all buttons and links */
 button,
 a {
-  font-family: 'Montserrat', sans-serif !important;
-  letter-spacing: 0.02em;
+  font-family: "Montserrat", sans-serif !important;
+  letter-spacing: 0.015em;
 }
 
-/* Range input styles */
+/* Утиліти прототипу */
+.site-section {
+  width: 100%;
+}
+
+.site-section--alt {
+  background: linear-gradient(180deg, var(--brand-olive-soft) 0%, var(--background-color-light) 100%);
+}
+
+.site-section--white {
+  background: #fff;
+}
+
+.site-card {
+  border-radius: var(--radius-3xl);
+  border: 1px solid var(--color-border);
+  background: #fff;
+  box-shadow: var(--shadow-soft);
+  transition: box-shadow var(--transition-base), transform var(--transition-base);
+}
+
+.site-card:hover {
+  box-shadow: var(--shadow-card);
+}
+
+.site-heading {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--brand-olive-dark);
+}
+
+.site-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(135deg, var(--brand-olive) 0%, var(--brand-olive-elite) 100%);
+  color: #fff;
+  font-weight: 600;
+  transition: opacity var(--transition-fast), transform var(--transition-fast),
+    box-shadow var(--transition-base);
+  box-shadow: 0 4px 16px rgba(74, 88, 64, 0.25);
+}
+
+.site-btn-primary:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(74, 88, 64, 0.3);
+}
+
+.site-btn-ghost {
+  border-radius: var(--radius-pill);
+  border: 1.5px solid rgba(74, 88, 64, 0.2);
+  color: var(--brand-olive-dark);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.site-btn-ghost:hover {
+  background: #fff;
+  border-color: var(--brand-olive-muted);
+}
+
+.site-media-frame {
+  overflow: hidden;
+  border-radius: var(--radius-3xl);
+  box-shadow: var(--shadow-soft);
+}
+
+/* Range input */
 input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
@@ -140,9 +203,9 @@ input[type="range"] {
 }
 
 input[type="range"]::-webkit-slider-track {
-  background: #e5e7eb;
+  background: var(--brand-olive-light);
   height: 8px;
-  border-radius: 4px;
+  border-radius: var(--radius-pill);
 }
 
 input[type="range"]::-webkit-slider-thumb {
@@ -151,27 +214,26 @@ input[type="range"]::-webkit-slider-thumb {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #111827;
+  background: var(--brand-olive);
   cursor: pointer;
   margin-top: -5px;
 }
 
 input[type="range"]::-moz-range-track {
-  background: #e5e7eb;
+  background: var(--brand-olive-light);
   height: 8px;
-  border-radius: 4px;
+  border-radius: var(--radius-pill);
 }
 
 input[type="range"]::-moz-range-thumb {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #111827;
+  background: var(--brand-olive);
   cursor: pointer;
   border: none;
 }
 
-/* Каталог: подвійний слайдер ціни — видимі кружечки */
 .catalog-price-range-input {
   -webkit-appearance: none;
   appearance: none;
@@ -191,15 +253,15 @@ input[type="range"]::-moz-range-thumb {
   height: 20px;
   margin-top: -7px;
   border-radius: 50%;
-  background: #8b5e3f;
+  background: var(--brand-olive);
   border: 2px solid #fff;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 2px 8px rgba(74, 88, 64, 0.22);
   cursor: grab;
 }
 
 .catalog-price-range-input:active::-webkit-slider-thumb {
   cursor: grabbing;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
+  box-shadow: 0 3px 12px rgba(74, 88, 64, 0.28);
 }
 
 .catalog-price-range-input::-moz-range-track {
@@ -212,49 +274,45 @@ input[type="range"]::-moz-range-thumb {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: #8b5e3f;
+  background: var(--brand-olive);
   border: 2px solid #fff;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 2px 8px rgba(74, 88, 64, 0.22);
   cursor: grab;
 }
 
 .catalog-price-range-input:focus-visible::-webkit-slider-thumb,
 .catalog-price-range-input:focus-visible::-moz-range-thumb {
-  outline: 2px solid #8b5e3f;
+  outline: 2px solid var(--brand-olive);
   outline-offset: 2px;
 }
 
-/* Enhanced focus states for accessibility */
 *:focus-visible {
-  outline: 2px solid var(--color-primary);
+  outline: 2px solid var(--brand-olive);
   outline-offset: 2px;
-  outline-radius: var(--radius-sm);
 }
 
 button:focus-visible,
 a:focus-visible {
-  outline: 2px solid var(--color-primary);
+  outline: 2px solid var(--brand-olive);
   outline-offset: 2px;
 }
 
-/* Skip link for keyboard navigation */
 .skip-link {
   position: absolute;
   top: -40px;
   left: 0;
-  background: var(--color-primary);
-  color: var(--color-secondary);
+  background: var(--brand-olive-elite);
+  color: #fff;
   padding: var(--spacing-sm) var(--spacing-md);
   text-decoration: none;
   z-index: var(--z-tooltip);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
 }
 
 .skip-link:focus {
   top: var(--spacing-md);
 }
 
-/* Optimize animations for reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -265,24 +323,21 @@ a:focus-visible {
   }
 }
 
-/* Performance optimizations */
 img,
 video {
   content-visibility: auto;
 }
 
-/* Will-change for animated elements */
 .group:hover img,
 .group:hover video {
   will-change: opacity;
 }
 
-/* Hide scrollbar utility */
 .scrollbar-hide {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 .scrollbar-hide::-webkit-scrollbar {
-  display: none; /* Chrome, Safari and Opera */
+  display: none;
 }

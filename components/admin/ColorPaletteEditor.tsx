@@ -47,8 +47,9 @@ export default function ColorPaletteEditor({ rows, onChange }: Props) {
   return (
     <div className="space-y-3">
       <p className="text-[11px] text-gray-500">
-        Оберіть колір з палітри або вкажіть HEX. Назва показується на сайті. Для виробів з
-        фанери: білий колір на сайті дає +{WHITE_COLOR_SURCHARGE_UAH} грн до ціни.
+        Оберіть колір з палітри або вкажіть HEX. Назва показується на сайті. Доплата +
+        {WHITE_COLOR_SURCHARGE_UAH} грн за білий — лише якщо в описі товару є рядок «Матеріал:
+        …фанер…» (короткий або детальний опис).
       </p>
       <div className="flex flex-wrap gap-2">
         {PRESET_SWATCHES.map((hex) => (

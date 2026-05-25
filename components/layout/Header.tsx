@@ -57,7 +57,12 @@ function TopContactBar({ className = "" }: { className?: string }) {
   const primaryPhone = siteContact.phones[0];
 
   return (
-    <div className={`bg-[#8B5E3F] text-white shrink-0 ${className}`}>
+    <div
+      className={`shrink-0 text-white ${className}`}
+      style={{
+        background: "linear-gradient(90deg, var(--brand-olive-elite) 0%, var(--brand-olive) 50%, var(--brand-olive-muted) 100%)",
+      }}
+    >
       <div className="max-w-[1920px] mx-auto px-3 sm:px-6 lg:px-12 min-h-10 lg:min-h-11 py-1.5 flex flex-nowrap items-center justify-between gap-2 lg:gap-6">
         <p className="min-w-0 font-['Montserrat'] text-[10px] leading-tight sm:text-xs font-medium lg:text-sm truncate">
           {LABEL_FREE_DELIVERY_FROM_2000}
@@ -209,7 +214,7 @@ export default function Header() {
 
   const shellClass = headerTransparent
     ? "bg-transparent border-transparent shadow-none"
-    : "bg-white border-[#E8E0D5] shadow-sm";
+    : "bg-white/92 border-[var(--color-border)] shadow-[var(--shadow-soft)] backdrop-blur-md";
 
   return (
     <>
@@ -236,7 +241,7 @@ export default function Header() {
               />
             </Link>
 
-            <nav className="flex items-center justify-center gap-6 xl:gap-8 flex-1 min-w-0 font-['Montserrat'] text-[15px] text-[#3D1A00]">
+            <nav className="flex items-center justify-center gap-6 xl:gap-8 flex-1 min-w-0 font-['Montserrat'] text-[15px] text-[var(--brand-olive-dark)]">
               <div
                 ref={catalogRef}
                 className="relative"
@@ -248,8 +253,8 @@ export default function Header() {
               >
                 <button
                   type="button"
-                  className={`inline-flex items-center gap-1.5 whitespace-nowrap hover:text-[#8B5E3F] transition-colors ${
-                    catalogOpen ? "text-[#8B5E3F]" : ""
+                  className={`inline-flex items-center gap-1.5 whitespace-nowrap hover:text-[var(--brand-olive)] transition-colors ${
+                    catalogOpen ? "text-[var(--brand-olive)]" : ""
                   }`}
                   onClick={() => setCatalogOpen((v) => !v)}
                   aria-expanded={catalogOpen}
@@ -262,19 +267,19 @@ export default function Header() {
 
                 {catalogOpen && (
                   <div
-                    className="absolute top-full left-0 mt-2 min-w-[280px] bg-white rounded-lg shadow-lg border border-[#E8E0D5] py-3 z-50"
+                    className="absolute top-full left-0 mt-3 min-w-[300px] bg-white/98 rounded-2xl shadow-[var(--shadow-card)] border border-[var(--color-border)] py-3 z-50 backdrop-blur-md"
                     onMouseEnter={cancelCatalogClose}
                     onMouseLeave={scheduleCatalogClose}
                   >
                     <div className="flex">
-                      <div className="w-44 border-r border-[#E8E0D5] py-1">
+                      <div className="w-44 border-r border-[var(--color-border)] py-1">
                         {categories.map((cat) => (
                           <Link
                             key={cat.id}
                             href={`/catalog?categoryId=${cat.id}`}
                             onMouseEnter={() => setHoveredCategoryId(cat.id)}
-                            className={`block px-4 py-2 text-sm hover:bg-[#FFF9F0] transition-colors ${
-                              hoveredCategoryId === cat.id ? "bg-[#FFF9F0] text-[#8B5E3F] font-medium" : ""
+                            className={`block rounded-xl mx-1 px-3 py-2 text-sm transition-colors hover:bg-[var(--brand-olive-soft)] ${
+                              hoveredCategoryId === cat.id ? "bg-[var(--brand-olive-soft)] text-[var(--brand-olive)] font-medium" : ""
                             }`}
                             onClick={() => setCatalogOpen(false)}
                           >
@@ -290,7 +295,7 @@ export default function Header() {
                             <Link
                               key={sub.id}
                               href={`/catalog?subcategory=${encodeURIComponent(sub.name)}`}
-                              className="block px-3 py-2 text-sm hover:bg-[#FFF9F0] rounded transition-colors"
+                              className="block rounded-xl mx-1 px-3 py-2 text-sm transition-colors hover:bg-[var(--brand-olive-soft)]"
                               onClick={() => setCatalogOpen(false)}
                             >
                               {sub.name}
@@ -299,7 +304,7 @@ export default function Header() {
                         ) : hoveredCategoryId ? (
                           <Link
                             href={`/catalog?categoryId=${hoveredCategoryId}`}
-                            className="block px-3 py-2 text-sm text-[#8B5E3F] underline"
+                            className="block rounded-xl mx-1 px-3 py-2 text-sm text-[var(--brand-olive)] underline"
                             onClick={() => setCatalogOpen(false)}
                           >
                             Переглянути всі
@@ -311,7 +316,7 @@ export default function Header() {
                     </div>
                     <Link
                       href="/catalog"
-                      className="block mx-3 mt-2 pt-2 border-t border-[#E8E0D5] text-sm font-medium text-[#8B5E3F] hover:underline"
+                      className="block mx-3 mt-2 pt-2 border-t border-[var(--color-border)] text-sm font-medium text-[var(--brand-olive)] hover:underline"
                       onClick={() => setCatalogOpen(false)}
                     >
                       Весь каталог
@@ -328,7 +333,7 @@ export default function Header() {
                     const hashId = getMainNavHashId(link.href);
                     if (hashId) handleHomeAnchorClick(e, hashId);
                   }}
-                  className="whitespace-nowrap hover:text-[#8B5E3F] transition-colors"
+                  className="whitespace-nowrap hover:text-[var(--brand-olive)] transition-colors"
                 >
                   {link.label}
                 </Link>
@@ -338,10 +343,10 @@ export default function Header() {
             <button
               type="button"
               onClick={() => setIsSearchOpen(true)}
-              className={`flex items-center gap-2 h-10 px-4 rounded-full text-[#3D1A00]/60 transition-colors min-w-[180px] xl:min-w-[220px] max-w-[280px] shrink-0 ${
+              className={`flex items-center gap-2 h-10 px-4 rounded-full text-[var(--brand-olive-dark)]/60 transition-colors min-w-[180px] xl:min-w-[220px] max-w-[280px] shrink-0 ${
                 headerTransparent
                   ? "bg-white/75 hover:bg-white/90 backdrop-blur-sm"
-                  : "bg-[#F5F0E8] hover:bg-[#EDE8DF]"
+                  : "bg-[var(--brand-olive-soft)] hover:bg-[var(--brand-olive-light)]"
               }`}
               aria-label="Пошук"
             >
@@ -353,13 +358,13 @@ export default function Header() {
               <Link
                 href="/cart"
                 className={`relative flex h-11 w-11 items-center justify-center rounded-full transition-colors ${
-                  headerTransparent ? "hover:bg-white/30" : "hover:bg-[#FFF9F0]"
+                  headerTransparent ? "hover:bg-white/30" : "hover:bg-[var(--brand-olive-soft)]"
                 }`}
                 aria-label="Кошик"
               >
                 <Image src={ICON_CART} alt="" width={23} height={21} className="h-5 w-auto" />
                 {totalItems > 0 && (
-                  <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center text-[10px] font-bold text-white bg-[#8B5E3F] rounded-full">
+                  <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center text-[10px] font-bold text-white bg-[var(--brand-olive)] rounded-full">
                     {totalItems > 99 ? "99+" : totalItems}
                   </span>
                 )}
@@ -367,13 +372,13 @@ export default function Header() {
               <Link
                 href="/favorites"
                 className={`relative flex h-11 w-11 items-center justify-center rounded-full transition-colors ${
-                  headerTransparent ? "hover:bg-white/30" : "hover:bg-[#FFF9F0]"
+                  headerTransparent ? "hover:bg-white/30" : "hover:bg-[var(--brand-olive-soft)]"
                 }`}
                 aria-label="Вішлист"
               >
                 <Image src={ICON_LIKE} alt="" width={20} height={19} className="h-5 w-auto" />
                 {favoritesCount > 0 && (
-                  <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center text-[10px] font-bold text-white bg-[#8B5E3F] rounded-full">
+                  <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center text-[10px] font-bold text-white bg-[var(--brand-olive)] rounded-full">
                     {favoritesCount > 99 ? "99+" : favoritesCount}
                   </span>
                 )}
@@ -389,7 +394,7 @@ export default function Header() {
               <button
                 type="button"
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="flex h-10 w-10 shrink-0 items-center justify-center text-[#3D1A00]"
+                className="flex h-10 w-10 shrink-0 items-center justify-center text-[var(--brand-olive-dark)]"
                 aria-label="Меню"
               >
                 {isSidebarOpen ? (
@@ -422,10 +427,10 @@ export default function Header() {
               <button
                 type="button"
                 onClick={() => setIsSearchOpen(true)}
-                className={`flex h-10 items-center gap-1.5 px-3 rounded-full text-[#3D1A00]/70 transition-colors ${
+                className={`flex h-10 items-center gap-1.5 px-3 rounded-full text-[var(--brand-olive-dark)]/70 transition-colors ${
                   headerTransparent
                     ? "bg-white/75 hover:bg-white/90 backdrop-blur-sm"
-                    : "bg-[#F5F0E8]"
+                    : "bg-[var(--brand-olive-soft)]"
                 }`}
                 aria-label="Пошук"
               >
@@ -439,7 +444,7 @@ export default function Header() {
               >
                 <Image src={ICON_LIKE} alt="" width={20} height={19} className="h-[18px] w-auto" />
                 {favoritesCount > 0 && (
-                  <span className="absolute top-0 right-0 min-w-[16px] h-4 px-0.5 flex items-center justify-center text-[9px] font-bold text-white bg-[#8B5E3F] rounded-full">
+                  <span className="absolute top-0 right-0 min-w-[16px] h-4 px-0.5 flex items-center justify-center text-[9px] font-bold text-white bg-[var(--brand-olive)] rounded-full">
                     {favoritesCount > 99 ? "99+" : favoritesCount}
                   </span>
                 )}
@@ -451,7 +456,7 @@ export default function Header() {
               >
                 <Image src={ICON_CART} alt="" width={23} height={21} className="h-[18px] w-auto" />
                 {totalItems > 0 && (
-                  <span className="absolute top-0 right-0 min-w-[16px] h-4 px-0.5 flex items-center justify-center text-[9px] font-bold text-white bg-[#8B5E3F] rounded-full">
+                  <span className="absolute top-0 right-0 min-w-[16px] h-4 px-0.5 flex items-center justify-center text-[9px] font-bold text-white bg-[var(--brand-olive)] rounded-full">
                     {totalItems}
                   </span>
                 )}

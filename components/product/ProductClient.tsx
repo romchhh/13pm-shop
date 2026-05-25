@@ -9,9 +9,9 @@ import Alert from "@/components/shared/Alert";
 import CartAlert from "@/components/shared/CartAlert";
 import { getFirstProductImage } from "@/lib/getFirstProductImage";
 import {
+  getDefaultColorIndex,
   getWhiteColorSurcharge,
   getUnitPriceWithColor,
-  productOffersWhiteColor,
   WHITE_COLOR_SURCHARGE_UAH,
 } from "@/lib/colorPricing";
 import {
@@ -93,7 +93,9 @@ export default function ProductClient({ product }: ProductClientProps) {
   const [quantity, setQuantity] = useState(1);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<TabId>("details");
-  const [selectedColorIndex, setSelectedColorIndex] = useState(0);
+  const [selectedColorIndex, setSelectedColorIndex] = useState(() =>
+    getDefaultColorIndex(product.color_options ?? [])
+  );
   const { addItem } = useBasket();
   const [showCartAlert, setShowCartAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
@@ -110,15 +112,17 @@ export default function ProductClient({ product }: ProductClientProps) {
 
   useEffect(() => {
     setActiveImageIndex(0);
-    setSelectedColorIndex(0);
+    setSelectedColorIndex(getDefaultColorIndex(product.color_options ?? []));
     setQuantity(1);
     const el = mobileGalleryScrollRef.current;
     if (el) el.scrollTo({ left: 0, behavior: "auto" });
-  }, [product.id]);
+  }, [product.id, product.color_options]);
 
   useEffect(() => {
-    if (selectedColorIndex >= colors.length) setSelectedColorIndex(0);
-  }, [colors.length, selectedColorIndex]);
+    if (selectedColorIndex >= colors.length) {
+      setSelectedColorIndex(getDefaultColorIndex(colors));
+    }
+  }, [colors, colors.length, selectedColorIndex]);
 
   const currentSizeLabel = useMemo(() => {
     const v = sizeVariants.find((s) => s.productId === product.id);
@@ -130,8 +134,16 @@ export default function ProductClient({ product }: ProductClientProps) {
       ? colors[selectedColorIndex].name
       : undefined;
 
-  const colorSurchargeUah = getWhiteColorSurcharge(selectedColorName, colors);
-  const hasWhiteColorOption = productOffersWhiteColor(colors);
+  const materialTexts = useMemo(
+    () => ({
+      description: product.description,
+      short_description: product.short_description,
+      main_info: product.main_info,
+    }),
+    [product.description, product.short_description, product.main_info]
+  );
+
+  const colorSurchargeUah = getWhiteColorSurcharge(selectedColorName, colors, materialTexts);
   const analyticsCategory = product.subcategory_name ?? product.category_name ?? null;
 
   const handleAddToCart = async () => {
@@ -182,7 +194,8 @@ export default function ProductClient({ product }: ProductClientProps) {
     product.price,
     product.discount_percentage,
     selectedColorName,
-    colors
+    colors,
+    materialTexts
   );
 
   const categorySlug =
@@ -203,7 +216,8 @@ export default function ProductClient({ product }: ProductClientProps) {
       product.price,
       product.discount_percentage,
       selectedColorName,
-      colors
+      colors,
+      materialTexts
     );
 
     pushGA4EcommerceEvent("view_item", {
@@ -524,13 +538,17 @@ export default function ProductClient({ product }: ProductClientProps) {
 
             {colors.length > 0 && (
               <div className="border-t border-black/10 pt-5">
-                <p className="mb-1 text-sm text-black/45">Оберіть колір</p>
-                {hasWhiteColorOption && (
+                <p
+                  className={`text-sm text-black/45 ${colorSurchargeUah > 0 ? "mb-1" : "mb-3"}`}
+                >
+                  Оберіть колір
+                </p>
+                {colorSurchargeUah > 0 && (
                   <p className="mb-3 text-sm text-black/70">
                     Білий колір — +{WHITE_COLOR_SURCHARGE_UAH.toLocaleString("uk-UA")} грн до ціни
                   </p>
                 )}
-                <div className={`flex flex-wrap gap-3 ${hasWhiteColorOption ? "" : "mt-2"}`}>
+                <div className="flex flex-wrap gap-3">
                   {colors.map((c, i) => (
                     <button
                       key={`${c.hex}-${c.name}-${i}`}

@@ -104,7 +104,7 @@ export default function HomeSectionCarousel({
 
   if (loading) {
     return (
-      <section className="w-full bg-white">
+      <section className="site-section site-section--white">
         <div className={`max-w-[1920px] mx-auto px-6 lg:px-10 ${homeSectionOuterClass}`}>
           <p className="font-['Montserrat'] text-black/60">{loadingMessage}</p>
         </div>
@@ -116,7 +116,7 @@ export default function HomeSectionCarousel({
     <section className="w-full bg-white">
       <div className={`max-w-[1920px] mx-auto px-6 lg:px-10 ${homeSectionOuterClass}`}>
         <div className={homeSectionHeaderRowClass}>
-          <h2 className="font-['Montserrat'] text-2xl font-semibold tracking-tight text-black lg:text-3xl">
+          <h2 className="site-heading text-2xl lg:text-3xl">
             {title}
           </h2>
           {catalogHref ? (
@@ -147,7 +147,7 @@ export default function HomeSectionCarousel({
           <button
             type="button"
             onClick={scrollLeft}
-            className="shrink-0 p-2 text-[#8B5E3F] transition-opacity hover:opacity-70"
+            className="shrink-0 rounded-full p-2 text-[var(--brand-olive)] transition-opacity hover:bg-[var(--brand-olive-soft)] hover:opacity-80"
             aria-label="Прокрутити вліво"
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -165,8 +165,8 @@ export default function HomeSectionCarousel({
                   onClick={() => goToDot(i)}
                   className={`rounded-full transition-all ${
                     i === activeDot
-                      ? "h-2.5 w-2.5 bg-[#8B5E3F]"
-                      : "h-2 w-2 border-2 border-[#8B5E3F] bg-transparent"
+                      ? "h-2.5 w-2.5 bg-[var(--brand-olive)]"
+                      : "h-2 w-2 border-2 border-[var(--brand-olive)] bg-transparent"
                   }`}
                   aria-label={`Показати блок ${i + 1} з ${pageCount}`}
                 />
@@ -178,7 +178,7 @@ export default function HomeSectionCarousel({
           <button
             type="button"
             onClick={scrollRight}
-            className="shrink-0 p-2 text-[#8B5E3F] transition-opacity hover:opacity-70"
+            className="shrink-0 rounded-full p-2 text-[var(--brand-olive)] transition-opacity hover:bg-[var(--brand-olive-soft)] hover:opacity-80"
             aria-label="Прокрутити вправо"
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>

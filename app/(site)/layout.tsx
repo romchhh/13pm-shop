@@ -74,8 +74,8 @@ export default function RootLayout({
         <link rel="shortcut icon" type="image/png" href={SITE_ICON_PATH} />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/site.webmanifest" />
-        <meta name="theme-color" content="#8B5E3F" />
-        <meta name="msapplication-TileColor" content="#8B5E3F" />
+        <meta name="theme-color" content="#4A5840" />
+        <meta name="msapplication-TileColor" content="#4A5840" />
         <meta name="msapplication-TileImage" content="/android-chrome-192x192.png" />
         
         {/* Preload critical resources */}

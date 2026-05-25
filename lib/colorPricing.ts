@@ -24,12 +24,44 @@ export function productOffersWhiteColor(colorOptions: ProductColorOption[]): boo
   return colorOptions.some(isWhiteColorOption);
 }
 
-/** Доплата в грн, якщо обрано білий і товар має білий у color_options. */
+/** Індекс кольору за замовчуванням: перший небілий, інакше 0. */
+export function getDefaultColorIndex(colorOptions: ProductColorOption[]): number {
+  if (colorOptions.length === 0) return 0;
+  const firstNonWhite = colorOptions.findIndex((c) => !isWhiteColorOption(c));
+  return firstNonWhite >= 0 ? firstNonWhite : 0;
+}
+
+export type ProductMaterialTexts = {
+  /** «Короткий опис (на сторінці товару)» в адмінці */
+  description?: string | null;
+  /** «Детальний опис» в адмінці (вкладка «Деталі») */
+  short_description?: string | null;
+  main_info?: string | null;
+};
+
+const MATERIAL_LINE = /^\s*(?:матеріал|material)\s*:\s*(.+)$/i;
+
+/** Чи в описі товару вказано матеріал з фанери (рядок «Матеріал: …»). */
+export function productHasPlywoodMaterial(texts: ProductMaterialTexts): boolean {
+  const fields = [texts.description, texts.short_description, texts.main_info];
+  for (const raw of fields) {
+    if (!raw?.trim()) continue;
+    for (const line of raw.split(/\r?\n/)) {
+      const match = line.match(MATERIAL_LINE);
+      if (match && /фанер/i.test(match[1])) return true;
+    }
+  }
+  return false;
+}
+
+/** Доплата в грн: білий колір + матеріал «фанера» в описі товару. */
 export function getWhiteColorSurcharge(
   selectedColorName: string | undefined,
-  colorOptions: ProductColorOption[]
+  colorOptions: ProductColorOption[],
+  materialTexts: ProductMaterialTexts
 ): number {
   if (!selectedColorName?.trim() || colorOptions.length === 0) return 0;
+  if (!productHasPlywoodMaterial(materialTexts)) return 0;
   if (!productOffersWhiteColor(colorOptions)) return 0;
 
   const selected = colorOptions.find(
@@ -45,8 +77,9 @@ export function getUnitPriceWithColor(
   basePrice: number,
   discountPercentage: number | null | undefined,
   selectedColorName: string | undefined,
-  colorOptions: ProductColorOption[]
+  colorOptions: ProductColorOption[],
+  materialTexts: ProductMaterialTexts
 ): number {
   const base = Math.round(getDiscountedPrice(basePrice, discountPercentage));
-  return base + getWhiteColorSurcharge(selectedColorName, colorOptions);
+  return base + getWhiteColorSurcharge(selectedColorName, colorOptions, materialTexts);
 }

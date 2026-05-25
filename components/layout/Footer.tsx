@@ -7,7 +7,7 @@ import { siteContact } from "@/lib/siteContact";
 import { SITE_WORDMARK } from "@/lib/siteBrand";
 import { useCategories } from "@/lib/CategoriesProvider";
 
-const FOOTER_BG = "#d1d1a6";
+const FOOTER_BG = "var(--brand-footer)";
 
 const PAYMENT_LOGOS = [
   { src: "/images/icons/Badge.svg", alt: "Visa" },

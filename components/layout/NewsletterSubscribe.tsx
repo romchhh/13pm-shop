@@ -45,9 +45,15 @@ export default function NewsletterSubscribe() {
   return (
     <section className="relative w-full" aria-labelledby="newsletter-heading">
       {/* Тільки біле тло зверху й по боках картки — без «світло-коричневого» body; низ прозорий → футер не перекривається білим */}
-      <div className="w-full bg-white px-4 pt-2 sm:px-6 sm:pt-4 lg:px-12 lg:pt-6">
+      <div className="w-full bg-[var(--background-color-light)] px-4 pt-2 sm:px-6 sm:pt-4 lg:px-12 lg:pt-6">
         <div className="mx-auto max-w-[1920px]">
-          <div className="relative z-10 rounded-2xl bg-[#8B5E3F] px-5 py-8 shadow-lg sm:px-8 sm:py-10 lg:flex lg:items-center lg:justify-between lg:gap-12 lg:rounded-3xl lg:px-12 lg:py-12 -mb-16 sm:-mb-20 lg:-mb-24">
+          <div
+            className="relative z-10 overflow-hidden rounded-[2rem] px-5 py-8 shadow-[var(--shadow-elevated)] sm:px-8 sm:py-10 lg:flex lg:items-center lg:justify-between lg:gap-12 lg:rounded-[2.5rem] lg:px-12 lg:py-12 -mb-16 sm:-mb-20 lg:-mb-24"
+            style={{
+              background:
+                "linear-gradient(135deg, var(--brand-olive-elite) 0%, var(--brand-olive) 45%, var(--brand-olive-muted) 100%)",
+            }}
+          >
             <h2
               id="newsletter-heading"
               className="font-['Montserrat'] text-xl font-bold uppercase leading-tight tracking-tight text-white sm:text-2xl lg:max-w-[min(42%,520px)] lg:text-[clamp(1.5rem,2.2vw,2.25rem)]"
@@ -62,7 +68,7 @@ export default function NewsletterSubscribe() {
               <label className="relative block">
                 <span className="sr-only">Email</span>
                 <span
-                  className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#3D1A00]/45"
+                  className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[var(--brand-olive-dark)]/45"
                   aria-hidden
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -83,13 +89,13 @@ export default function NewsletterSubscribe() {
                   placeholder="Напишіть свій email"
                   autoComplete="email"
                   disabled={status === "loading"}
-                  className="w-full rounded-full border-0 bg-white py-3.5 pl-11 pr-4 font-['Montserrat'] text-sm text-[#3D1A00] placeholder:text-[#3D1A00]/45 focus:outline-none focus:ring-2 focus:ring-white/40 disabled:opacity-70"
+                  className="w-full rounded-full border-0 bg-white/95 py-3.5 pl-11 pr-4 font-['Montserrat'] text-sm text-[var(--brand-olive-dark)] placeholder:text-[var(--brand-olive-dark)]/45 focus:outline-none focus:ring-2 focus:ring-white/40 disabled:opacity-70 backdrop-blur-sm"
                 />
               </label>
               <button
                 type="submit"
                 disabled={status === "loading"}
-                className="w-full rounded-full bg-white py-3.5 font-['Montserrat'] text-sm font-medium text-[#3D1A00] transition-opacity hover:opacity-90 disabled:opacity-60"
+                className="w-full rounded-full bg-white/95 py-3.5 font-['Montserrat'] text-sm font-semibold text-[var(--brand-olive-dark)] transition-all hover:bg-white disabled:opacity-60 backdrop-blur-sm"
               >
                 {status === "loading" ? "Надсилання…" : "Підписатися на розсилку"}
               </button>
