@@ -70,6 +70,39 @@ export async function POST(req: NextRequest) {
       }
     });
 
+    // Створюємо TTN для Нової пошти
+    let ttnNumber: string | null = null;
+    try {
+      const { createOrderTtn, saveTtnToOrder } = await import("@/lib/createOrderTtn");
+      const orderTotal = order.items.reduce(
+        (sum, item) => sum + Number(item.price) * item.quantity,
+        0
+      );
+      const ttnResult = await createOrderTtn({
+        orderId: order.id,
+        customerName: order.customerName,
+        phoneNumber: order.phoneNumber,
+        city: order.city,
+        postOffice: order.postOffice,
+        deliveryMethod: order.deliveryMethod,
+        orderTotal: Math.round(orderTotal),
+        orderItems: order.items.map((i) => ({
+          productId: i.productId,
+          productName: i.productName ?? i.product?.name ?? null,
+        })),
+      });
+
+      if ("ttn" in ttnResult) {
+        ttnNumber = ttnResult.ttn;
+        await saveTtnToOrder(order.id, ttnNumber);
+        console.log(`[Mono webhook] TTN ${ttnNumber} created for order ${order.id}`);
+      } else {
+        console.warn(`[Mono webhook] Failed to create TTN for order ${order.id}:`, ttnResult.error);
+      }
+    } catch (e) {
+      console.warn("[Mono webhook] TTN creation failed:", e);
+    }
+
     try {
       await sendOrderNotification(
         {
@@ -85,6 +118,7 @@ export async function POST(req: NextRequest) {
           payment_type: order.paymentType,
           payment_status: "paid",
           status: order.status,
+          nova_poshta_ttn: ttnNumber,
           items: order.items.map((item) => ({
             product_name: item.product?.name ?? "Товар",
             size: item.size,
@@ -131,6 +165,7 @@ export async function POST(req: NextRequest) {
             payment_type: order.paymentType,
             comment: order.comment,
             invoice_id: order.invoiceId,
+            nova_poshta_ttn: ttnNumber,
             created_at: order.createdAt,
             items: order.items.map((item) => ({
               product_id: item.productId,

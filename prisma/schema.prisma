@@ -239,6 +239,7 @@ model Order {
   promoCodeId  Int?        @map("promo_code_id")
   promoDiscountAmount Decimal? @map("promo_discount_amount") @db.Decimal(10, 2) // знижка по промокоду (грн)
   status       String?     // Optional status field
+  novaPoshtaTtn String?    @map("nova_poshta_ttn") // Номер накладної Нової пошти
   createdAt    DateTime    @default(now()) @map("created_at")
   
   user         User?       @relation(fields: [userId], references: [id], onDelete: SetNull)

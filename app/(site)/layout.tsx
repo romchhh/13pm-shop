@@ -63,6 +63,10 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes" />
         <meta name="format-detection" content="telephone=no" />
         
+        {/* Language and alternate links */}
+        <link rel="alternate" hrefLang="uk" href={baseUrl} />
+        <link rel="alternate" hrefLang="x-default" href={baseUrl} />
+        
         {/* Favicon and App Icons */}
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />

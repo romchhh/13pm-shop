@@ -13,10 +13,13 @@ export default function ProductClientWrapper({ product }: ProductClientWrapperPr
 
   useEffect(() => {
     setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
     if (typeof window !== "undefined") {
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     }
-  }, []);
+  }, [product.id]);
 
   // Only render ProductClient after component is mounted on client
   // This ensures BasketProvider context is available

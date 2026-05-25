@@ -41,6 +41,7 @@ export type OrderForEmail = {
   payment_type: string;
   comment?: string | null;
   invoice_id: string;
+  nova_poshta_ttn?: string | null;
   created_at: Date;
   items: OrderItemForEmail[];
 };
@@ -133,6 +134,12 @@ export function buildOrderConfirmationHtml(
                   <td>
                     <p style="margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:${ACCENT};font-weight:600;">Доставка</p>
                     <p style="margin:0 0 16px;font-size:15px;color:${TEXT};line-height:1.45;">${escapeHtml(deliveryLabel)}<br />${escapeHtml(order.city)}, ${escapeHtml(order.post_office)}</p>
+                    ${
+                      order.nova_poshta_ttn
+                        ? `<p style="margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:${ACCENT};font-weight:600;">Номер накладної Нової пошти (ТТН)</p>
+                    <p style="margin:0 0 16px;font-size:15px;color:${TEXT};font-weight:600;">${escapeHtml(order.nova_poshta_ttn)}</p>`
+                        : ""
+                    }
                     <p style="margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:${ACCENT};font-weight:600;">Оплата</p>
                     <p style="margin:0 0 4px;font-size:15px;color:${TEXT};">${escapeHtml(paymentLabel)}</p>
                     <p style="margin:0;font-size:13px;color:${MUTED};">Дата: ${escapeHtml(dateStr)}</p>

@@ -299,11 +299,41 @@ export async function POST(req: NextRequest) {
     // Тест оплата — зберігаємо з orderId і редірект на успіх
     if (isTestPayment) {
       log.debug(" Saving order (test_payment)...");
-      await sqlPostOrder({
+      const { orderId: dbOrderId } = await sqlPostOrder({
         ...orderPayload,
         invoice_id: orderId,
         payment_status: "paid",
       });
+
+      // Створюємо TTN для Нової пошти
+      let ttnNumber: string | null = null;
+      try {
+        const { createOrderTtn, saveTtnToOrder } = await import("@/lib/createOrderTtn");
+        const ttnResult = await createOrderTtn({
+          orderId: dbOrderId,
+          customerName: customer_name,
+          phoneNumber: phone_number,
+          city,
+          postOffice: post_office,
+          deliveryMethod: delivery_method,
+          orderTotal: Math.round(orderTotal),
+          orderItems: normalizedItems.map((i) => ({
+            productId: i.product_id,
+            productName: i.product_name,
+          })),
+        });
+
+        if ("ttn" in ttnResult) {
+          ttnNumber = ttnResult.ttn;
+          await saveTtnToOrder(dbOrderId, ttnNumber);
+          log.debug(`TTN ${ttnNumber} created for order ${dbOrderId}`);
+        } else {
+          log.warn(`Failed to create TTN for order ${dbOrderId}:`, ttnResult.error);
+        }
+      } catch (e) {
+        log.warn("TTN creation failed (test_payment):", e);
+      }
+
       // Лист підтвердження на email клієнта (як при реальній оплаті)
       if (email && String(email).trim()) {
         try {
@@ -334,6 +364,7 @@ export async function POST(req: NextRequest) {
               payment_type,
               comment: comment ?? null,
               invoice_id: orderId,
+              nova_poshta_ttn: ttnNumber,
               created_at: new Date(),
               items: normalizedItems.map((item) => ({
                 product_id: item.product_id,
@@ -367,6 +398,35 @@ export async function POST(req: NextRequest) {
         decrement_stock: true,
       });
 
+      // Створюємо TTN для Нової пошти
+      let ttnNumber: string | null = null;
+      try {
+        const { createOrderTtn, saveTtnToOrder } = await import("@/lib/createOrderTtn");
+        const ttnResult = await createOrderTtn({
+          orderId: dbOrderId,
+          customerName: customer_name,
+          phoneNumber: phone_number,
+          city,
+          postOffice: post_office,
+          deliveryMethod: delivery_method,
+          orderTotal: Math.round(orderTotal),
+          orderItems: normalizedItems.map((i) => ({
+            productId: i.product_id,
+            productName: i.product_name,
+          })),
+        });
+
+        if ("ttn" in ttnResult) {
+          ttnNumber = ttnResult.ttn;
+          await saveTtnToOrder(dbOrderId, ttnNumber);
+          log.debug(`TTN ${ttnNumber} created for order ${dbOrderId}`);
+        } else {
+          log.warn(`Failed to create TTN for order ${dbOrderId}:`, ttnResult.error);
+        }
+      } catch (e) {
+        log.warn("TTN creation failed (prepay):", e);
+      }
+
       try {
         await sendOrderNotification(
           {
@@ -382,6 +442,7 @@ export async function POST(req: NextRequest) {
             payment_type: "prepay",
             payment_status: "paid",
             status: null,
+            nova_poshta_ttn: ttnNumber,
             items: normalizedItems.map((item) => ({
               product_name: item.product_name,
               size: item.size,
@@ -427,6 +488,7 @@ export async function POST(req: NextRequest) {
               payment_type,
               comment: comment ?? null,
               invoice_id: orderId,
+              nova_poshta_ttn: ttnNumber,
               created_at: new Date(),
               items: normalizedItems.map((item) => ({
                 product_id: item.product_id,

@@ -26,6 +26,7 @@ interface Order {
   post_office: string;
   payment_type: string;
   status: string;
+  nova_poshta_ttn?: string | null;
   created_at: Date;
 }
 
@@ -228,6 +229,12 @@ export default function OrdersTable() {
                   isHeader
                   className="px-5 py-3 text-left text-sm font-semibold text-gray-900"
                 >
+                  ТТН
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="px-5 py-3 text-left text-sm font-semibold text-gray-900"
+                >
                   Статус
                 </TableCell>
                 <TableCell
@@ -249,7 +256,7 @@ export default function OrdersTable() {
               {loading ? (
                 <TableRow>
                   <TableCell
-                    colSpan={10}
+                    colSpan={11}
                     className="text-center py-6 text-gray-600"
                   >
                     Завантаження...
@@ -258,7 +265,7 @@ export default function OrdersTable() {
               ) : orders.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={10}
+                    colSpan={11}
                     className="text-center py-6 text-gray-600"
                   >
                     Замовлень не знайдено.
@@ -290,6 +297,15 @@ export default function OrdersTable() {
                     </TableCell>
                     <TableCell className="px-5 py-4 text-sm text-gray-700">
                       {getPaymentTypeLabel(order.payment_type, "short")}
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-sm text-gray-700">
+                      {order.nova_poshta_ttn ? (
+                        <span className="font-mono font-semibold text-xs text-green-700">
+                          {order.nova_poshta_ttn}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400 text-xs">—</span>
+                      )}
                     </TableCell>
                     <TableCell className="px-5 py-4 text-sm text-gray-700">
                       <select

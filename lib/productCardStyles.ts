@@ -80,7 +80,7 @@ export function productCardTitleClass(hasSubtitle: boolean): string {
 }
 
 export function productCardPriceRowClass(): string {
-  return "mt-auto flex items-end justify-between gap-2 pt-4 sm:gap-3";
+  return "mt-auto flex flex-col items-start gap-2 pt-4 sm:flex-row sm:items-end sm:justify-between sm:gap-3";
 }
 
 export function productCardStrikePriceClass(): string {

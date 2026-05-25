@@ -24,6 +24,7 @@ interface OrderData {
   invoice_id: string;
   email?: string | null;
   phone_number?: string | null;
+  nova_poshta_ttn?: string | null;
   items: OrderItem[];
   payment_type: string;
   payment_status: string;
@@ -364,6 +365,16 @@ function PaymentSuccessContent() {
                   {order?.invoice_id ?? orderId}
                 </span>
               </p>
+            )}
+            {order?.nova_poshta_ttn && (
+              <div className="mt-4 rounded-xl border border-[#8B5E3F]/20 bg-[#8B5E3F]/5 p-4">
+                <p className="font-['Montserrat'] text-xs font-semibold uppercase tracking-wider text-[#8B5E3F]">
+                  Номер накладної Нової пошти (ТТН)
+                </p>
+                <p className="mt-1 font-['Montserrat'] text-lg font-bold text-black">
+                  {order.nova_poshta_ttn}
+                </p>
+              </div>
             )}
           </div>
 

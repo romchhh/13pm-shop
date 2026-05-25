@@ -1446,6 +1446,7 @@ export async function sqlGetOrderByInvoiceId(invoiceId: string) {
     comment: order.comment,
     payment_type: order.paymentType,
     payment_status: order.paymentStatus,
+    nova_poshta_ttn: order.novaPoshtaTtn,
     created_at: order.createdAt,
     items: order.items.map((item) => {
       const product = item.product as

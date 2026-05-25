@@ -131,7 +131,9 @@ export default function CatalogProductCard({
             sizes="(max-width: 640px) 45vw, (max-width: 1024px) 33vw, 25vw"
             priority={imagePriority}
             loading={imageLoading}
-            quality={imagePriority ? 85 : 75}
+            quality={imagePriority ? 85 : 70}
+            placeholder="blur"
+            blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjUzNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjUzNCIgZmlsbD0iI2Y1ZjVmNCIvPjwvc3ZnPg=="
           />
         )}
 
@@ -203,7 +205,7 @@ export default function CatalogProductCard({
               {displayPrice.toLocaleString("uk-UA")} ₴
             </p>
           </div>
-          <div className="shrink-0">
+          <div className="shrink-0 w-full sm:w-auto">
             <AddToCartButton
               size="sm"
               disabled={outOfStock}

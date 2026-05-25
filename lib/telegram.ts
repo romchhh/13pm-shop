@@ -17,6 +17,7 @@ interface OrderData {
   payment_type: string;
   payment_status: string;
   status?: string | null;
+  nova_poshta_ttn?: string | null;
   items: Array<{
     product_name: string;
     size: string;
@@ -66,6 +67,10 @@ function formatOrderMessage(order: OrderData, isPaid: boolean = false): string {
   message += `📦 <b>Доставка:</b> ${deliveryMethodMap[order.delivery_method] || order.delivery_method}\n`;
   message += `🏙️ <b>Місто:</b> ${order.city}\n`;
   message += `📍 <b>Відділення:</b> ${order.post_office}\n`;
+
+  if (order.nova_poshta_ttn) {
+    message += `\n📋 <b>ТТН Нової пошти:</b> <code>${order.nova_poshta_ttn}</code>\n`;
+  }
 
   if (order.comment) {
     message += `\n💬 <b>Коментар:</b>\n${order.comment}\n`;

@@ -278,8 +278,11 @@ export default function ProductClient({ product }: ProductClientProps) {
         alt={alt}
         fill
         className="bg-transparent object-contain"
-        sizes="(max-width: 1024px) 100vw, 56vw"
+        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 56vw"
         priority={priority}
+        quality={priority ? 90 : 80}
+        placeholder="blur"
+        blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjUzNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjUzNCIgZmlsbD0iI2Y1ZjVmNCIvPjwvc3ZnPg=="
       />
     );
   };
@@ -380,6 +383,8 @@ export default function ProductClient({ product }: ProductClientProps) {
                         fill
                         className="object-cover"
                         sizes="88px"
+                        quality={60}
+                        loading="lazy"
                       />
                     )}
                   </button>
@@ -418,7 +423,7 @@ export default function ProductClient({ product }: ProductClientProps) {
                         <button
                           type="button"
                           onClick={() => openLightbox(i)}
-                          className="relative aspect-[3/4] w-full max-w-[min(420px,calc(100vw-2rem))] shrink-0 overflow-hidden rounded-2xl border-0 bg-transparent p-0 text-left shadow-none outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[#8B5E3F]/40 focus-visible:ring-offset-2"
+                          className="relative aspect-[3/4] w-full max-w-[min(420px,calc(100vw-2rem))] shrink-0 overflow-hidden rounded-2xl border-0 bg-transparent p-0 mx-auto shadow-none outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[#8B5E3F]/40 focus-visible:ring-offset-2"
                           aria-label={`Відкрити фото ${i + 1} у повному розмірі`}
                         >
                           {renderMediaSlide(item, `${product.name} — ${i + 1}`, i === 0)}
