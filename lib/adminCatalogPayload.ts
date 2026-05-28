@@ -37,6 +37,7 @@ export type AdminProductPayload = {
   bought_together_ids?: number[];
   pair_together_ids?: number[];
   color_options?: unknown;
+  white_color_surcharge_enabled?: boolean;
   size_variants?: unknown;
   size_group_ordered_ids?: number[];
   size_linked_ids?: number[];
@@ -145,6 +146,7 @@ export function parseAdminProductPayload(body: Record<string, unknown>): AdminPr
     bought_together_ids: boughtTogether,
     pair_together_ids: pairTogether,
     color_options: body.color_options ?? [],
+    white_color_surcharge_enabled: body.white_color_surcharge_enabled !== false,
     size_variants: body.size_variants ?? [],
     size_group_ordered_ids: parseIdArray(body.size_group_ordered_ids),
     size_linked_ids: parseIdArray(body.size_linked_ids),
@@ -268,6 +270,7 @@ export function adminProductPayloadToSql(
     bought_together_ids: payload.bought_together_ids ?? [],
     pair_together_ids: payload.pair_together_ids ?? [],
     color_options: payload.color_options ?? [],
+    white_color_surcharge_enabled: payload.white_color_surcharge_enabled !== false,
     size_variants: payload.size_variants ?? [],
     season: payload.season ?? [],
     category_id: payload.category_id ?? null,

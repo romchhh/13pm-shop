@@ -80,6 +80,7 @@ interface ProductClientProps {
       description?: string | null;
     }[];
     color_options?: ProductColorOption[];
+    white_color_surcharge_enabled?: boolean;
     size_variants?: ProductSizeVariant[];
   };
 }
@@ -140,8 +141,14 @@ export default function ProductClient({ product }: ProductClientProps) {
       description: product.description,
       short_description: product.short_description,
       main_info: product.main_info,
+      white_color_surcharge_enabled: product.white_color_surcharge_enabled,
     }),
-    [product.description, product.short_description, product.main_info]
+    [
+      product.description,
+      product.short_description,
+      product.main_info,
+      product.white_color_surcharge_enabled,
+    ]
   );
 
   const colorSurchargeUah = getWhiteColorSurcharge(selectedColorName, colors, materialTexts);

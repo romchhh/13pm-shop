@@ -148,6 +148,8 @@ model Product {
   pairTogetherIds      Int[]          @default([]) @map("pair_together_ids")
   /// Палітра кольорів: [{ "hex": "#1a1a1a", "name": "Чорний" }, ...]
   colorOptions         Json?          @default("[]") @map("color_options")
+  /// Чи застосовувати доплату за білий колір (+150 грн) для цього товару
+  whiteColorSurchargeEnabled Boolean  @default(true) @map("white_color_surcharge_enabled")
   /// Варіанти розміру як окремі товари: [{ "label": "30×40", "productId": 12, "slug": "..." }]
   sizeVariants         Json?          @default("[]") @map("size_variants")
   isNew                Boolean        @default(false) @map("is_new")

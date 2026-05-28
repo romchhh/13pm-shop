@@ -179,6 +179,7 @@ export async function PUT(
       bought_together_ids: boughtTogetherIds,
       pair_together_ids: pairTogetherIds,
       color_options: body.color_options,
+      white_color_surcharge_enabled: body.white_color_surcharge_enabled !== false,
       size_variants:
         useSizeGroupOrder || useLegacySizeLinks ? undefined : body.size_variants,
       is_new: isNew,

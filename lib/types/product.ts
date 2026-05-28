@@ -46,6 +46,8 @@ export interface Product {
   free_delivery_badge?: boolean;
   is_new?: boolean;
   color_options?: ProductColorOption[];
+  /** Адмін-перемикач доплати за білий колір (+150 грн). */
+  white_color_surcharge_enabled?: boolean;
   size_variants?: ProductSizeVariant[];
   gift_product?: {
     id: number;

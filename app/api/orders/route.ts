@@ -6,6 +6,7 @@ import { sendOrderNotification } from "@/lib/telegram";
 import { createLogger } from "@/lib/logger";
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
+import { ENABLE_ONLINE_CARD_PAYMENT } from "@/lib/paymentConfig";
 
 const log = createLogger("POST /api/orders");
 
@@ -91,6 +92,11 @@ export async function POST(req: NextRequest) {
         typeof comment === "string" && comment.trim()
           ? `${tag}. ${comment.trim()}`
           : tag;
+    }
+
+    // Глобально вимкнена онлайн-оплата: будь-який запит з "full" переводимо в накладений платіж.
+    if (!ENABLE_ONLINE_CARD_PAYMENT && payment_type === "full") {
+      payment_type = "prepay";
     }
 
     log.debug("Extracted data:", {

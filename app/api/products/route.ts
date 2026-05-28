@@ -120,6 +120,7 @@ export async function POST(req: Request) {
         bought_together_ids = [],
         pair_together_ids = [],
         color_options,
+        white_color_surcharge_enabled = true,
         size_variants,
         is_new = false,
         size_group_ordered_ids: sizeGroupOrderedBody = undefined,
@@ -175,6 +176,7 @@ export async function POST(req: Request) {
               .filter((n: number) => Number.isInteger(n) && n > 0)
           : [],
         color_options: color_options ?? [],
+        white_color_surcharge_enabled: white_color_surcharge_enabled !== false,
         size_variants: size_variants ?? [],
         is_new: is_new === true,
         category_id,

@@ -50,6 +50,7 @@ export default function EditProductPage() {
   const [isHit, setIsHit] = useState(false);
   const [isNew, setIsNew] = useState(false);
   const [inStock, setInStock] = useState(true);
+  const [whiteColorSurchargeEnabled, setWhiteColorSurchargeEnabled] = useState(true);
 
   const [colorRows, setColorRows] = useState<ColorRow[]>([{ hex: "#888888", name: "" }]);
   const [boughtTogetherIds, setBoughtTogetherIds] = useState<number[]>([]);
@@ -126,6 +127,9 @@ export default function EditProductPage() {
             in_stock: productData.in_stock,
             stock: productData.stock,
           })
+        );
+        setWhiteColorSurchargeEnabled(
+          productData.white_color_surcharge_enabled !== false
         );
 
         const cols = parseColorOptions(productData.color_options);
@@ -273,6 +277,7 @@ export default function EditProductPage() {
           gift_product_id: null,
           bought_together_ids: boughtTogetherIds,
           pair_together_ids: [],
+          white_color_surcharge_enabled: whiteColorSurchargeEnabled,
           size_group_ordered_ids:
             Number.isInteger(pid) && sizeGroupPayload.length > 0
               ? sizeGroupPayload
@@ -405,6 +410,16 @@ export default function EditProductPage() {
 
               <ComponentCard title="Кольори">
                 <ColorPaletteEditor rows={colorRows} onChange={setColorRows} />
+                <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-3">
+                  <Label className="mb-0">
+                    Доплата за білий колір (+150 грн)
+                  </Label>
+                  <ToggleSwitch
+                    enabled={whiteColorSurchargeEnabled}
+                    setEnabled={setWhiteColorSurchargeEnabled}
+                    label=""
+                  />
+                </div>
               </ComponentCard>
 
               {productId != null && !Array.isArray(productId) && Number.isInteger(Number(productId)) ? (

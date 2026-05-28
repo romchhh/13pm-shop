@@ -121,6 +121,7 @@ async function _sqlGetAllProducts() {
     is_new: (p as any).isNew ?? false,
     size_variants: (p as any).sizeVariants ?? [],
     color_options: parseColorOptions((p as any).colorOptions ?? []),
+    white_color_surcharge_enabled: (p as any).whiteColorSurchargeEnabled ?? true,
   }));
 }
 
@@ -252,6 +253,8 @@ export async function sqlGetProduct(id: number) {
         pair_together_ids: (product as any).pairTogetherIds ?? [],
         color_options: parseColorOptions((product as any).colorOptions ?? []),
         size_variants: parseSizeVariants((product as any).sizeVariants ?? []),
+        white_color_surcharge_enabled:
+          (product as any).whiteColorSurchargeEnabled ?? true,
         is_new: (product as any).isNew ?? false,
       };
     },
@@ -357,6 +360,7 @@ export async function sqlGetProductBySlug(slug: string) {
     pair_together_ids: product.pairTogetherIds ?? [],
     color_options: parseColorOptions(product.colorOptions ?? []),
     size_variants: parseSizeVariants(product.sizeVariants ?? []),
+    white_color_surcharge_enabled: product.whiteColorSurchargeEnabled ?? true,
     is_new: product.isNew ?? false,
   };
 }
@@ -441,6 +445,7 @@ export async function sqlGetProductsByCategory(categoryName: string) {
         is_new: (p as any).isNew ?? false,
         size_variants: (p as any).sizeVariants ?? [],
         color_options: parseColorOptions((p as any).colorOptions ?? []),
+        white_color_surcharge_enabled: (p as any).whiteColorSurchargeEnabled ?? true,
       }));
       return dedupeCatalogBySizeGroup(mapped);
     },
@@ -549,6 +554,7 @@ export async function sqlGetProductsBySubcategoryName(name: string) {
         is_new: (p as any).isNew ?? false,
         size_variants: (p as any).sizeVariants ?? [],
         color_options: parseColorOptions((p as any).colorOptions ?? []),
+        white_color_surcharge_enabled: (p as any).whiteColorSurchargeEnabled ?? true,
       }));
       return dedupeCatalogBySizeGroup(mapped);
     },
@@ -687,6 +693,7 @@ export async function sqlPostProduct(product: {
   bought_together_ids?: number[];
   pair_together_ids?: number[];
   color_options?: unknown;
+  white_color_surcharge_enabled?: boolean;
   size_variants?: unknown;
   is_new?: boolean;
   season?: string[];
@@ -738,6 +745,7 @@ export async function sqlPostProduct(product: {
       boughtTogetherIds: product.bought_together_ids ?? [],
       pairTogetherIds: product.pair_together_ids ?? [],
       colorOptions: (product.color_options as Prisma.InputJsonValue) ?? [],
+      whiteColorSurchargeEnabled: product.white_color_surcharge_enabled ?? true,
       sizeVariants: (product.size_variants as Prisma.InputJsonValue) ?? [],
       isNew: product.is_new ?? false,
       season: product.season ?? [],
@@ -826,6 +834,7 @@ export async function sqlPutProduct(
     bought_together_ids?: number[];
     pair_together_ids?: number[];
     color_options?: unknown;
+    white_color_surcharge_enabled?: boolean;
     size_variants?: unknown;
     is_new?: boolean;
     season?: string[];
@@ -897,6 +906,8 @@ export async function sqlPutProduct(
           update.color_options === undefined
             ? undefined
             : (update.color_options as Prisma.InputJsonValue),
+        whiteColorSurchargeEnabled:
+          update.white_color_surcharge_enabled ?? undefined,
         sizeVariants:
           update.size_variants === undefined
             ? undefined

@@ -49,7 +49,7 @@ export default function ColorPaletteEditor({ rows, onChange }: Props) {
       <p className="text-[11px] text-gray-500">
         Оберіть колір з палітри або вкажіть HEX. Назва показується на сайті. Доплата +
         {WHITE_COLOR_SURCHARGE_UAH} грн за білий — лише якщо в описі товару є рядок «Матеріал:
-        …фанер…» (короткий або детальний опис).
+        …фанер…» (короткий або детальний опис) та якщо перемикач доплати увімкнено в товарі.
       </p>
       <div className="flex flex-wrap gap-2">
         {PRESET_SWATCHES.map((hex) => (
@@ -100,7 +100,7 @@ export default function ColorPaletteEditor({ rows, onChange }: Props) {
               {row.name.trim() &&
                 isWhiteColorOption({ hex: row.hex, name: row.name }) && (
                   <p className="mt-0.5 text-[10px] font-medium text-amber-800">
-                    +{WHITE_COLOR_SURCHARGE_UAH} грн на сайті
+                    Може додаватися +{WHITE_COLOR_SURCHARGE_UAH} грн на сайті
                   </p>
                 )}
             </div>

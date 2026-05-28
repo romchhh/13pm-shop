@@ -37,6 +37,8 @@ export type ProductMaterialTexts = {
   /** «Детальний опис» в адмінці (вкладка «Деталі») */
   short_description?: string | null;
   main_info?: string | null;
+  /** Адмін-перемикач: дозволяти доплату за білий для цього товару. */
+  white_color_surcharge_enabled?: boolean | null;
 };
 
 const MATERIAL_LINE = /^\s*(?:матеріал|material)\s*:\s*(.+)$/i;
@@ -61,6 +63,7 @@ export function getWhiteColorSurcharge(
   materialTexts: ProductMaterialTexts
 ): number {
   if (!selectedColorName?.trim() || colorOptions.length === 0) return 0;
+  if (materialTexts.white_color_surcharge_enabled === false) return 0;
   if (!productHasPlywoodMaterial(materialTexts)) return 0;
   if (!productOffersWhiteColor(colorOptions)) return 0;
 

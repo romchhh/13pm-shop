@@ -12,6 +12,7 @@ import {
   GA4_VERTICAL,
   pushGA4EcommerceEvent,
 } from "@/lib/ga4Ecommerce";
+import { ENABLE_ONLINE_CARD_PAYMENT } from "@/lib/paymentConfig";
 
 /** Calculate order subtotal from basket items */
 const ACCENT = "#8B5E3F";
@@ -1132,7 +1133,9 @@ export default function FinalCard() {
 
                 <div className={checkoutCard}>
                   <h2 className="mb-4 font-['Montserrat'] text-base font-semibold text-black">Спосіб оплати</h2>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+                  <div
+                    className={`grid grid-cols-1 gap-3 ${ENABLE_ONLINE_CARD_PAYMENT ? "sm:grid-cols-2 sm:gap-4" : ""}`}
+                  >
                     <button
                       type="button"
                       onClick={() => handlePaymentTypeChange("prepay")}
@@ -1145,18 +1148,20 @@ export default function FinalCard() {
                     >
                       Накладений платіж
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => handlePaymentTypeChange("full")}
-                      className={`rounded-xl px-4 py-3.5 font-['Montserrat'] text-sm font-semibold transition-colors sm:min-h-[52px] ${
-                        paymentType === "full"
-                          ? "text-white shadow-sm"
-                          : "border border-black/10 bg-white text-black hover:border-black/20"
-                      }`}
-                      style={paymentType === "full" ? { backgroundColor: ACCENT } : undefined}
-                    >
-                      Онлайн-оплата
-                    </button>
+                    {ENABLE_ONLINE_CARD_PAYMENT && (
+                      <button
+                        type="button"
+                        onClick={() => handlePaymentTypeChange("full")}
+                        className={`rounded-xl px-4 py-3.5 font-['Montserrat'] text-sm font-semibold transition-colors sm:min-h-[52px] ${
+                          paymentType === "full"
+                            ? "text-white shadow-sm"
+                            : "border border-black/10 bg-white text-black hover:border-black/20"
+                        }`}
+                        style={paymentType === "full" ? { backgroundColor: ACCENT } : undefined}
+                      >
+                        Онлайн-оплата
+                      </button>
+                    )}
                   </div>
                   {fieldErrors.paymentType && <p className="mt-2 text-xs text-red-500">{fieldErrors.paymentType}</p>}
                 </div>
