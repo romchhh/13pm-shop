@@ -1,7 +1,7 @@
 {
   "info": {
-    "_postman_id": "plywood-present-catalog-api",
-    "name": "Plywood Present — Catalog API",
+    "_postman_id": "13pm-tactic-catalog-api",
+    "name": "13pm tactic — Catalog API",
     "description": "Адмін API: товари, категорії, підкатегорії, завантаження медіа.\n\n1. Спочатку виконайте «Admin Login».\n2. Увімкніть збереження cookies в Postman.\n3. Змінні: baseUrl, adminUser, adminPass.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },

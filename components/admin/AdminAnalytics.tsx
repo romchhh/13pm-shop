@@ -133,7 +133,7 @@ export default function AdminAnalytics() {
 
               const row = (
                 <>
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#8B5E3F]/10 text-sm font-semibold text-[#8B5E3F]">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--site-accent)]/10 text-sm font-semibold text-[var(--site-accent)]">
                     {index + 1}
                   </span>
                   <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-gray-100">

@@ -4,7 +4,7 @@ import { Metadata } from "next";
 import React from "react";
 
 export const metadata: Metadata = {
-  title: "Промокоди | Plywood Present Admin",
+  title: "Промокоди | 13pm tactic Admin",
   description: "Генерація та управління промокодами зі знижкою % або фіксованою сумою",
 };
 

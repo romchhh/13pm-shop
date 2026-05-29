@@ -138,12 +138,12 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/info",
-        destination: "/#about",
+        destination: "/about-us",
         permanent: true,
       },
       {
         source: "/info/:path*",
-        destination: "/#about",
+        destination: "/about-us",
         permanent: true,
       },
     ];

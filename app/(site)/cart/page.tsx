@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import CartPageClient from "@/components/cart/CartPageClient";
-import { SITE_STORE_NAME } from "@/lib/siteBrand";
 import { buildPageMetadata } from "@/lib/seo";
+import { seoCopy } from "@/lib/seoCopy";
 
 export const metadata: Metadata = buildPageMetadata({
-  title: "Кошик",
-  description: `Кошик у ${SITE_STORE_NAME}: перевірте подарунки з фанери та перейдіть до оформлення замовлення з доставкою по Україні.`,
+  title: seoCopy.cart.title,
+  description: seoCopy.cart.description,
   path: "/cart",
   noIndex: true,
 });

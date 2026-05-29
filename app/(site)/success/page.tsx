@@ -231,7 +231,7 @@ function PaymentSuccessContent() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#faf9f7]">
         <div className="text-center">
-          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-[#8B5E3F]" />
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-[var(--site-accent)]" />
           <p className="mt-4 font-['Montserrat'] text-black/60">{loadingMessage}</p>
         </div>
       </div>
@@ -244,8 +244,8 @@ function PaymentSuccessContent() {
       <div className="min-h-screen bg-[#faf9f7] px-4 py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-md">
           <div className="rounded-2xl border border-black/[0.06] bg-white p-8 text-center shadow-[0_4px_20px_rgba(0,0,0,0.05)]">
-            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[#8B5E3F]/10">
-              <svg className="h-8 w-8 text-[#8B5E3F]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--site-accent)]/10">
+              <svg className="h-8 w-8 text-[var(--site-accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
@@ -257,7 +257,7 @@ function PaymentSuccessContent() {
             </p>
             {orderId && (
               <p className="mb-6 font-['Montserrat'] text-sm text-black/50">
-                Номер замовлення: <span className="font-semibold text-[#8B5E3F]">{orderId}</span>
+                Номер замовлення: <span className="font-semibold text-[var(--site-accent)]">{orderId}</span>
               </p>
             )}
             <div className="flex flex-col justify-center gap-4 sm:flex-row">
@@ -265,7 +265,7 @@ function PaymentSuccessContent() {
                 type="button"
                 onClick={handleRetry}
                 disabled={refreshing}
-                className="inline-flex items-center justify-center rounded-xl bg-[#8B5E3F] px-6 py-3 font-['Montserrat'] text-base font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                className="inline-flex items-center justify-center rounded-xl bg-[var(--site-accent)] px-6 py-3 font-['Montserrat'] text-base font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
               >
                 {refreshing ? "Перевірка..." : "Перевірити статус"}
               </button>
@@ -303,7 +303,7 @@ function PaymentSuccessContent() {
             </p>
             <Link
               href="/catalog"
-              className="inline-flex items-center justify-center rounded-xl bg-[#8B5E3F] px-6 py-3 font-['Montserrat'] text-base font-semibold text-white transition-opacity hover:opacity-90"
+              className="inline-flex items-center justify-center rounded-xl bg-[var(--site-accent)] px-6 py-3 font-['Montserrat'] text-base font-semibold text-white transition-opacity hover:opacity-90"
             >
               Перейти в каталог
             </Link>
@@ -324,7 +324,7 @@ function PaymentSuccessContent() {
         <nav className="mb-8" aria-label="Breadcrumb">
           <ol className="flex flex-wrap items-center gap-x-1 gap-y-1 font-['Montserrat'] text-sm text-black/45">
             <li>
-              <Link href="/" className="hover:text-[#8B5E3F]">
+              <Link href="/" className="hover:text-[var(--site-accent)]">
                 Головна
               </Link>
             </li>
@@ -337,18 +337,19 @@ function PaymentSuccessContent() {
 
         <div className="rounded-2xl border border-black/[0.06] bg-white p-8 shadow-[0_4px_20px_rgba(0,0,0,0.05)] sm:p-10">
           <div className="mb-8 flex justify-center">
-            <Image
-              src="/images/logos/logo_brown.svg"
-              alt="Plywood Present"
-              width={168}
-              height={48}
-              className="h-11 w-auto"
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/13pm-mark-black.svg"
+              alt="13pm tactic"
+              width={110}
+              height={44}
+              className="h-11 w-auto object-contain"
             />
           </div>
 
           <div className="mb-2 text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#8B5E3F]/10">
-              <svg className="h-7 w-7 text-[#8B5E3F]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--site-accent)]/10">
+              <svg className="h-7 w-7 text-[var(--site-accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
@@ -361,14 +362,14 @@ function PaymentSuccessContent() {
             {(order?.invoice_id || orderId) && (
               <p className="mt-4 font-['Montserrat'] text-sm text-black/55">
                 Номер:{" "}
-                <span className="font-semibold text-[#8B5E3F]">
+                <span className="font-semibold text-[var(--site-accent)]">
                   {order?.invoice_id ?? orderId}
                 </span>
               </p>
             )}
             {order?.nova_poshta_ttn && (
-              <div className="mt-4 rounded-xl border border-[#8B5E3F]/20 bg-[#8B5E3F]/5 p-4">
-                <p className="font-['Montserrat'] text-xs font-semibold uppercase tracking-wider text-[#8B5E3F]">
+              <div className="mt-4 rounded-xl border border-[var(--site-accent)]/20 bg-[var(--site-accent)]/5 p-4">
+                <p className="font-['Montserrat'] text-xs font-semibold uppercase tracking-wider text-[var(--site-accent)]">
                   Номер накладної Нової пошти (ТТН)
                 </p>
                 <p className="mt-1 font-['Montserrat'] text-lg font-bold text-black">
@@ -424,7 +425,7 @@ function PaymentSuccessContent() {
           <div className="mt-8 text-center">
             <Link
               href="/"
-              className="inline-flex min-w-[220px] items-center justify-center rounded-xl bg-[#8B5E3F] px-8 py-4 font-['Montserrat'] text-base font-semibold text-white transition-opacity hover:opacity-90"
+              className="inline-flex min-w-[220px] items-center justify-center rounded-xl bg-[var(--site-accent)] px-8 py-4 font-['Montserrat'] text-base font-semibold text-white transition-opacity hover:opacity-90"
             >
               На головну
             </Link>
@@ -441,7 +442,7 @@ export default function PaymentSuccessPage() {
       fallback={
         <div className="flex min-h-screen items-center justify-center bg-[#faf9f7]">
           <div className="text-center">
-            <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-[#8B5E3F]" />
+            <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-[var(--site-accent)]" />
             <p className="mt-4 font-['Montserrat'] text-black/60">Завантаження...</p>
           </div>
         </div>

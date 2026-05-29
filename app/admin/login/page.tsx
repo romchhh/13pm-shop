@@ -153,7 +153,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <p className="mt-6 text-center text-sm text-gray-400">
-          © {new Date().getFullYear()} Plywood Present — адмін-панель
+          © {new Date().getFullYear()} 13pm tactic — адмін-панель
         </p>
       </div>
     </div>

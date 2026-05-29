@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 
-/** Прокрутка до #about (Як ми працюємо?), #reviews, #faq після переходу на головну */
+/** Прокрутка до #about, #reviews, #faq після переходу на головну */
 export default function HomeHashScroll() {
   const pathname = usePathname();
 

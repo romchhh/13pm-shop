@@ -1,18 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { SITE_STORE_NAME } from "@/lib/siteBrand";
 import { buildPageMetadata } from "@/lib/seo";
+import { seoCopy } from "@/lib/seoCopy";
 import { siteContact } from "@/lib/siteContact";
 
 export const metadata: Metadata = buildPageMetadata({
-  title: "Повернення та обмін",
-  description: `Повернення та обмін подарунків з фанери від ${SITE_STORE_NAME}: строки, спосіб повернення коштів, індивідуальні замовлення. Відповідно до законодавства України.`,
+  title: seoCopy.returns.title,
+  description: seoCopy.returns.description,
   path: "/returns-and-exchange",
+  imageAlt: seoCopy.returns.imageAlt,
 });
 
 export default function ReturnsAndExchangePage() {
   return (
-    <div className="min-h-screen w-full bg-[#FFFFFF] py-20 px-6">
+    <div className="min-h-screen w-full bg-[#FFFFFF] px-6 pb-16 pt-6 sm:pt-8">
       <div className="max-w-3xl mx-auto">
         <div className="mb-16">
           <Link

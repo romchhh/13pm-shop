@@ -4,7 +4,7 @@ import { Metadata } from "next";
 import React from "react";
 
 export const metadata: Metadata = {
-  title: "Категорії | Plywood Present Admin",
+  title: "Категорії | 13pm tactic Admin",
   description: "Управління категоріями товарів",
 };
 

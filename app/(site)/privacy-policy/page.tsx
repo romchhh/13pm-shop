@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SITE_STORE_NAME } from "@/lib/siteBrand";
 import { buildPageMetadata } from "@/lib/seo";
+import { seoCopy } from "@/lib/seoCopy";
 
 export const metadata: Metadata = buildPageMetadata({
-  title: "Політика конфіденційності",
-  description: `Як ${SITE_STORE_NAME} обробляє персональні дані при замовленнях дерев'яного декору та подарунків з фанери онлайн. Зберігання, мета використання та ваші права.`,
+  title: seoCopy.privacy.title,
+  description: seoCopy.privacy.description,
   path: "/privacy-policy",
 });
 

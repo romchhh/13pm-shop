@@ -37,8 +37,8 @@ export default function HeroImageDropzone({
         {...getRootProps()}
         className={`cursor-pointer rounded-xl border-2 border-dashed px-4 py-8 text-center transition-colors ${
           isDragActive
-            ? "border-[#8B5E3F] bg-[#8B5E3F]/5"
-            : "border-gray-300 bg-gray-50 hover:border-[#8B5E3F]/50 hover:bg-white"
+            ? "border-[var(--site-accent)] bg-[var(--site-accent)]/5"
+            : "border-gray-300 bg-gray-50 hover:border-[var(--site-accent)]/50 hover:bg-white"
         }`}
       >
         <input {...getInputProps()} />

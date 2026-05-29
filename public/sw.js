@@ -1,9 +1,9 @@
-// Mobile-optimized service worker for Plywood Present
-const CACHE_NAME = 'plywood-present-mobile-v1';
-const STATIC_CACHE = 'plywood-present-static-v1';
-const DYNAMIC_CACHE = 'plywood-present-dynamic-v1';
-const IMAGE_CACHE = 'plywood-present-images-v1';
-const API_CACHE = 'plywood-present-api-v1';
+// Mobile-optimized service worker for 13pm tactic
+const CACHE_NAME = '13pm-tactic-mobile-v1';
+const STATIC_CACHE = '13pm-tactic-static-v1';
+const DYNAMIC_CACHE = '13pm-tactic-dynamic-v1';
+const IMAGE_CACHE = '13pm-tactic-images-v1';
+const API_CACHE = '13pm-tactic-api-v1';
 
 // Critical resources to cache immediately
 const STATIC_ASSETS = [

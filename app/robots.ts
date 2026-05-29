@@ -1,29 +1,43 @@
 import { MetadataRoute } from "next";
+import { getSiteBaseUrl } from "@/lib/seo";
+
+const PRIVATE_PATHS = [
+  "/admin/",
+  "/api/",
+  "/_next/",
+  "/private/",
+  "/cart",
+  "/final",
+  "/favorites",
+  "/success",
+  "/forbidden",
+];
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.PUBLIC_URL || process.env.NEXT_PUBLIC_PUBLIC_URL || "http://localhost:3000";
+  const baseUrl = getSiteBaseUrl();
 
   return {
     rules: [
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/admin/", "/api/", "/_next/", "/private/"],
+        disallow: PRIVATE_PATHS,
       },
-      // Allow Google to crawl product pages and product images served via /api/images/*
       {
         userAgent: "Googlebot",
         allow: ["/", "/api/images/"],
-        disallow: ["/admin/", "/api/", "/_next/", "/private/"],
+        disallow: PRIVATE_PATHS.filter((p) => p !== "/api/"),
       },
       {
         userAgent: "Googlebot-Image",
         allow: ["/", "/api/images/"],
-        disallow: ["/admin/", "/api/", "/_next/", "/private/"],
+        disallow: PRIVATE_PATHS.filter((p) => p !== "/api/"),
       },
-      { userAgent: "GPTBot", allow: "/", disallow: ["/admin/", "/api/"] },
-      { userAgent: "ChatGPT-User", allow: "/", disallow: ["/admin/", "/api/"] },
-      { userAgent: "OAI-SearchBot", allow: "/", disallow: ["/admin/", "/api/"] },
+      { userAgent: "GPTBot", allow: "/", disallow: ["/admin/", "/api/", "/cart", "/final"] },
+      { userAgent: "ChatGPT-User", allow: "/", disallow: ["/admin/", "/api/", "/cart", "/final"] },
+      { userAgent: "OAI-SearchBot", allow: "/", disallow: ["/admin/", "/api/", "/cart", "/final"] },
+      { userAgent: "ClaudeBot", allow: "/", disallow: ["/admin/", "/api/", "/cart", "/final"] },
+      { userAgent: "PerplexityBot", allow: "/", disallow: ["/admin/", "/api/", "/cart", "/final"] },
     ],
     host: new URL(baseUrl).host,
     sitemap: `${baseUrl}/sitemap.xml`,

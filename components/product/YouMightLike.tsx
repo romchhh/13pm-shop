@@ -33,14 +33,18 @@ export type YouMightLikeProduct = {
 interface YouMightLikeProps {
   suggestedProducts?: YouMightLikeProduct[];
   title?: string;
-  /** Показати посилання «Весь каталог →» */
+  /** CTA внизу секції (пілюля «Весь каталог») */
   showCatalogLink?: boolean;
+  catalogHref?: string;
+  catalogLabel?: string;
 }
 
 export default function YouMightLike({
   suggestedProducts,
   title,
-  showCatalogLink = false,
+  showCatalogLink = true,
+  catalogHref = "/catalog",
+  catalogLabel = "Весь каталог",
 }: YouMightLikeProps = {}) {
   const { products: clientProducts, loading } = useProducts();
   const { addItem } = useBasket();
@@ -80,12 +84,14 @@ export default function YouMightLike({
   };
 
   const isLoading = !suggestedProducts?.length && loading;
+  const resolvedCatalogHref = showCatalogLink ? catalogHref : null;
 
   if (isLoading) {
     return (
       <HomeSectionCarousel
         title={title || "Вам також може сподобатися"}
-        catalogHref={showCatalogLink ? "/catalog" : null}
+        catalogHref={resolvedCatalogHref}
+        catalogLabel={catalogLabel}
         loading
       />
     );
@@ -104,7 +110,8 @@ export default function YouMightLike({
       )}
       <HomeSectionCarousel
         title={title || "Вам також може сподобатися"}
-        catalogHref={showCatalogLink ? "/catalog" : null}
+        catalogHref={resolvedCatalogHref}
+        catalogLabel={catalogLabel}
       >
         {items.map((product, index) => (
           <div key={product.id} className={`${homeCarouselItemClass} flex self-stretch`}>

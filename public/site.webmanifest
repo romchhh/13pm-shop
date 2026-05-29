@@ -1,42 +1,21 @@
 {
-  "name": "Plywood Present — дерев'яний декор та подарунки з фанери",
-  "short_name": "Plywood Present",
-  "description": "Іменні подарунки та декор із фанери: фоторамки, метрики, ключниці. Власне виробництво в Україні, доставка Новою Поштою.",
+  "name": "13pm tactic — тактичний одяг в Україні",
+  "short_name": "13pm tactic",
+  "description": "Тактичний одяг власного виробництва: лінійки ALPHA, BRAVO, DELTA. Доставка Нова Пошта, −10% для силових структур.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#FFF9F0",
-  "theme_color": "#8B5E3F",
+  "background_color": "#F2F2F0",
+  "theme_color": "#4A5840",
   "orientation": "portrait-primary",
   "scope": "/",
   "lang": "uk",
   "icons": [
     {
-      "src": "/favicon-16x16.png",
-      "sizes": "16x16",
-      "type": "image/png"
-    },
-    {
-      "src": "/favicon-32x32.png",
-      "sizes": "32x32",
-      "type": "image/png"
-    },
-    {
-      "src": "/apple-touch-icon.png",
-      "sizes": "180x180",
-      "type": "image/png"
-    },
-    {
-      "src": "/android-chrome-192x192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
-      "src": "/android-chrome-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable any"
+      "src": "/13pm.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     }
   ],
-  "categories": ["shopping", "lifestyle", "gifts"]
+  "categories": ["shopping", "lifestyle"]
 }

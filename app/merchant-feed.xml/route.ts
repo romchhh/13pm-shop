@@ -131,7 +131,7 @@ export async function GET() {
 <channel>
 <title>${SITE_STORE_NAME} — фід товарів</title>
 <link>${escapeXml(baseUrl)}</link>
-<description>Google Merchant Center — ${SITE_STORE_NAME}, подарунки та декор з фанери</description>
+<description>Google Merchant Center — ${SITE_STORE_NAME}, тактичний одяг</description>
 ${itemsXml}
 </channel>
 </rss>`;

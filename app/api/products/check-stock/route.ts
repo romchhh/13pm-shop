@@ -1,50 +1,46 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { canFulfillQuantity } from "@/lib/productAvailability";
+import { availableStockForSize, canFulfillSizeQuantity } from "@/lib/productStock";
 
 const DEFAULT_SIZE = "—";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { items } = body; // Array of { product_id, size?, quantity }
+    const { items } = body;
 
     if (!Array.isArray(items)) {
-      return NextResponse.json(
-        { error: "Items must be an array" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Items must be an array" }, { status: 400 });
     }
 
     const stockChecks = await Promise.all(
       items.map(
-        async (item: {
-          product_id: number;
-          size?: string;
-          quantity: number;
-        }) => {
+        async (item: { product_id: number; size?: string; quantity: number }) => {
           const product = await prisma.product.findUnique({
             where: { id: item.product_id },
-            select: { stock: true, inStock: true },
+            select: { stock: true, inStock: true, sizeVariants: true },
           });
 
           const requestedQuantity = item.quantity;
           const size = item.size ?? DEFAULT_SIZE;
-          const availableStock =
-            product?.inStock === true ? (product?.stock ?? 0) : 0;
+          const productRow = product
+            ? {
+                stock: product.stock,
+                inStock: product.inStock,
+                sizeVariants: product.sizeVariants,
+              }
+            : null;
+
+          const availableStock = productRow ? availableStockForSize(productRow, size) : 0;
 
           return {
             product_id: item.product_id,
             size,
             requested: requestedQuantity,
             available: availableStock,
-            sufficient: canFulfillQuantity(
-              {
-                in_stock: product?.inStock,
-                stock: product?.stock,
-              },
-              requestedQuantity
-            ),
+            sufficient: productRow
+              ? canFulfillSizeQuantity(productRow, size, requestedQuantity)
+              : false,
           };
         }
       )
@@ -65,9 +61,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, stockChecks });
   } catch (error) {
     console.error("Error checking stock:", error);
-    return NextResponse.json(
-      { error: "Failed to check stock" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to check stock" }, { status: 500 });
   }
 }

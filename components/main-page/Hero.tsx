@@ -5,38 +5,148 @@ import Link from "next/link";
 import { useState, useCallback, useEffect } from "react";
 import type { HeroSlideData } from "@/lib/heroSlides.shared";
 import { resolveHeroImageSrc } from "@/lib/heroSlides.shared";
+import { SITE_STORE_NAME } from "@/lib/siteBrand";
+
+function heroSlideImageAlt(slide: HeroSlideData): string {
+  const headline = slide.title.replace(/\n+/g, " ").trim();
+  return `${headline} — ${SITE_STORE_NAME}, тактичний одяг в Україні`;
+}
 
 const AUTOPLAY_MS = 5000;
 
-const heroTextShadow =
-  "0 1px 2px rgba(255,255,255,0.95), 0 0 24px rgba(255,255,255,0.65)";
+const heroTextShadow = "0 2px 28px rgba(0,0,0,0.5)";
+const heroSubtitleShadow = "0 1px 14px rgba(0,0,0,0.45)";
 
-const heroTitleStyleDesktop: React.CSSProperties = {
-  fontFamily: "Montserrat, sans-serif",
-  fontWeight: 700,
-  fontSize: "clamp(40px, 5.2vw, 72px)",
-  lineHeight: "1.2",
-  letterSpacing: "-0.04em",
-  textShadow: heroTextShadow,
-};
+const HERO_FEATURES = [
+  { label: "3 ЛІНІЙКИ ОДЯГУ" },
+  { label: "-10% ДЛЯ ЗСУ" },
+  { label: "1–3 ДНІ ДОСТАВКА" },
+] as const;
 
-const heroTitleStyleMobile: React.CSSProperties = {
-  fontFamily: "Montserrat, sans-serif",
-  fontWeight: 700,
-  fontSize: "clamp(26px, 7.5vw, 36px)",
-  lineHeight: "1.2",
-  letterSpacing: "-0.04em",
-  textShadow: heroTextShadow,
-};
+function CatalogArrowIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      className={className}
+      aria-hidden
+    >
+      <path
+        d="M7 17L17 7M17 7H9M17 7V15"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 
-const heroSubtitleStyle: React.CSSProperties = {
-  fontFamily: "Montserrat, sans-serif",
-  fontWeight: 500,
-  fontSize: "clamp(18px, 2.4vw, 38px)",
-  lineHeight: "1.35",
-  letterSpacing: "-0.03em",
-  textShadow: heroTextShadow,
-};
+function HeroTitle({ lines }: { lines: string[] }) {
+  if (lines.length === 0) return null;
+
+  return (
+    <h1
+      className="text-left text-white font-['Montserrat'] font-bold leading-[1.02] tracking-[-0.04em] text-[clamp(2.75rem,11vw,3.25rem)] sm:text-[clamp(3rem,10vw,3.75rem)] lg:text-[clamp(3.25rem,5.5vw,5.5rem)] xl:text-[clamp(3.75rem,5vw,6.25rem)]"
+      style={{ textShadow: heroTextShadow }}
+    >
+      {lines.map((line) => (
+        <span key={line} className="block">
+          {line}
+        </span>
+      ))}
+    </h1>
+  );
+}
+
+function HeroFeaturesBar({ className = "" }: { className?: string }) {
+  return (
+    <div
+      className={`grid grid-cols-3 divide-x divide-white/25 border-t border-white/20 ${className}`}
+    >
+      {HERO_FEATURES.map((item) => (
+        <p
+          key={item.label}
+          className="flex items-center justify-center px-2 py-4 text-center font-['Montserrat'] text-xs font-bold uppercase leading-snug tracking-[0.1em] text-white/95 sm:py-4 sm:text-sm lg:py-5 lg:text-sm lg:tracking-[0.12em]"
+        >
+          {item.label}
+        </p>
+      ))}
+    </div>
+  );
+}
+
+function HeroCatalogCard({
+  className = "",
+  variant = "desktop",
+}: {
+  className?: string;
+  variant?: "desktop" | "bar";
+}) {
+  const isBar = variant === "bar";
+
+  if (isBar) {
+    return (
+      <Link
+        href="/catalog"
+        className={`group flex flex-row items-center justify-between gap-3 rounded-[1.5rem] bg-white p-4 text-[#1C1C1C] shadow-[0_20px_50px_rgba(0,0,0,0.35)] transition-transform hover:scale-[1.01] sm:p-4 ${className}`}
+      >
+        <div className="min-w-0 flex-1">
+          <p className="font-['Montserrat'] text-sm font-semibold leading-tight text-black/55 sm:text-base">
+            Тактичний одяг
+          </p>
+          <p className="mt-1 font-['Montserrat'] text-xl font-bold leading-tight tracking-tight transition-colors group-hover:text-black sm:text-2xl">
+            Перейти до каталогу
+          </p>
+        </div>
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1C1C1C] text-white transition-colors group-hover:bg-[var(--site-accent)] sm:h-11 sm:w-11">
+          <CatalogArrowIcon />
+        </span>
+      </Link>
+    );
+  }
+
+  return (
+    <Link
+      href="/catalog"
+      className={`group flex w-full max-w-[20rem] flex-col justify-between rounded-[1.5rem] bg-white p-4 text-[#1C1C1C] shadow-[0_20px_50px_rgba(0,0,0,0.38)] transition-transform hover:scale-[1.02] xl:max-w-[21rem] xl:p-4 ${className}`}
+    >
+      <div>
+        <p className="font-['Montserrat'] text-sm font-semibold leading-tight text-black/55 sm:text-base">
+          Тактичний одяг
+        </p>
+        <p className="mt-1.5 font-['Montserrat'] text-[clamp(1.375rem,2.4vw,1.875rem)] font-bold leading-[1.08] tracking-tight transition-colors group-hover:text-black">
+          Перейти до каталогу
+        </p>
+      </div>
+      <span className="mt-3 flex h-10 w-10 shrink-0 items-center justify-center self-end rounded-full bg-[#1C1C1C] text-white transition-colors group-hover:bg-[var(--site-accent)]">
+        <CatalogArrowIcon className="scale-90" />
+      </span>
+    </Link>
+  );
+}
+
+function HeroScrollHint({ className = "" }: { className?: string }) {
+  return (
+    <a
+      href="#categories"
+      className={`inline-flex flex-col items-center gap-1.5 font-['Montserrat'] text-[11px] font-semibold uppercase tracking-[0.22em] text-white/80 transition-colors hover:text-white sm:text-xs ${className}`}
+    >
+      <span>Гортай вниз</span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+        <path
+          d="M12 5v14M6 13l6 6 6-6"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </a>
+  );
+}
 
 type HeroProps = {
   slides: HeroSlideData[];
@@ -64,6 +174,8 @@ export default function Hero({ slides }: HeroProps) {
     return () => clearInterval(timer);
   }, [hasMultiple, slideCount]);
 
+  const titleLines = slide.title.split("\n").filter(Boolean);
+
   const pagination = hasMultiple ? (
     <div className="flex items-center gap-2.5">
       {slides.map((s, i) => (
@@ -73,8 +185,8 @@ export default function Hero({ slides }: HeroProps) {
           onClick={() => setActiveSlide(i)}
           className={`rounded-full transition-all ${
             i === activeSlide
-              ? "h-2.5 w-2.5 bg-[#8B5E3F] lg:bg-white"
-              : "h-2 w-2 border-2 border-[#8B5E3F] bg-transparent lg:border-white/90"
+              ? "h-2.5 w-2.5 bg-white"
+              : "h-2 w-2 border-2 border-white/80 bg-transparent"
           } cursor-pointer`}
           aria-label={i === activeSlide ? `Слайд ${i + 1}` : `Перейти до слайду ${i + 1}`}
           aria-current={i === activeSlide ? "true" : undefined}
@@ -86,9 +198,9 @@ export default function Hero({ slides }: HeroProps) {
   return (
     <section
       id="hero"
-      className="relative mt-[var(--site-contact-bar-height)] flex h-[calc(100svh-var(--site-contact-bar-height))] min-h-[calc(100svh-var(--site-contact-bar-height))] w-full flex-col overflow-hidden lg:block"
+      className="relative mt-[var(--site-contact-bar-height)] flex h-[calc(100svh-var(--site-contact-bar-height))] min-h-[calc(100svh-var(--site-contact-bar-height))] w-full flex-col overflow-hidden"
     >
-      <div className="relative z-0 flex min-h-0 flex-1 flex-col lg:absolute lg:inset-0 lg:min-h-0 lg:flex-none">
+      <div className="relative z-0 flex min-h-0 flex-1 flex-col">
         <div className="absolute inset-0 z-0 overflow-hidden">
           {slides.map((s, i) => (
             <div
@@ -100,28 +212,28 @@ export default function Hero({ slides }: HeroProps) {
             >
               <Image
                 src={resolveHeroImageSrc(s.mobileImage)}
-                alt=""
+                alt={heroSlideImageAlt(s)}
                 fill
                 priority={i === 0}
-                className="scale-[1.02] object-cover object-top blur-[1px] lg:hidden"
+                className="object-cover object-center lg:hidden"
                 sizes="100vw"
               />
               <Image
                 src={resolveHeroImageSrc(s.desktopImage)}
-                alt=""
+                alt={heroSlideImageAlt(s)}
                 fill
                 priority={i === 0}
-                className="hidden scale-[1.02] object-cover object-[65%_top] blur-[1px] lg:block"
+                className="hidden object-cover object-center lg:block"
                 sizes="100vw"
               />
             </div>
           ))}
           <div
-            className="pointer-events-none absolute inset-0 hidden bg-gradient-to-r from-[#E8E4DC]/92 via-[#E8E4DC]/55 to-transparent lg:block lg:max-w-[62%] lg:from-[#E8E4DC]/88 lg:via-[#E8E4DC]/35"
+            className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-black/15"
             aria-hidden
           />
           <div
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-[min(45%,220px)] bg-gradient-to-t from-black/30 via-black/12 to-transparent lg:h-[min(38%,280px)] lg:from-black/25"
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-[min(62%,380px)] bg-gradient-to-t from-black/85 via-black/45 to-transparent lg:from-black/75"
             aria-hidden
           />
         </div>
@@ -131,7 +243,7 @@ export default function Hero({ slides }: HeroProps) {
             <button
               type="button"
               onClick={goPrev}
-              className="absolute left-10 top-1/2 z-20 hidden h-12 w-12 -translate-y-1/2 items-center justify-center text-white/80 transition-colors hover:text-white lg:flex"
+              className="absolute left-6 top-1/2 z-20 hidden h-12 w-12 -translate-y-1/2 items-center justify-center text-white/80 transition-colors hover:text-white lg:flex xl:left-10"
               aria-label="Попередній слайд"
             >
               <svg width="24" height="40" viewBox="0 0 24 40" fill="none" aria-hidden>
@@ -147,7 +259,7 @@ export default function Hero({ slides }: HeroProps) {
             <button
               type="button"
               onClick={goNext}
-              className="absolute right-10 top-1/2 z-20 hidden h-12 w-12 -translate-y-1/2 items-center justify-center text-white/80 transition-colors hover:text-white lg:flex"
+              className="absolute right-6 top-1/2 z-20 hidden h-12 w-12 -translate-y-1/2 items-center justify-center text-white/80 transition-colors hover:text-white lg:flex xl:right-10"
               aria-label="Наступний слайд"
             >
               <svg width="24" height="40" viewBox="0 0 24 40" fill="none" aria-hidden>
@@ -163,59 +275,52 @@ export default function Hero({ slides }: HeroProps) {
           </>
         )}
 
-        <div className="relative z-10 flex min-h-0 flex-1 flex-col px-6 pb-8 pt-[calc(var(--site-nav-height)+0.75rem)] lg:hidden">
-          <div className="max-w-[340px] space-y-3">
-            <h1 className="text-left text-black" style={heroTitleStyleMobile}>
-              {slide.title}
-            </h1>
-            <p className="text-left text-black/90" style={heroSubtitleStyle}>
+        {/* Контент: на моб. — по центру висоти; на десктопі — зліва + каталог справа */}
+        <div className="absolute inset-x-0 top-[var(--site-nav-height)] bottom-[min(44vh,330px)] z-10 mx-auto flex w-full max-w-[1920px] flex-col justify-center px-6 sm:bottom-[min(42vh,310px)] lg:relative lg:inset-auto lg:flex lg:h-full lg:flex-1 lg:flex-row lg:items-center lg:justify-between lg:gap-10 lg:pb-[7.5rem] lg:px-14 lg:pt-[calc(var(--site-nav-height)+1.25rem)] xl:gap-16 xl:px-20">
+          <div className="max-w-2xl space-y-5 lg:max-w-[min(52rem,52%)] lg:space-y-7">
+            <HeroTitle lines={titleLines} />
+            <p
+              className="max-w-lg text-left font-['Montserrat'] font-normal leading-[1.5] tracking-[-0.01em] text-white/90 text-[clamp(1.125rem,4.5vw,1.3125rem)] sm:text-lg lg:max-w-md lg:text-[clamp(1.0625rem,1.6vw,1.25rem)] lg:leading-[1.55]"
+              style={{ textShadow: heroSubtitleShadow }}
+            >
               {slide.subtitle}
             </p>
           </div>
 
-          <div className="min-h-[1rem] flex-1" aria-hidden />
-
-          <Link
-            href="/catalog"
-            className="flex w-full items-center justify-center rounded-full bg-white py-4 font-['Montserrat'] text-base font-medium text-black shadow-sm transition-colors hover:bg-[#FFF9F0]"
-            style={{ letterSpacing: "-0.02em" }}
-          >
-            Переглянути каталог
-          </Link>
+          <HeroCatalogCard
+            variant="desktop"
+            className="hidden lg:flex lg:shrink-0 lg:justify-self-end"
+          />
         </div>
 
-        <div className="relative z-10 mx-auto hidden h-full min-h-full w-full max-w-[1920px] items-center px-14 pb-20 pt-[calc(var(--site-nav-height)+0.5rem)] xl:px-20 lg:flex">
-          <div className="flex w-full max-w-[600px] flex-col items-start gap-8 xl:max-w-[720px]">
-            <div className="space-y-5 xl:space-y-6">
-              <h1 className="text-left text-black" style={heroTitleStyleDesktop}>
-                {slide.title}
-              </h1>
-              <p className="max-w-xl text-left text-black/90" style={heroSubtitleStyle}>
-                {slide.subtitle}
-              </p>
+        {/* Нижня зона: моб. каталог → переваги → «Гортай вниз» (однаково на всіх екранах) */}
+        <div className="absolute inset-x-0 bottom-0 z-10">
+          <div className="mx-auto max-w-[1920px]">
+            <div className="bg-gradient-to-t from-black/90 via-black/50 to-transparent px-4 pt-8 pb-3 sm:px-6 lg:hidden">
+              <HeroCatalogCard variant="bar" className="w-full" />
             </div>
-            <Link
-              href="/catalog"
-              className="inline-flex min-h-[60px] items-center justify-center rounded-full bg-white px-16 py-5 font-['Montserrat'] text-2xl font-medium text-black shadow-md transition-colors hover:bg-[#FFF9F0] xl:min-h-[64px] xl:px-[4.5rem] xl:py-5 xl:text-[26px]"
-              style={{ letterSpacing: "-0.02em" }}
-            >
-              Переглянути каталог
-            </Link>
+
+            <div className="relative">
+              {pagination && (
+                <div className="absolute -top-10 right-4 hidden lg:block xl:right-20">
+                  {pagination}
+                </div>
+              )}
+              <HeroFeaturesBar />
+            </div>
+
+            <div className="flex justify-center bg-gradient-to-t from-black/70 to-transparent py-3 sm:py-4">
+              <HeroScrollHint />
+            </div>
+
+            {pagination && (
+              <div className="flex justify-center bg-[var(--site-bar-dark)] py-3 lg:hidden">
+                {pagination}
+              </div>
+            )}
           </div>
         </div>
-
-        {pagination && (
-          <div className="absolute bottom-6 left-1/2 z-20 hidden -translate-x-1/2 lg:flex">
-            {pagination}
-          </div>
-        )}
       </div>
-
-      {pagination && (
-        <div className="relative z-20 flex shrink-0 items-center justify-center bg-white py-3.5 lg:hidden">
-          {pagination}
-        </div>
-      )}
     </section>
   );
 }

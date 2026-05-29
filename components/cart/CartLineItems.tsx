@@ -75,7 +75,7 @@ export default function CartLineItems({
                 >
                   <Image
                     src={getCartImageSrc(item.imageUrl)}
-                    alt={item.name}
+                    alt={`${item.name} — тактичний одяг 13pm tactic`}
                     fill
                     className="object-cover"
                     sizes="112px"

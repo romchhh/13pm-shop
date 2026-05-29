@@ -1,5 +1,5 @@
 {
-  "name": "plywood-present-site",
+  "name": "13pm-tactic-site",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -25,7 +25,8 @@
     "manage-products": "ts-node --project tsconfig.scripts.json scripts/manage-products.ts",
     "add-categories": "ts-node --project tsconfig.scripts.json scripts/add-categories.ts",
     "seed-test-categories": "ts-node --project tsconfig.scripts.json scripts/seed-test-categories.ts",
-    "seed-frame-products": "ts-node --project tsconfig.scripts.json scripts/seed-frame-products.ts",
+    "seed-tactic-categories": "ts-node --project tsconfig.scripts.json scripts/seed-tactic-categories.ts",
+    "seed-tactic-products": "ts-node --project tsconfig.scripts.json scripts/seed-tactic-products.ts",
     "backfill-slugs": "ts-node --project tsconfig.scripts.json scripts/backfill-slugs.ts",
     "fix-slug-columns": "ts-node --project tsconfig.scripts.json scripts/fix-slug-columns.ts",
     "check-vitals": "echo 'Run lighthouse audit after deployment'"

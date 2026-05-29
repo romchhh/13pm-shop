@@ -348,20 +348,22 @@ const AppSidebar: React.FC = () => {
       >
         <Link href="/admin">
           {isExpanded || isHovered || isMobileOpen ? (
-            <Image
-              src="/images/logos/logo_brown.svg"
-              alt="Plywood Present Logo"
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src="/13pm-mark-black.svg"
+              alt="13pm tactic"
               width={160}
               height={44}
-              className="h-10 w-auto max-w-[160px]"
+              className="h-10 w-auto max-w-[160px] object-contain"
             />
           ) : (
-            <Image
-              src="/images/logos/logo_brown.svg"
-              alt="Plywood Present"
-              width={40}
-              height={40}
-              className="h-9 w-9 object-contain"
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src="/13pm-mark-black.svg"
+              alt="13pm tactic"
+              width={44}
+              height={44}
+              className="h-9 w-auto object-contain"
             />
           )}
         </Link>

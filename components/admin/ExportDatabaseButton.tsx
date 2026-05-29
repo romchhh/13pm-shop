@@ -61,7 +61,7 @@ export default function ExportDatabaseButton() {
         type="button"
         onClick={handleExport}
         disabled={loading}
-        className="mt-3 inline-flex items-center justify-center rounded-lg bg-[#3D1A00] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#2d1400] disabled:opacity-50"
+        className="mt-3 inline-flex items-center justify-center rounded-lg bg-[#1C1C1C] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#2d1400] disabled:opacity-50"
       >
         {loading ? "Формування…" : "Завантажити CSV"}
       </button>

@@ -3,6 +3,7 @@
  */
 
 import { PAYMENT_TYPE_LABELS_LONG } from "@/lib/paymentTypeLabels";
+import { TELEGRAM_BRAND_FOOTER } from "@/lib/siteBrand";
 
 interface OrderData {
   id: number;
@@ -51,7 +52,7 @@ function formatOrderMessage(order: OrderData, isPaid: boolean = false): string {
   );
 
   // Get base URL for order link
-  const baseUrl = process.env.PUBLIC_URL || process.env.NEXT_PUBLIC_PUBLIC_URL || "https://forbody.space";
+  const baseUrl = process.env.PUBLIC_URL || process.env.NEXT_PUBLIC_PUBLIC_URL || "";
   const orderLink = `${baseUrl}/admin/orders/${order.id}/edit`;
   
   let message = `${paymentStatusEmoji} <b>НОВЕ ЗАМОВЛЕННЯ ${paymentStatusText}</b>\n\n`;
@@ -86,6 +87,7 @@ function formatOrderMessage(order: OrderData, isPaid: boolean = false): string {
 
   message += `\n💰 <b>Загальна сума:</b> ${total.toFixed(2)} ₴\n`;
   message += `\n🕐 <b>Дата:</b> ${new Date(order.created_at).toLocaleString("uk-UA")}\n`;
+  message += `\n${TELEGRAM_BRAND_FOOTER}`;
 
   return message;
 }
@@ -163,7 +165,8 @@ export async function sendContactFormNotification(data: {
       `👤 <b>Ім'я:</b> ${escapeHtml(data.name)}\n` +
       `📧 <b>Email:</b> ${escapeHtml(data.email)}\n\n` +
       `💬 <b>Повідомлення:</b>\n${escapeHtml(data.message)}\n\n` +
-      `🕐 <b>Дата:</b> ${new Date().toLocaleString("uk-UA")}`;
+      `🕐 <b>Дата:</b> ${new Date().toLocaleString("uk-UA")}\n\n` +
+      TELEGRAM_BRAND_FOOTER;
 
     const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
     const response = await fetch(url, {
@@ -205,7 +208,8 @@ export async function sendNewsletterSubscribeNotification(email: string): Promis
     const text =
       `📬 <b>ПІДПИСКА НА РОЗСИЛКУ</b>\n\n` +
       `📧 <b>Email:</b> ${escapeHtml(email)}\n\n` +
-      `🕐 <b>Дата:</b> ${new Date().toLocaleString("uk-UA")}`;
+      `🕐 <b>Дата:</b> ${new Date().toLocaleString("uk-UA")}\n\n` +
+      TELEGRAM_BRAND_FOOTER;
 
     const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
     const response = await fetch(url, {

@@ -1,13 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
+import Image from "next/image";
 import { siteContact } from "@/lib/siteContact";
 import { SITE_WORDMARK } from "@/lib/siteBrand";
 import { useCategories } from "@/lib/CategoriesProvider";
-
-const FOOTER_BG = "#d1d1a6";
+import BrandLogo from "./BrandLogo";
 
 const PAYMENT_LOGOS = [
   { src: "/images/icons/Badge.svg", alt: "Visa" },
@@ -17,13 +16,13 @@ const PAYMENT_LOGOS = [
 ] as const;
 
 const footerLinkClass =
-  "font-['Montserrat'] text-sm text-black/90 hover:opacity-70 transition-opacity";
+  "font-['Montserrat'] text-sm text-white/85 hover:text-white transition-opacity";
 
 const footerHeadingClass =
-  "font-['Montserrat'] text-xs font-bold uppercase tracking-[0.14em] text-black text-center lg:text-left";
+  "font-['Montserrat'] text-xs font-bold uppercase tracking-[0.14em] text-white text-center lg:text-left";
 
 const socialLinkClass =
-  "inline-flex items-center gap-3 font-['Montserrat'] text-sm font-medium text-black/90 hover:opacity-70 transition-opacity";
+  "inline-flex items-center gap-3 font-['Montserrat'] text-sm font-medium text-white/90 hover:text-white transition-opacity";
 
 function InstagramIcon() {
   return (
@@ -77,13 +76,12 @@ export default function Footer() {
         Новинки
       </Link>
       <Link href="/catalog?hits=1" className={footerLinkClass}>
-        Хіти
+        BESTSELLERS
       </Link>
-      <Link
-        href="/#about"
-        className={footerLinkClass}
-        onClick={(e) => handleInPageAnchor(e, "#about")}
-      >
+      <Link href="/catalog?promo=1" className={footerLinkClass}>
+        Акції
+      </Link>
+      <Link href="/#about" className={footerLinkClass}>
         Про нас
       </Link>
       <Link href="/#faq" className={footerLinkClass} onClick={(e) => handleInPageAnchor(e, "#faq")}>
@@ -109,32 +107,20 @@ export default function Footer() {
   );
 
   return (
-    <footer
-      className="relative z-0 w-full text-[#1a1a1a] border-t border-[#3D1A00]/15"
-      style={{ backgroundColor: FOOTER_BG }}
-    >
+    <footer className="relative z-0 w-full bg-[var(--site-bar-dark)] text-white border-t border-white/10">
       <div className="max-w-[1920px] mx-auto px-6 pt-24 pb-10 sm:pt-28 sm:pb-12 lg:px-12 lg:pt-32 lg:pb-14">
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-4 lg:gap-10 xl:gap-16">
-          {/* Бренд */}
           <div className="flex flex-col items-center gap-4 text-center lg:items-start lg:gap-5 lg:text-left max-w-md lg:max-w-none mx-auto lg:mx-0">
-            <Link href="/" className="inline-block">
-              <Image
-                src="/images/logos/logo_black.svg"
-                alt={SITE_WORDMARK}
-                width={200}
-                height={56}
-                className="h-14 w-auto sm:h-16 lg:h-12 mx-auto lg:mx-0"
-              />
-            </Link>
-            <p className="font-['Montserrat'] text-sm leading-relaxed text-black/85 max-w-sm">
-              Власне виробництво дерев&apos;яного декору та подарунків.
+            <BrandLogo variant="footer" />
+            <p className="font-['Montserrat'] text-sm leading-relaxed text-white/80 max-w-sm">
+              {SITE_WORDMARK} — tactical clothing UA. Твій тактичний одяг.
             </p>
-            <p className="font-['Montserrat'] text-sm leading-relaxed text-black/85 max-w-sm">
-              Іменні вироби, фоторамки, сімейні композиції та унікальні подарунки ручної роботи.
+            <p className="font-['Montserrat'] text-sm leading-relaxed text-white/80 max-w-sm">
+              Розроблено для дії, створено для тебе. Власне виробництво. Доставка по всьому світу.
+              -10% для силових структур.
             </p>
           </div>
 
-          {/* Навігація */}
           <div className="flex flex-col items-center gap-4 lg:items-start lg:gap-5">
             <h3 className={footerHeadingClass}>Навігація</h3>
             <nav className="flex flex-wrap justify-center gap-x-3 gap-y-2 max-w-md lg:max-w-none lg:flex-col lg:items-start lg:gap-3 lg:justify-start">
@@ -142,12 +128,11 @@ export default function Footer() {
             </nav>
           </div>
 
-          {/* Категорії */}
           <div className="flex flex-col items-center gap-4 lg:items-start lg:gap-5">
             <h3 className={footerHeadingClass}>Категорії</h3>
             <nav className="flex flex-wrap justify-center gap-x-3 gap-y-2 max-w-md lg:max-w-none lg:flex-col lg:items-start lg:gap-3 lg:justify-start">
               {categoriesLoading && categories.length === 0 ? (
-                <span className="text-black/50 text-sm font-['Montserrat']">Завантаження…</span>
+                <span className="text-white/50 text-sm font-['Montserrat']">Завантаження…</span>
               ) : (
                 categories.map((cat) => (
                   <Link
@@ -162,7 +147,6 @@ export default function Footer() {
             </nav>
           </div>
 
-          {/* Соцмережі + оплата */}
           <div className="flex flex-col items-center gap-6 lg:items-start">
             <div className="flex flex-col items-center gap-4 w-full lg:items-start">
               <h3 className={footerHeadingClass}>Соц-мережі</h3>
@@ -177,11 +161,11 @@ export default function Footer() {
                   className={socialLinkClass}
                   aria-label={`Instagram ${siteContact.instagramHandle}`}
                 >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-black/10 text-black">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-white">
                     <InstagramIcon />
                   </span>
                   <span>
-                    Instagram <span className="text-black/75">{siteContact.instagramHandle}</span>
+                    Instagram <span className="text-white/70">{siteContact.instagramHandle}</span>
                   </span>
                 </Link>
                 <Link
@@ -191,11 +175,11 @@ export default function Footer() {
                   className={socialLinkClass}
                   aria-label={`TikTok ${siteContact.tiktokHandle}`}
                 >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-black/10 text-black">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-white">
                     <TikTokIcon />
                   </span>
                   <span>
-                    TikTok <span className="text-black/75">{siteContact.tiktokHandle}</span>
+                    TikTok <span className="text-white/70">{siteContact.tiktokHandle}</span>
                   </span>
                 </Link>
               </nav>
@@ -220,14 +204,14 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="border-t border-black/25">
+      <div className="border-t border-white/15">
         <div className="max-w-[1920px] mx-auto px-6 lg:px-12 py-5">
-          <p className="text-center font-['Montserrat'] text-xs text-black/60">
+          <p className="text-center font-['Montserrat'] text-xs text-white/50">
             <Link
               href="https://new.telebots.site/"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-black transition-colors"
+              className="hover:text-white transition-colors"
             >
               created by telebots
             </Link>

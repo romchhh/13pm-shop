@@ -207,7 +207,7 @@ images: (файли)
 
 ## Postman
 
-Колекція: [`docs/postman/Plywood-Present-Catalog-API.postman_collection.json`](./postman/Plywood-Present-Catalog-API.postman_collection.json)
+Колекція: [`docs/postman/Plywood-Present-Catalog-API.postman_collection.json`](./postman/Plywood-Present-Catalog-API.postman_collection.json) (файл Postman; назва колекції — 13pm tactic)
 
 Змінні колекції:
 

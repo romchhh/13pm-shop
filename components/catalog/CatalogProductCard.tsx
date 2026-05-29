@@ -120,7 +120,7 @@ export default function CatalogProductCard({
         ) : (
           <Image
             src={getProductImageSrc(product.first_media)}
-            alt={`${product.name} — ${SITE_STORE_NAME}`}
+            alt={`${product.name} — тактичний одяг ${SITE_STORE_NAME}, фото товару`}
             className={productCardMediaImageClass()}
             fill
             sizes="(max-width: 640px) 45vw, (max-width: 1024px) 33vw, 25vw"
@@ -203,6 +203,7 @@ export default function CatalogProductCard({
           <div className="w-full shrink-0 lg:w-auto">
             <AddToCartButton
               size="sm"
+              variant="dark"
               disabled={outOfStock}
               className="w-full lg:w-auto"
               onClick={(e) => {

@@ -49,7 +49,11 @@ export default function CartRecommendations() {
           <p className="font-['Montserrat'] text-sm text-red-600">{cartError}</p>
         </div>
       )}
-      <HomeSectionCarousel title="Вам також може сподобатися" catalogHref="/catalog">
+      <HomeSectionCarousel
+        title="Вам також може сподобатися"
+        catalogHref="/catalog"
+        catalogLabel="Весь каталог"
+      >
         {filtered.map((product, index) => (
           <div key={product.id} className={`${homeCarouselItemClass} flex self-stretch`}>
             <CatalogProductCard

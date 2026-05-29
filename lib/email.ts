@@ -5,7 +5,7 @@
  * - RESEND_API_KEY=re_xxx — обов'язково.
  * - EMAIL_FROM — адреса відправника:
  *   • Тест: onboarding@resend.dev (працює без верифікації).
- *   • Прод: верифікуйте свій домен на resend.com/domains, потім напр. news@plywood-present-site.com.
+ *   • Прод: верифікуйте свій домен на resend.com/domains, потім напр. news@your-domain.com.
  */
 
 import { Resend } from "resend";

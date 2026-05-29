@@ -1,7 +1,11 @@
+/** Каталог лише з акційними товарами */
+export const CATALOG_PROMO_HREF = "/catalog?promo=1";
+
 /** Пункти головного меню (десктоп і бургер) */
 export const mainNavLinks = [
   { label: "Новинки", href: "/catalog?new=1" },
-  { label: "Хіти", href: "/catalog?hits=1" },
+  { label: "BESTSELLERS", href: "/catalog?hits=1" },
+  { label: "Акції", href: CATALOG_PROMO_HREF },
   { label: "Про нас", href: "/#about" },
   { label: "Контакти", href: "/contacts" },
   { label: "Відгуки", href: "/#reviews" },
@@ -9,8 +13,8 @@ export const mainNavLinks = [
 
 export type MainNavLink = (typeof mainNavLinks)[number];
 
-export function getMainNavHashId(href: string): "about" | "reviews" | null {
-  if (href === "/#about") return "about";
+export function getMainNavHashId(href: string): "reviews" | "about" | null {
   if (href === "/#reviews") return "reviews";
+  if (href === "/#about") return "about";
   return null;
 }

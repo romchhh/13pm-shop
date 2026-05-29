@@ -1,6 +1,6 @@
 /** Промокод зі сторінки кошика переноситься на оформлення через sessionStorage. */
 
-const KEY = "plywood_checkout_promo";
+const KEY = "13pm_tactic_checkout_promo";
 
 export type StoredCartPromo = {
   code: string;

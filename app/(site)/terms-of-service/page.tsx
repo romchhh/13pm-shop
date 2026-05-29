@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SITE_STORE_NAME } from "@/lib/siteBrand";
 import { buildPageMetadata, getSiteBaseUrl } from "@/lib/seo";
+import { seoCopy } from "@/lib/seoCopy";
 
 const baseUrl = getSiteBaseUrl();
 
 export const metadata: Metadata = buildPageMetadata({
-  title: "Договір публічної оферти",
-  description: `Публічна оферта ${SITE_STORE_NAME}: купівля дерев'яного декору та подарунків з фанери онлайн — оформлення, оплата, доставка та повернення.`,
+  title: seoCopy.terms.title,
+  description: seoCopy.terms.description,
   path: "/terms-of-service",
 });
 

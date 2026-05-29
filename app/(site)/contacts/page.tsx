@@ -45,20 +45,20 @@ export default function ContactsPage() {
 
         {/* Хлібні крихти */}
         <nav className="mb-8" aria-label="Breadcrumb">
-          <ol className="flex items-center gap-2 text-sm font-['Montserrat'] text-[#3D1A00]/60">
+          <ol className="flex items-center gap-2 text-sm font-['Montserrat'] text-[#1C1C1C]/60">
             <li>
-              <Link href="/" className="hover:text-[#3D1A00] transition-colors">
+              <Link href="/" className="hover:text-[#1C1C1C] transition-colors">
                 Головна
               </Link>
             </li>
-            <li aria-hidden className="text-[#3D1A00]/30">|</li>
-            <li className="text-[#3D1A00]">Контакти</li>
+            <li aria-hidden className="text-[#1C1C1C]/30">|</li>
+            <li className="text-[#1C1C1C]">Контакти</li>
           </ol>
         </nav>
 
         {/* Великий заголовок по центру */}
         <h1
-          className="text-center text-[#3D1A00] uppercase mb-16"
+          className="text-center text-[#1C1C1C] uppercase mb-16"
           style={{
             fontFamily: "Montserrat, sans-serif",
             fontWeight: 700,
@@ -76,10 +76,10 @@ export default function ContactsPage() {
           {/* ── Ліва: форма ── */}
           <div
             id="contact-form"
-            className="w-full lg:w-[55%] rounded-2xl p-8 lg:p-12 bg-white border border-[#3D1A00]/10 scroll-mt-24"
+            className="w-full lg:w-[55%] rounded-2xl p-8 lg:p-12 bg-white border border-[#1C1C1C]/10 scroll-mt-24"
           >
             <h2
-              className="text-[#3D1A00] uppercase mb-8"
+              className="text-[#1C1C1C] uppercase mb-8"
               style={{
                 fontFamily: "Montserrat, sans-serif",
                 fontWeight: 600,
@@ -87,13 +87,13 @@ export default function ContactsPage() {
                 letterSpacing: "0.04em",
               }}
             >
-              Зв&apos;язатися з Plywood Present
+              Зв&apos;язатися з 13pm tactic
             </h2>
 
             {submitted ? (
               <div className="py-12 text-center">
                 <p
-                  className="text-[#3D1A00]"
+                  className="text-[#1C1C1C]"
                   style={{ fontFamily: "Montserrat, sans-serif", fontSize: "18px", fontWeight: 500 }}
                 >
                   Дякуємо! Ми отримали ваше повідомлення і зв&apos;яжемося найближчим часом.
@@ -104,7 +104,7 @@ export default function ContactsPage() {
                 {/* Ім'я */}
                 <div>
                   <label
-                    className="block text-[#3D1A00]/60 mb-1"
+                    className="block text-[#1C1C1C]/60 mb-1"
                     style={{ fontFamily: "Montserrat, sans-serif", fontSize: "11px", letterSpacing: "0.08em" }}
                   >
                     ІМ&apos;Я *
@@ -113,7 +113,7 @@ export default function ContactsPage() {
                     type="text"
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    className="w-full bg-transparent border-b border-[#3D1A00]/30 pb-2 text-[#3D1A00] outline-none focus:border-[#3D1A00] transition-colors placeholder-transparent"
+                    className="w-full bg-transparent border-b border-[#1C1C1C]/30 pb-2 text-[#1C1C1C] outline-none focus:border-[#1C1C1C] transition-colors placeholder-transparent"
                     style={{ fontFamily: "Montserrat, sans-serif", fontSize: "15px" }}
                     placeholder="Ваше ім'я"
                   />
@@ -122,7 +122,7 @@ export default function ContactsPage() {
                 {/* Email */}
                 <div>
                   <label
-                    className="block text-[#3D1A00]/60 mb-1"
+                    className="block text-[#1C1C1C]/60 mb-1"
                     style={{ fontFamily: "Montserrat, sans-serif", fontSize: "11px", letterSpacing: "0.08em" }}
                   >
                     EMAIL *
@@ -131,7 +131,7 @@ export default function ContactsPage() {
                     type="email"
                     value={form.email}
                     onChange={(e) => setForm({ ...form, email: e.target.value })}
-                    className="w-full bg-transparent border-b border-[#3D1A00]/30 pb-2 text-[#3D1A00] outline-none focus:border-[#3D1A00] transition-colors placeholder-transparent"
+                    className="w-full bg-transparent border-b border-[#1C1C1C]/30 pb-2 text-[#1C1C1C] outline-none focus:border-[#1C1C1C] transition-colors placeholder-transparent"
                     style={{ fontFamily: "Montserrat, sans-serif", fontSize: "15px" }}
                     placeholder="email@example.com"
                   />
@@ -140,7 +140,7 @@ export default function ContactsPage() {
                 {/* Запит */}
                 <div>
                   <label
-                    className="block text-[#3D1A00]/60 mb-1"
+                    className="block text-[#1C1C1C]/60 mb-1"
                     style={{ fontFamily: "Montserrat, sans-serif", fontSize: "11px", letterSpacing: "0.08em" }}
                   >
                     ВАШ ЗАПИТ *
@@ -149,12 +149,12 @@ export default function ContactsPage() {
                     value={form.message}
                     onChange={(e) => setForm({ ...form, message: e.target.value })}
                     rows={3}
-                    className="w-full bg-transparent border-b border-[#3D1A00]/30 pb-2 text-[#3D1A00] outline-none focus:border-[#3D1A00] transition-colors resize-none"
+                    className="w-full bg-transparent border-b border-[#1C1C1C]/30 pb-2 text-[#1C1C1C] outline-none focus:border-[#1C1C1C] transition-colors resize-none"
                     style={{ fontFamily: "Montserrat, sans-serif", fontSize: "15px" }}
                     placeholder="Що ви хочете дізнатися/замовити?"
                   />
                   <p
-                    className="text-[#3D1A00]/40 mt-1"
+                    className="text-[#1C1C1C]/40 mt-1"
                     style={{ fontFamily: "Montserrat, sans-serif", fontSize: "12px" }}
                   >
                     Що ви хочете дізнатися/замовити?
@@ -166,8 +166,8 @@ export default function ContactsPage() {
                   <span
                     className={`mt-0.5 w-5 h-5 flex-shrink-0 border rounded-sm transition-colors flex items-center justify-center ${
                       agreed
-                        ? "bg-[#3D1A00] border-[#3D1A00]"
-                        : "border-[#3D1A00]/40 group-hover:border-[#3D1A00]"
+                        ? "bg-[#1C1C1C] border-[#1C1C1C]"
+                        : "border-[#1C1C1C]/40 group-hover:border-[#1C1C1C]"
                     }`}
                     onClick={() => setAgreed(!agreed)}
                   >
@@ -178,16 +178,16 @@ export default function ContactsPage() {
                     )}
                   </span>
                   <span
-                    className="text-[#3D1A00]/70 leading-relaxed"
+                    className="text-[#1C1C1C]/70 leading-relaxed"
                     style={{ fontFamily: "Montserrat, sans-serif", fontSize: "13px" }}
                     onClick={() => setAgreed(!agreed)}
                   >
                     Продовжуючи, я приймаю умови{" "}
-                    <Link href="/terms-of-service" className="underline hover:text-[#3D1A00] transition-colors">
+                    <Link href="/terms-of-service" className="underline hover:text-[#1C1C1C] transition-colors">
                       Публічної оферти
                     </Link>{" "}
                     та надаю згоду на обробку своїх персональних даних відповідно до{" "}
-                    <Link href="/privacy-policy" className="underline hover:text-[#3D1A00] transition-colors">
+                    <Link href="/privacy-policy" className="underline hover:text-[#1C1C1C] transition-colors">
                       Політики конфіденційності
                     </Link>
                   </span>
@@ -201,7 +201,7 @@ export default function ContactsPage() {
                   <button
                     onClick={handleSubmit}
                     disabled={!agreed || !form.name.trim() || !form.email.trim() || !form.message.trim() || sending}
-                    className="w-full px-10 py-4 bg-[#3D1A00] text-white uppercase transition-all hover:bg-[#3D1A00]/85 disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="w-full px-10 py-4 bg-[#1C1C1C] text-white uppercase transition-all hover:bg-[#1C1C1C]/85 disabled:opacity-40 disabled:cursor-not-allowed"
                     style={{
                       fontFamily: "Montserrat, sans-serif",
                       fontWeight: 600,
@@ -218,12 +218,12 @@ export default function ContactsPage() {
 
           {/* ── Права: контактна інформація ── */}
           <div
-            className="w-full lg:w-[45%] rounded-2xl p-8 lg:p-12 grid grid-cols-2 gap-x-8 gap-y-12 content-start bg-white border border-[#3D1A00]/10"
+            className="w-full lg:w-[45%] rounded-2xl p-8 lg:p-12 grid grid-cols-2 gap-x-8 gap-y-12 content-start bg-white border border-[#1C1C1C]/10"
           >
             {/* Телефон */}
             <div className="col-span-2 sm:col-span-1">
               <p
-                className="text-[#3D1A00]/50 uppercase mb-3"
+                className="text-[#1C1C1C]/50 uppercase mb-3"
                 style={{
                   fontFamily: "Montserrat, sans-serif",
                   fontWeight: 500,
@@ -238,7 +238,7 @@ export default function ContactsPage() {
                   <a
                     key={phone.tel}
                     href={`tel:${phone.tel}`}
-                    className="block text-[#3D1A00] hover:opacity-70 transition-opacity"
+                    className="block text-[#1C1C1C] hover:opacity-70 transition-opacity"
                     style={{
                       fontFamily: "Montserrat, sans-serif",
                       fontWeight: 400,
@@ -255,7 +255,7 @@ export default function ContactsPage() {
             {/* Месенджери */}
             <div className="col-span-2 sm:col-span-1">
               <p
-                className="text-[#3D1A00]/50 uppercase mb-3"
+                className="text-[#1C1C1C]/50 uppercase mb-3"
                 style={{
                   fontFamily: "Montserrat, sans-serif",
                   fontWeight: 500,
@@ -266,7 +266,7 @@ export default function ContactsPage() {
                 Месенджери
               </p>
               <p
-                className="text-[#3D1A00] mb-2"
+                className="text-[#1C1C1C] mb-2"
                 style={{
                   fontFamily: "Montserrat, sans-serif",
                   fontWeight: 400,
@@ -277,12 +277,12 @@ export default function ContactsPage() {
                 <a href={`tel:${siteContact.messengerPhone.tel}`} className="hover:opacity-70">
                   {siteContact.messengerPhone.display}
                 </a>
-                <span className="text-[#3D1A00]/70"> ({siteContact.messengerLabel})</span>
+                <span className="text-[#1C1C1C]/70"> ({siteContact.messengerLabel})</span>
               </p>
               <div className="flex flex-wrap gap-3">
                 <a
                   href={siteContact.viberUrl}
-                  className="text-[#3D1A00] underline hover:opacity-70 text-sm font-['Montserrat']"
+                  className="text-[#1C1C1C] underline hover:opacity-70 text-sm font-['Montserrat']"
                 >
                   Viber
                 </a>
@@ -290,7 +290,7 @@ export default function ContactsPage() {
                   href={siteContact.telegramUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[#3D1A00] underline hover:opacity-70 text-sm font-['Montserrat']"
+                  className="text-[#1C1C1C] underline hover:opacity-70 text-sm font-['Montserrat']"
                 >
                   Telegram
                 </a>
@@ -300,7 +300,7 @@ export default function ContactsPage() {
             {/* E-mail */}
             <div>
               <p
-                className="text-[#3D1A00]/50 uppercase mb-3"
+                className="text-[#1C1C1C]/50 uppercase mb-3"
                 style={{
                   fontFamily: "Montserrat, sans-serif",
                   fontWeight: 500,
@@ -312,7 +312,7 @@ export default function ContactsPage() {
               </p>
               <a
                 href={`mailto:${siteContact.email}`}
-                className="text-[#3D1A00] hover:opacity-70 transition-opacity"
+                className="text-[#1C1C1C] hover:opacity-70 transition-opacity"
                 style={{
                   fontFamily: "Montserrat, sans-serif",
                   fontWeight: 400,
@@ -327,7 +327,7 @@ export default function ContactsPage() {
             {/* Графік роботи */}
             <div>
               <p
-                className="text-[#3D1A00]/50 uppercase mb-3"
+                className="text-[#1C1C1C]/50 uppercase mb-3"
                 style={{
                   fontFamily: "Montserrat, sans-serif",
                   fontWeight: 500,
@@ -338,7 +338,7 @@ export default function ContactsPage() {
                 Графік роботи
               </p>
               <div
-                className="text-[#3D1A00] space-y-1"
+                className="text-[#1C1C1C] space-y-1"
                 style={{
                   fontFamily: "Montserrat, sans-serif",
                   fontWeight: 400,

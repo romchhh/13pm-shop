@@ -3,7 +3,9 @@
 import {
   SITE_PRODUCT_BRAND,
   SITE_STORE_NAME,
+  siteDefaultOgImageAlt,
   siteFooterLead,
+  siteMetaDescription,
 } from "@/lib/siteBrand";
 import { siteContact } from "@/lib/siteContact";
 import { DEFAULT_OG_IMAGE_PATH, productCanonicalPath } from "@/lib/seo";
@@ -40,7 +42,7 @@ function normalizeBaseUrl(url: string): string {
 /** Schema.org WebSite — для пошукових систем і rich results */
 export function WebSiteStructuredData({
   name = SITE_STORE_NAME,
-  description = siteFooterLead,
+  description = siteMetaDescription,
   baseUrl = defaultBaseUrl,
   locale = "uk_UA",
 }: {
@@ -57,20 +59,12 @@ export function WebSiteStructuredData({
     description,
     url: normalizedBaseUrl,
     inLanguage: locale,
-    potentialAction: {
-      "@type": "SearchAction",
-      target: {
-        "@type": "EntryPoint",
-        urlTemplate: `${normalizedBaseUrl}/catalog?q={search_term_string}`,
-      },
-      "query-input": "required name=search_term_string",
-    },
     publisher: {
       "@type": "Organization",
       name: SITE_STORE_NAME,
       logo: {
         "@type": "ImageObject",
-        url: `${normalizedBaseUrl}${DEFAULT_OG_IMAGE_PATH}`,
+        url: `${normalizedBaseUrl}/13pm-mark-black.svg`,
       },
     },
   };
@@ -110,8 +104,8 @@ export function ProductStructuredData({ product, baseUrl = defaultBaseUrl, slug 
     name: product.name,
     description:
       product.description ||
-      `${product.name} — дерев'яний декор та подарунок від ${SITE_PRODUCT_BRAND}, ${SITE_STORE_NAME}`,
-    image: imageUrl,
+      `${product.name} — тактичний одяг від ${SITE_PRODUCT_BRAND}, ${SITE_STORE_NAME}`,
+    image: [imageUrl],
     brand: {
       "@type": "Brand",
       name: SITE_PRODUCT_BRAND,
@@ -121,9 +115,9 @@ export function ProductStructuredData({ product, baseUrl = defaultBaseUrl, slug 
       name: SITE_STORE_NAME,
       url: normalizedBaseUrl,
     },
-    category: product.category_name || "Подарунки з фанери",
+    category: product.category_name || "Тактичний одяг",
     offers: offer,
-    sku: `plywood-present-${product.id}`,
+    sku: `13pm-tactic-${product.id}`,
   };
 
   return (
@@ -146,8 +140,12 @@ export function OrganizationStructuredData({
     "@type": ["Organization", "OnlineStore"],
     name,
     url: url || normalizedBase,
-    logo: logo || `${normalizedBase}/images/logos/logo_brown.svg`,
-    image: `${normalizedBase}${DEFAULT_OG_IMAGE_PATH}`,
+    logo: logo || `${normalizedBase}/13pm-mark-black.svg`,
+    image: {
+      "@type": "ImageObject",
+      url: `${normalizedBase}${DEFAULT_OG_IMAGE_PATH}`,
+      caption: siteDefaultOgImageAlt,
+    },
     description: siteFooterLead,
     sameAs: [
       siteContact.instagramUrl,

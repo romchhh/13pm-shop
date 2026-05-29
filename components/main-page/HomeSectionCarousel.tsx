@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import {
   useRef,
   useState,
@@ -14,11 +13,15 @@ import {
   homeSectionHeaderRowClass,
   homeSectionOuterClass,
 } from "@/lib/homeSectionSpacing";
+import HomeCarouselNavButton from "@/components/shared/HomeCarouselNavButton";
+import HomePillLink from "@/components/shared/HomePillLink";
 
 interface HomeSectionCarouselProps {
   title: string;
-  /** Якщо `null` — без посилання «Весь каталог» */
+  /** Якщо `null` — без кнопки «Весь каталог» */
   catalogHref?: string | null;
+  /** Текст CTA-пілюлі (за замовчуванням «Весь каталог») */
+  catalogLabel?: string;
   /** Not required when `loading` is true (early return). */
   children?: ReactNode;
   loading?: boolean;
@@ -45,6 +48,7 @@ function useHorizontalScroll() {
 export default function HomeSectionCarousel({
   title,
   catalogHref = "/catalog",
+  catalogLabel = "Весь каталог",
   children,
   loading,
   loadingMessage = "Завантаження...",
@@ -106,7 +110,26 @@ export default function HomeSectionCarousel({
     return (
       <section className="w-full bg-white">
         <div className={`max-w-[1920px] mx-auto px-6 lg:px-10 ${homeSectionOuterClass}`}>
+          <div className={homeSectionHeaderRowClass}>
+            <h2 className="font-['Montserrat'] text-2xl font-semibold tracking-tight text-black lg:text-3xl">
+              {title}
+            </h2>
+          </div>
           <p className="font-['Montserrat'] text-black/60">{loadingMessage}</p>
+          <div className={`${homeSectionCarouselNavClass} mt-6 gap-5`} aria-hidden>
+            <div className="h-10 w-10 rounded-full bg-black/10 lg:h-11 lg:w-11" />
+            <div className="flex gap-2">
+              <div className="h-2 w-2 rounded-full bg-black/15" />
+              <div className="h-2.5 w-2.5 rounded-full bg-black/25" />
+              <div className="h-2 w-2 rounded-full bg-black/15" />
+            </div>
+            <div className="h-10 w-10 rounded-full bg-black/10 lg:h-11 lg:w-11" />
+          </div>
+          {catalogHref ? (
+            <div className="mt-6 flex justify-center lg:mt-8">
+              <div className="h-12 w-full max-w-sm animate-pulse rounded-full bg-black/10 sm:max-w-md lg:min-w-[300px]" />
+            </div>
+          ) : null}
         </div>
       </section>
     );
@@ -119,17 +142,6 @@ export default function HomeSectionCarousel({
           <h2 className="font-['Montserrat'] text-2xl font-semibold tracking-tight text-black lg:text-3xl">
             {title}
           </h2>
-          {catalogHref ? (
-            <Link
-              href={catalogHref}
-              className="inline-flex shrink-0 items-center gap-1 font-['Montserrat'] text-sm text-black/45 hover:text-black/70 transition-colors"
-            >
-              Весь каталог
-              <span aria-hidden>→</span>
-            </Link>
-          ) : (
-            <span className="hidden sm:block sm:w-24" aria-hidden />
-          )}
         </div>
 
         <div
@@ -141,19 +153,15 @@ export default function HomeSectionCarousel({
         </div>
 
         <div
-          className={homeSectionCarouselNavClass}
+          className={`${homeSectionCarouselNavClass} gap-5`}
           aria-label="Навігація каруселі"
         >
-          <button
-            type="button"
+          <HomeCarouselNavButton
+            direction="left"
             onClick={scrollLeft}
-            className="shrink-0 p-2 text-[#8B5E3F] transition-opacity hover:opacity-70"
-            aria-label="Прокрутити вліво"
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
-          </button>
+            disabled={pageCount <= 1 || activeDot === 0}
+            label="Прокрутити вліво"
+          />
           {pageCount > 1 ? (
             <div className="flex items-center gap-2.5" role="tablist">
               {Array.from({ length: pageCount }).map((_, i) => (
@@ -165,8 +173,8 @@ export default function HomeSectionCarousel({
                   onClick={() => goToDot(i)}
                   className={`rounded-full transition-all ${
                     i === activeDot
-                      ? "h-2.5 w-2.5 bg-[#8B5E3F]"
-                      : "h-2 w-2 border-2 border-[#8B5E3F] bg-transparent"
+                      ? "h-2.5 w-2.5 bg-[#1C1C1C]"
+                      : "h-2 w-2 border-2 border-[#1C1C1C]/35 bg-transparent hover:border-[#1C1C1C]/60"
                   }`}
                   aria-label={`Показати блок ${i + 1} з ${pageCount}`}
                 />
@@ -175,17 +183,19 @@ export default function HomeSectionCarousel({
           ) : (
             <span className="w-8" aria-hidden />
           )}
-          <button
-            type="button"
+          <HomeCarouselNavButton
+            direction="right"
             onClick={scrollRight}
-            className="shrink-0 p-2 text-[#8B5E3F] transition-opacity hover:opacity-70"
-            aria-label="Прокрутити вправо"
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M9 18l6-6-6-6" />
-            </svg>
-          </button>
+            disabled={pageCount > 1 && activeDot >= pageCount - 1}
+            label="Прокрутити вправо"
+          />
         </div>
+
+        {catalogHref ? (
+          <div className="mt-6 flex justify-center lg:mt-8">
+            <HomePillLink href={catalogHref}>{catalogLabel}</HomePillLink>
+          </div>
+        ) : null}
       </div>
     </section>
   );

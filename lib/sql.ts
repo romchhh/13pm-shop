@@ -12,6 +12,7 @@ import {
   serializeSizeVariants,
 } from "./productOptions";
 import { textToSlug, ensureUniqueSlug } from "./slug";
+import { pickFirstProductMedia } from "./getFirstProductImage";
 
 // Keep sql template literal for backward compatibility (used in migrate route)
 // This will be deprecated but kept for now
@@ -60,7 +61,7 @@ async function _sqlGetAllProducts() {
         select: { name: true },
       },
       media: {
-        take: 1,
+        take: 12,
         orderBy: { id: "asc" },
         select: {
           type: true,
@@ -117,7 +118,7 @@ async function _sqlGetAllProducts() {
     subcategory_name: p.subcategory?.name || null,
     package_weight: p.packageWeight ?? null,
     course: p.course ?? null,
-    first_media: p.media[0] ? { type: p.media[0].type, url: p.media[0].url } : null,
+    first_media: pickFirstProductMedia(p.media),
     is_new: (p as any).isNew ?? false,
     size_variants: (p as any).sizeVariants ?? [],
     color_options: parseColorOptions((p as any).colorOptions ?? []),
@@ -252,7 +253,7 @@ export async function sqlGetProduct(id: number) {
         bought_together_ids: (product as any).boughtTogetherIds ?? [],
         pair_together_ids: (product as any).pairTogetherIds ?? [],
         color_options: parseColorOptions((product as any).colorOptions ?? []),
-        size_variants: parseSizeVariants((product as any).sizeVariants ?? []),
+        size_variants: (product as any).sizeVariants ?? [],
         white_color_surcharge_enabled:
           (product as any).whiteColorSurchargeEnabled ?? true,
         is_new: (product as any).isNew ?? false,
@@ -359,7 +360,7 @@ export async function sqlGetProductBySlug(slug: string) {
     bought_together_ids: product.boughtTogetherIds ?? [],
     pair_together_ids: product.pairTogetherIds ?? [],
     color_options: parseColorOptions(product.colorOptions ?? []),
-    size_variants: parseSizeVariants(product.sizeVariants ?? []),
+    size_variants: product.sizeVariants ?? [],
     white_color_surcharge_enabled: product.whiteColorSurchargeEnabled ?? true,
     is_new: product.isNew ?? false,
   };
@@ -400,7 +401,7 @@ export async function sqlGetProductsByCategory(categoryName: string) {
             select: { categoryId: true },
           },
           media: {
-            take: 1,
+            take: 12,
             orderBy: { id: "asc" },
             select: {
               type: true,
@@ -441,7 +442,7 @@ export async function sqlGetProductsByCategory(categoryName: string) {
         subcategory_name: p.subcategory?.name || null,
         package_weight: p.packageWeight ?? null,
         course: p.course ?? null,
-        first_media: p.media[0] ? { type: p.media[0].type, url: p.media[0].url } : null,
+        first_media: pickFirstProductMedia(p.media),
         is_new: (p as any).isNew ?? false,
         size_variants: (p as any).sizeVariants ?? [],
         color_options: parseColorOptions((p as any).colorOptions ?? []),
@@ -501,7 +502,7 @@ export async function sqlGetProductsBySubcategoryName(name: string) {
             select: { subcategoryId: true },
           },
           media: {
-            take: 1,
+            take: 12,
             orderBy: { id: "asc" },
             select: {
               type: true,
@@ -550,7 +551,7 @@ export async function sqlGetProductsBySubcategoryName(name: string) {
         subcategory_name: p.subcategory?.name || null,
         package_weight: p.packageWeight ?? null,
         course: p.course ?? null,
-        first_media: p.media[0] ? { type: p.media[0].type, url: p.media[0].url } : null,
+        first_media: pickFirstProductMedia(p.media),
         is_new: (p as any).isNew ?? false,
         size_variants: (p as any).sizeVariants ?? [],
         color_options: parseColorOptions((p as any).colorOptions ?? []),
@@ -570,7 +571,7 @@ const homeCarouselProductInclude = {
   category: { select: { name: true } },
   subcategory: { select: { name: true } },
   media: {
-    take: 1,
+    take: 12,
     orderBy: { id: "asc" as const },
     select: { type: true, url: true },
   },
@@ -614,7 +615,7 @@ function mapHomeCarouselProduct(p: {
     stock: p.stock,
     category_name: p.category?.name || null,
     subcategory_name: p.subcategory?.name || null,
-    first_media: p.media[0] ? { type: p.media[0].type, url: p.media[0].url } : null,
+    first_media: pickFirstProductMedia(p.media),
     size_variants: (p as { sizeVariants?: unknown }).sizeVariants ?? [],
   };
 }

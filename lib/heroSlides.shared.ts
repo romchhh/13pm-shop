@@ -8,19 +8,21 @@ export type HeroSlideData = {
   mobileImage: string;
 };
 
+export const DEFAULT_HERO_IMAGE = "/hero-main.png";
+
 export const DEFAULT_HERO_SLIDES: HeroSlideData[] = [
   {
     id: 0,
-    title: "Подарунки з дерева, створені спеціально для Вас",
+    title: "МАГАЗИН\nТАКТИЧНОГО\nОДЯГУ",
     subtitle:
-      "Іменні вироби, сімейний декор, фоторамки та унікальні подарунки ручної роботи.",
-    desktopImage: "/images/pages/hero-desktop.jpg",
-    mobileImage: "/images/pages/hero-mobile.jpg",
+      "Куртки, штани, футболки та худі власного виробництва. Лінійки ALPHA, BRAVO та DELTA — доставка по Україні 1–3 дні.",
+    desktopImage: DEFAULT_HERO_IMAGE,
+    mobileImage: DEFAULT_HERO_IMAGE,
   },
 ];
 
 export function resolveHeroImageSrc(url: string): string {
-  if (!url) return "/images/pages/hero-desktop.jpg";
+  if (!url) return DEFAULT_HERO_IMAGE;
   if (url.startsWith("http") || url.startsWith("/")) return url;
   return `/api/images/${url}`;
 }

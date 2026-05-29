@@ -145,8 +145,11 @@ export async function PUT(
       : undefined;
 
     const useSizeGroupOrder =
-      sizeGroupOrderedIds !== undefined && sizeGroupOrderedIds.length > 0;
-    const useLegacySizeLinks = sizeLinkedIds !== undefined;
+      sizeGroupOrderedIds !== undefined &&
+      sizeGroupOrderedIds.length > 0 &&
+      body.size_variants === undefined;
+    const useLegacySizeLinks =
+      sizeLinkedIds !== undefined && body.size_variants === undefined;
 
     await sqlPutProduct(id, {
       name: body.name,

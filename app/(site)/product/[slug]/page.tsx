@@ -3,6 +3,7 @@ import ProductRouteScrollToTop from "@/components/product/ProductRouteScrollToTo
 import YouMightLike from "@/components/product/YouMightLike";
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { parseColorOptions } from "@/lib/productOptions";
 import { sqlGetProductBySlug, sqlGetProduct, sqlGetCatalogProducts, sqlGetAllProducts } from "@/lib/sql";
 import { SITE_STORE_NAME } from "@/lib/siteBrand";
 import { buildProductMetadata, productCanonicalPath } from "@/lib/seo";
@@ -53,6 +54,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     price: Number(product.price),
     discount_percentage: product.discount_percentage,
     category_name: product.category_name,
+    subcategory_name: (product as { subcategory_name?: string | null }).subcategory_name,
     first_media: firstMedia ? { url: firstMedia.url, type: firstMedia.type } : null,
   });
 }
@@ -191,31 +193,20 @@ export default async function Page({ params }: PageProps) {
         }))
     : [];
 
-  const pairProducts = pairTogetherIds.length
+  const colorLinkedProducts = pairTogetherIds.length
     ? allProductsForLinks
-        .filter((p) => pairTogetherIds.includes(p.id))
+        .filter((p) => pairTogetherIds.includes(p.id) && p.id !== product.id)
         .slice(0, 12)
         .map((p) => ({
           id: p.id,
           name: p.name,
           slug: p.slug ?? null,
-          price: p.price,
-          old_price: (p as { old_price?: number | null }).old_price ?? null,
-          discount_percentage: (p as { discount_percentage?: number | null }).discount_percentage ?? null,
-          first_media: p.first_media ?? null,
-          subtitle: (p as { subtitle?: string | null }).subtitle ?? null,
-          description: (p as { description?: string | null }).description ?? null,
-          is_new: (p as { is_new?: boolean }).is_new ?? false,
-          is_hit: (p as { is_hit?: boolean }).is_hit ?? false,
-          is_promo: (p as { is_promo?: boolean }).is_promo ?? false,
-          gift_product_id: (p as { gift_product_id?: number | null }).gift_product_id ?? null,
-          in_stock: (p as { in_stock?: boolean }).in_stock,
-          stock: (p as { stock?: number }).stock,
+          color_options: parseColorOptions((p as { color_options?: unknown }).color_options),
         }))
     : [];
 
-  // Прокидаємо на клієнт (ProductClient) для блоку "Купують разом"
   (product as any).bought_together_products = boughtTogetherProducts;
+  (product as any).color_linked_products = colorLinkedProducts;
 
   return (
     <main className="min-h-screen bg-[#FFFFFF]">
@@ -224,9 +215,6 @@ export default async function Page({ params }: PageProps) {
         <ProductServer product={product} />
       </Suspense>
       <YouMightLike title="Вам також може сподобатися" suggestedProducts={suggestedProducts} showCatalogLink />
-      {pairProducts.length > 0 && (
-        <YouMightLike title="Обирай у парі" suggestedProducts={pairProducts} />
-      )}
     </main>
   );
 }

@@ -1,21 +1,13 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { Montserrat } from "next/font/google";
+import { Montserrat, Playfair_Display } from "next/font/google";
 import Script from "next/script";
 import "./critical.css";
 import "./globals.css";
 import "./mobile-optimizations.css";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
-import NewsletterSubscribe from "@/components/layout/NewsletterSubscribe";
-import { AppProvider } from "@/lib/GeneralProvider";
-import { BasketProvider } from "@/lib/BasketProvider";
-import { FavoritesProvider } from "@/lib/FavoritesProvider";
-import { CategoriesProvider } from "@/lib/CategoriesProvider";
+import SiteChrome from "@/components/layout/SiteChrome";
 import { registerServiceWorker } from "@/lib/registerSW";
-import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
 import { WebVitals } from "@/components/shared/WebVitals";
-import MainContent from "@/components/shared/MainContent";
 import { OrganizationStructuredData, WebSiteStructuredData } from "@/components/shared/StructuredData";
 import { buildRootSiteMetadata } from "@/lib/seo";
 import { SITE_ICON_PATH, siteMetadataIcons } from "@/lib/siteBrand";
@@ -27,8 +19,15 @@ const montserrat = Montserrat({
   fallback: ["system-ui", "arial"],
   variable: "--font-montserrat",
   adjustFontFallback: true,
-  // Optimize: only load weights that are actually used
   weight: ["300", "400", "500", "600", "700"],
+});
+
+const playfair = Playfair_Display({
+  subsets: ["latin", "cyrillic"],
+  display: "swap",
+  style: ["italic"],
+  weight: ["400", "500", "600"],
+  variable: "--font-playfair",
 });
 
 export const metadata: Metadata = {
@@ -44,7 +43,7 @@ export default function RootLayout({
   const baseUrl = process.env.PUBLIC_URL || process.env.NEXT_PUBLIC_PUBLIC_URL || "http://localhost:3000";
 
   return (
-    <html lang="uk" className={montserrat.className}>
+    <html lang="uk" className={`${montserrat.className} ${playfair.variable}`}>
       <head>
         {/* Google Tag Manager */}
         <Script id="gtm" strategy="beforeInteractive">{`
@@ -68,19 +67,17 @@ export default function RootLayout({
         <link rel="alternate" hrefLang="x-default" href={baseUrl} />
         
         {/* Favicon and App Icons */}
-        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-        <link rel="icon" type="image/png" href={SITE_ICON_PATH} />
-        <link rel="shortcut icon" type="image/png" href={SITE_ICON_PATH} />
-        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+        <link rel="icon" type="image/svg+xml" href={SITE_ICON_PATH} />
+        <link rel="shortcut icon" type="image/svg+xml" href={SITE_ICON_PATH} />
+        <link rel="apple-touch-icon" href={SITE_ICON_PATH} />
         <link rel="manifest" href="/site.webmanifest" />
         <meta name="theme-color" content="#4A5840" />
         <meta name="msapplication-TileColor" content="#4A5840" />
-        <meta name="msapplication-TileImage" content="/android-chrome-192x192.png" />
+        <meta name="msapplication-TileImage" content={SITE_ICON_PATH} />
         
         {/* Preload critical resources */}
         {/* Hero image preload */}
-        <link rel="preload" href="/images/hf_20260222_063745_3c9c7bbc-82d2-4f3f-8c11-4216792e4995.jpeg" as="image" />
+        <link rel="preload" href="/hero-main.png" as="image" />
         <link rel="preload" href="/api/products/top-sale" as="fetch" crossOrigin="anonymous" />
         
         {/* Mobile-specific prefetch */}
@@ -144,25 +141,7 @@ export default function RootLayout({
           />
         </noscript>
         
-        <a href="#main-content" className="skip-link">
-          Перейти до основного контенту
-        </a>
-        <ErrorBoundary>
-          <AppProvider>
-            <BasketProvider>
-              <FavoritesProvider>
-              <CategoriesProvider>
-                <Header />
-                <Suspense fallback={<main id="main-content" className="bg-[var(--background-warm-yellow)] mt-[var(--site-header-offset)] min-h-screen" />}>
-                  <MainContent id="main-content">{children}</MainContent>
-                </Suspense>
-                <NewsletterSubscribe />
-                <Footer />
-              </CategoriesProvider>
-              </FavoritesProvider>
-            </BasketProvider>
-          </AppProvider>
-        </ErrorBoundary>
+        <SiteChrome>{children}</SiteChrome>
         
         {/* Service Worker registration - loaded after interactive */}
         <Script

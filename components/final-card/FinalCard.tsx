@@ -12,10 +12,20 @@ import {
   GA4_VERTICAL,
   pushGA4EcommerceEvent,
 } from "@/lib/ga4Ecommerce";
+import PaymentWalletLogos from "@/components/shared/PaymentWalletLogos";
 import { ENABLE_ONLINE_CARD_PAYMENT } from "@/lib/paymentConfig";
 
 /** Calculate order subtotal from basket items */
-const ACCENT = "#8B5E3F";
+const CHECKOUT_CTA_PRIMARY =
+  "bg-[#1C1C1C] text-white shadow-[0_4px_20px_rgba(0,0,0,0.2)] transition-[transform,box-shadow,background-color] hover:bg-black hover:shadow-[0_6px_24px_rgba(0,0,0,0.24)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none disabled:hover:bg-[#1C1C1C]";
+
+function checkoutChoiceButtonClass(selected: boolean): string {
+  return `rounded-2xl px-4 py-4 text-left font-['Montserrat'] transition-all sm:min-h-[58px] ${
+    selected
+      ? "border-2 border-[#1C1C1C] bg-[#1C1C1C] text-white shadow-[0_4px_16px_rgba(0,0,0,0.16)] ring-2 ring-[#1C1C1C]/15"
+      : "border-2 border-black/10 bg-white text-black hover:border-[#1C1C1C]/30 hover:bg-black/[0.02]"
+  }`;
+}
 
 function getSubtotal(
   items: {
@@ -780,7 +790,7 @@ export default function FinalCard() {
           <nav className="mb-8" aria-label="Breadcrumb">
             <ol className="flex items-center gap-2 text-sm font-['Montserrat'] font-normal">
               <li>
-                <Link href="/" className="text-[#3D1A00] hover:opacity-80 transition-opacity">
+                <Link href="/" className="text-[#1C1C1C] hover:opacity-80 transition-opacity">
                   Головна
                 </Link>
               </li>
@@ -790,15 +800,15 @@ export default function FinalCard() {
           </nav>
 
           <div className="text-center py-12 sm:py-16">
-            <h1 className="font-['Montserrat'] font-bold text-3xl sm:text-4xl lg:text-5xl text-[#3D1A00] uppercase tracking-tight mb-4">
+            <h1 className="font-['Montserrat'] font-bold text-3xl sm:text-4xl lg:text-5xl text-[#1C1C1C] uppercase tracking-tight mb-4">
               Дякуємо!
             </h1>
-            <p className="font-['Montserrat'] font-bold text-2xl sm:text-3xl lg:text-4xl text-[#3D1A00] uppercase tracking-tight mb-10 sm:mb-12">
+            <p className="font-['Montserrat'] font-bold text-2xl sm:text-3xl lg:text-4xl text-[#1C1C1C] uppercase tracking-tight mb-10 sm:mb-12">
               Ваше замовлення оформлене!
             </p>
             <Link
               href="/"
-              className="inline-flex items-center justify-center px-8 py-4 rounded-lg font-['Montserrat'] font-semibold text-[#3D1A00] uppercase text-base tracking-tight bg-[#9B9B5A] hover:bg-[#8a8a4e] transition-colors"
+              className={`inline-flex min-h-14 items-center justify-center rounded-2xl px-10 py-4 font-['Montserrat'] text-base font-bold text-white ${CHECKOUT_CTA_PRIMARY}`}
             >
               Повернутися на головну
             </Link>
@@ -811,9 +821,11 @@ export default function FinalCard() {
   const checkoutCard =
     "rounded-2xl border border-black/[0.06] bg-white p-5 shadow-[0_4px_20px_rgba(0,0,0,0.05)] sm:p-6";
   const checkoutInput = (err?: string) =>
-    `w-full rounded-xl border bg-white px-4 py-3 font-['Montserrat'] text-sm text-black placeholder:text-black/35 transition-colors focus:border-[#8B5E3F]/45 focus:outline-none focus:ring-1 focus:ring-[#8B5E3F]/20 ${
-      err ? "border-red-400" : "border-black/10"
+    `w-full rounded-xl border bg-white px-4 py-3.5 font-['Montserrat'] text-sm text-black placeholder:text-black/35 transition-colors focus:border-[#1C1C1C] focus:outline-none focus:ring-2 focus:ring-[#1C1C1C]/12 ${
+      err ? "border-red-400 ring-2 ring-red-100" : "border-black/12"
     }`;
+  const checkoutSectionTitle = "font-['Montserrat'] text-lg font-bold text-black";
+  const checkoutSectionHint = "mb-4 font-['Montserrat'] text-sm text-black/50";
   const deliveryCostDisplay = deliveryMethod === "nova_poshta_branch" ? DELIVERY_COST_BRANCH : 0;
   const summarySubtotal = getSubtotal(items);
   const summaryPromo = appliedPromo?.discountAmount ?? 0;
@@ -824,10 +836,7 @@ export default function FinalCard() {
       <div className="mx-auto w-full max-w-[1920px] px-4 sm:px-6 lg:px-12">
       {!mounted ? (
         <div className="flex min-h-[400px] w-full items-center justify-center py-12 sm:py-20">
-          <div
-            className="h-12 w-12 animate-spin rounded-full border-2 border-black/15 border-t-transparent"
-            style={{ borderTopColor: ACCENT }}
-          />
+          <div className="h-12 w-12 animate-spin rounded-full border-2 border-black/10 border-t-[#1C1C1C]" />
         </div>
       ) : items.length == 0 ? (
         <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-10 py-12 sm:gap-14 sm:py-20">
@@ -841,8 +850,7 @@ export default function FinalCard() {
           </h2>
           <Link
             href="/catalog"
-            className="inline-flex h-14 w-full max-w-sm items-center justify-center rounded-xl px-6 font-['Montserrat'] text-base font-semibold text-white transition-opacity hover:opacity-90 sm:h-16 sm:text-lg"
-            style={{ backgroundColor: ACCENT }}
+            className={`inline-flex h-14 w-full max-w-sm items-center justify-center rounded-2xl px-6 font-['Montserrat'] text-base font-bold sm:h-16 sm:text-lg ${CHECKOUT_CTA_PRIMARY}`}
           >
             Продовжити покупки
           </Link>
@@ -852,7 +860,7 @@ export default function FinalCard() {
           <nav className="mb-4 font-['Montserrat'] text-sm text-black/45" aria-label="Breadcrumb">
             <ol className="flex flex-wrap items-center gap-x-1 gap-y-1">
               <li>
-                <Link href="/" className="hover:text-[#8B5E3F]">
+                <Link href="/" className="hover:text-[var(--site-accent)]">
                   Головна
                 </Link>
               </li>
@@ -860,7 +868,7 @@ export default function FinalCard() {
                 &gt;
               </li>
               <li>
-                <Link href="/cart" className="hover:text-[#8B5E3F]">
+                <Link href="/cart" className="hover:text-[var(--site-accent)]">
                   Кошик
                 </Link>
               </li>
@@ -892,7 +900,8 @@ export default function FinalCard() {
                 <CartLineItems onGlobalError={setError} />
 
                 <div className={checkoutCard}>
-                  <h2 className="mb-4 font-['Montserrat'] text-base font-semibold text-black">Інформація про покупця</h2>
+                  <h2 className={`mb-1 ${checkoutSectionTitle}`}>Інформація про покупця</h2>
+                  <p className={checkoutSectionHint}>Контакти для підтвердження замовлення</p>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
                     <div className="flex flex-col gap-1.5">
                       <label htmlFor="firstName" className="text-sm font-['Montserrat'] text-black/70">
@@ -967,7 +976,8 @@ export default function FinalCard() {
                 </div>
 
                 <div className={checkoutCard}>
-                  <h2 className="mb-4 font-['Montserrat'] text-base font-semibold text-black">Доставка</h2>
+                  <h2 className={`mb-1 ${checkoutSectionTitle}`}>Доставка</h2>
+                  <p className={checkoutSectionHint}>Куди надіслати замовлення</p>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
                     <div className="flex flex-col gap-1.5">
                       <label htmlFor="city" className="text-sm font-['Montserrat'] text-black/70">
@@ -1132,34 +1142,52 @@ export default function FinalCard() {
                 </div>
 
                 <div className={checkoutCard}>
-                  <h2 className="mb-4 font-['Montserrat'] text-base font-semibold text-black">Спосіб оплати</h2>
+                  <h2 className={`mb-1 ${checkoutSectionTitle}`}>Спосіб оплати</h2>
+                  <p className={checkoutSectionHint}>Оберіть зручний варіант</p>
                   <div
                     className={`grid grid-cols-1 gap-3 ${ENABLE_ONLINE_CARD_PAYMENT ? "sm:grid-cols-2 sm:gap-4" : ""}`}
+                    role="group"
+                    aria-label="Спосіб оплати"
                   >
                     <button
                       type="button"
+                      aria-pressed={paymentType === "prepay"}
                       onClick={() => handlePaymentTypeChange("prepay")}
-                      className={`rounded-xl px-4 py-3.5 font-['Montserrat'] text-sm font-semibold transition-colors sm:min-h-[52px] ${
-                        paymentType === "prepay"
-                          ? "text-white shadow-sm"
-                          : "border border-black/10 bg-white text-black hover:border-black/20"
-                      }`}
-                      style={paymentType === "prepay" ? { backgroundColor: ACCENT } : undefined}
+                      className={checkoutChoiceButtonClass(paymentType === "prepay")}
                     >
-                      Накладений платіж
+                      <span className="block text-sm font-bold sm:text-base">Накладений платіж</span>
+                      <span
+                        className={`mt-1 block text-xs font-normal leading-snug ${
+                          paymentType === "prepay" ? "text-white/75" : "text-black/50"
+                        }`}
+                      >
+                        Оплата при отриманні у відділенні
+                      </span>
                     </button>
                     {ENABLE_ONLINE_CARD_PAYMENT && (
                       <button
                         type="button"
+                        aria-pressed={paymentType === "full"}
                         onClick={() => handlePaymentTypeChange("full")}
-                        className={`rounded-xl px-4 py-3.5 font-['Montserrat'] text-sm font-semibold transition-colors sm:min-h-[52px] ${
-                          paymentType === "full"
-                            ? "text-white shadow-sm"
-                            : "border border-black/10 bg-white text-black hover:border-black/20"
-                        }`}
-                        style={paymentType === "full" ? { backgroundColor: ACCENT } : undefined}
+                        className={checkoutChoiceButtonClass(paymentType === "full")}
                       >
-                        Онлайн-оплата
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="min-w-0 flex-1 text-left">
+                            <span className="block text-sm font-bold sm:text-base">Онлайн-оплата</span>
+                            <span
+                              className={`mt-2 block text-xs font-normal leading-snug ${
+                                paymentType === "full" ? "text-white/75" : "text-black/50"
+                              }`}
+                            >
+                              Visa, Mastercard та мобільні гаманці
+                            </span>
+                          </div>
+                          <PaymentWalletLogos
+                            size="lg"
+                            layout="column"
+                            className="shrink-0 pt-0.5"
+                          />
+                        </div>
                       </button>
                     )}
                   </div>
@@ -1169,7 +1197,10 @@ export default function FinalCard() {
 
             <aside className="w-full lg:w-[min(100%,380px)] lg:shrink-0 lg:sticky lg:top-[calc(var(--site-header-offset)+1rem)]">
               <div className={checkoutCard}>
-                <h2 className="font-['Montserrat'] text-lg font-semibold text-black">Сума замовлення</h2>
+                <h2 className={checkoutSectionTitle}>Сума замовлення</h2>
+                <p className="mt-1 font-['Montserrat'] text-sm text-black/50">
+                  Перевірте позиції перед оплатою
+                </p>
 
                 <div className="mt-6 space-y-2 font-['Montserrat'] text-sm text-black">
                   <div className="flex justify-between gap-3">
@@ -1190,14 +1221,14 @@ export default function FinalCard() {
                         : "0 грн"}
                     </span>
                   </div>
-                  <div className="flex justify-between gap-3 border-t border-black/8 pt-3 text-base font-bold text-black">
-                    <span>Сума</span>
-                    <span>{Math.round(summaryTotal).toLocaleString("uk-UA")} грн</span>
+                  <div className="flex justify-between gap-3 rounded-xl bg-[#1C1C1C]/[0.04] px-3 py-3 text-base font-bold text-black">
+                    <span>До сплати</span>
+                    <span className="text-lg">{Math.round(summaryTotal).toLocaleString("uk-UA")} грн</span>
                   </div>
                 </div>
 
                 <div className="mt-5">
-                  <label className="mb-2 block font-['Montserrat'] text-xs font-medium text-black/60">Промокод</label>
+                  <label className="mb-2 block font-['Montserrat'] text-sm font-semibold text-black">Промокод</label>
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
                     <div className="relative min-w-0 flex-1">
                       <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-black/35" aria-hidden>
@@ -1218,7 +1249,7 @@ export default function FinalCard() {
                           }
                         }}
                         className={`${checkoutInput()} pl-10 uppercase`}
-                        placeholder="Додати промокод"
+                        placeholder="Промокод"
                       />
                     </div>
                     <button
@@ -1267,8 +1298,11 @@ export default function FinalCard() {
                           setPromoValidating(false);
                         }
                       }}
-                      className="inline-flex shrink-0 items-center justify-center rounded-xl px-5 py-3 font-['Montserrat'] text-sm font-semibold text-white transition-opacity disabled:opacity-45 sm:px-6"
-                      style={{ backgroundColor: ACCENT }}
+                      className={`inline-flex min-h-[48px] shrink-0 items-center justify-center rounded-xl border-2 px-5 font-['Montserrat'] text-sm font-bold transition-all sm:px-6 ${
+                        promoValidating || !promoCodeInput.trim()
+                          ? "cursor-not-allowed border-black/8 bg-black/[0.04] text-black/35"
+                          : "border-[#1C1C1C] bg-[#1C1C1C] text-white shadow-sm hover:bg-black"
+                      }`}
                     >
                       {promoValidating ? "Перевірка…" : "Застосувати"}
                     </button>
@@ -1287,10 +1321,11 @@ export default function FinalCard() {
                   </p>
                   <label className="flex cursor-pointer items-start gap-3">
                     <span
-                      className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors ${
-                        agreedToPolicy ? "border-transparent text-white" : "border-black/25 hover:border-black/40"
+                      className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors ${
+                        agreedToPolicy
+                          ? "border-[#1C1C1C] bg-[#1C1C1C] text-white"
+                          : "border-black/25 bg-white hover:border-[#1C1C1C]/50"
                       }`}
-                      style={agreedToPolicy ? { backgroundColor: ACCENT } : undefined}
                       onClick={() => setAgreedToPolicy(!agreedToPolicy)}
                     >
                       {agreedToPolicy && (
@@ -1318,21 +1353,25 @@ export default function FinalCard() {
                 <button
                   type="submit"
                   disabled={loading || !agreedToPolicy}
-                  className="mt-6 flex w-full items-center justify-center gap-2 rounded-full py-4 font-['Montserrat'] text-base font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-45"
-                  style={{ backgroundColor: ACCENT }}
+                  className={`mt-6 flex min-h-[3.75rem] w-full items-center justify-center gap-2 rounded-2xl px-6 py-4 font-['Montserrat'] text-base font-bold tracking-wide ${CHECKOUT_CTA_PRIMARY}`}
                 >
                   {loading ? (
                     "Обробка…"
                   ) : paymentType === "full" ? (
                     <>
-                      Оплатити <span aria-hidden>→</span>
+                      Оплатити замовлення <span className="text-lg" aria-hidden>→</span>
                     </>
                   ) : (
                     <>
-                      Оформити замовлення <span aria-hidden>→</span>
+                      Оформити замовлення <span className="text-lg" aria-hidden>→</span>
                     </>
                   )}
                 </button>
+                {!agreedToPolicy && (
+                  <p className="mt-2 text-center font-['Montserrat'] text-xs text-black/45">
+                    Підтвердіть умови оферти, щоб продовжити
+                  </p>
+                )}
               </div>
             </aside>
           </div>

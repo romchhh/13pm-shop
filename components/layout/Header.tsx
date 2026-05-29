@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import BrandLogo from "./BrandLogo";
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useAppContext } from "@/lib/GeneralProvider";
@@ -57,7 +58,7 @@ function TopContactBar({ className = "" }: { className?: string }) {
   const primaryPhone = siteContact.phones[0];
 
   return (
-    <div className={`bg-[#8B5E3F] text-white shrink-0 ${className}`}>
+    <div className={`bg-[var(--site-bar-dark)] text-white shrink-0 ${className}`}>
       <div className="max-w-[1920px] mx-auto px-3 sm:px-6 lg:px-12 min-h-10 lg:min-h-11 py-1.5 flex flex-nowrap items-center justify-between gap-2 lg:gap-6">
         <p className="min-w-0 font-['Montserrat'] text-[10px] leading-tight sm:text-xs font-medium lg:text-sm truncate">
           {LABEL_FREE_DELIVERY_FROM_2000}
@@ -193,23 +194,32 @@ export default function Header() {
   }, [hoveredCategoryId]);
 
   const [isScrolled, setIsScrolled] = useState(false);
-  const isHeroMode = pathname === "/" && !isScrolled;
-  const headerTransparent = isHeroMode && !isSidebarOpen;
+  const isHomePage = pathname === "/";
+  const headerTransparent = isHomePage && !isScrolled && !isSidebarOpen;
 
   useEffect(() => {
+    if (!isHomePage) {
+      setIsScrolled(false);
+      return;
+    }
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  useEffect(() => {
-    if (pathname !== "/") setIsScrolled(false);
-  }, [pathname]);
+  }, [isHomePage]);
 
   const shellClass = headerTransparent
     ? "bg-transparent border-transparent shadow-none"
-    : "bg-white border-[#E8E0D5] shadow-sm";
+    : "bg-white border-[#E0E0DE] shadow-sm";
+
+  const navToneClass = headerTransparent ? "text-white" : "text-[#1C1C1C]";
+  const navHoverClass = headerTransparent
+    ? "hover:text-white/75"
+    : "hover:text-[var(--site-accent)]";
+  const iconHoverClass = headerTransparent
+    ? "hover:bg-white/15"
+    : "hover:bg-[#F2F2F0]";
+  const iconFilterClass = headerTransparent ? "brightness-0 invert" : "";
 
   return (
     <>
@@ -220,23 +230,19 @@ export default function Header() {
 
       {/* Навігація — під смугою, на головній прозора над hero */}
       <header
-        className={`fixed left-0 right-0 z-[var(--z-site-header)] transition-all duration-300 top-[var(--site-contact-bar-height)]`}
+        className={`fixed left-0 right-0 z-[var(--z-site-header)] overflow-visible transition-all duration-300 top-[var(--site-contact-bar-height)]`}
       >
         {/* Десктоп */}
-        <div className={`hidden lg:block border-b transition-all duration-300 ${shellClass}`}>
-          <div className="max-w-[1920px] mx-auto px-8 xl:px-12 min-h-[88px] py-2 flex items-center gap-6 xl:gap-10">
-            <Link href="/" className="shrink-0 flex items-center">
-              <Image
-                src="/images/logos/logo_brown.svg"
-                alt="Plywood Present"
-                width={104}
-                height={90}
-                priority
-                className="h-20 w-auto"
-              />
-            </Link>
+        <div className={`hidden lg:block overflow-visible border-b transition-all duration-300 ${shellClass}`}>
+          <div className="mx-auto flex max-w-[1920px] items-center gap-6 overflow-visible px-8 py-3.5 xl:gap-10 xl:px-12 min-h-[var(--site-nav-height)]">
+            <BrandLogo
+              variant={headerTransparent ? "onHero" : "default"}
+              className="shrink-0 self-center"
+            />
 
-            <nav className="flex items-center justify-center gap-6 xl:gap-8 flex-1 min-w-0 font-['Montserrat'] text-[15px] text-[#3D1A00]">
+            <nav
+              className={`flex items-center justify-center gap-6 xl:gap-8 flex-1 min-w-0 font-['Montserrat'] text-[15px] font-bold transition-colors ${navToneClass}`}
+            >
               <div
                 ref={catalogRef}
                 className="relative"
@@ -248,8 +254,12 @@ export default function Header() {
               >
                 <button
                   type="button"
-                  className={`inline-flex items-center gap-1.5 whitespace-nowrap hover:text-[#8B5E3F] transition-colors ${
-                    catalogOpen ? "text-[#8B5E3F]" : ""
+                  className={`inline-flex items-center gap-1.5 whitespace-nowrap font-bold transition-colors ${navHoverClass} ${
+                    catalogOpen
+                      ? headerTransparent
+                        ? "text-white/90"
+                        : "text-[var(--site-accent)]"
+                      : ""
                   }`}
                   onClick={() => setCatalogOpen((v) => !v)}
                   aria-expanded={catalogOpen}
@@ -262,19 +272,21 @@ export default function Header() {
 
                 {catalogOpen && (
                   <div
-                    className="absolute top-full left-0 mt-2 min-w-[280px] bg-white rounded-lg shadow-lg border border-[#E8E0D5] py-3 z-50"
+                    className="absolute top-full left-0 z-50 mt-2 min-w-[280px] rounded-lg border border-[#E0E0DE] bg-white py-3 text-[#1C1C1C] shadow-lg"
                     onMouseEnter={cancelCatalogClose}
                     onMouseLeave={scheduleCatalogClose}
                   >
                     <div className="flex">
-                      <div className="w-44 border-r border-[#E8E0D5] py-1">
+                      <div className="w-44 border-r border-[#E0E0DE] py-1">
                         {categories.map((cat) => (
                           <Link
                             key={cat.id}
                             href={`/catalog?categoryId=${cat.id}`}
                             onMouseEnter={() => setHoveredCategoryId(cat.id)}
-                            className={`block px-4 py-2 text-sm hover:bg-[#FFF9F0] transition-colors ${
-                              hoveredCategoryId === cat.id ? "bg-[#FFF9F0] text-[#8B5E3F] font-medium" : ""
+                            className={`block px-4 py-2 text-sm text-[#1C1C1C] transition-colors hover:bg-[#F2F2F0] hover:text-[#1C1C1C] ${
+                              hoveredCategoryId === cat.id
+                                ? "bg-[#F2F2F0] font-medium text-[var(--site-accent)]"
+                                : ""
                             }`}
                             onClick={() => setCatalogOpen(false)}
                           >
@@ -282,15 +294,15 @@ export default function Header() {
                           </Link>
                         ))}
                       </div>
-                      <div className="flex-1 py-1 px-2 min-w-[160px]">
+                      <div className="min-w-[160px] flex-1 px-2 py-1">
                         {subcategoriesLoading ? (
-                          <p className="px-3 py-2 text-sm text-gray-500">Завантаження…</p>
+                          <p className="px-3 py-2 text-sm text-black/50">Завантаження…</p>
                         ) : subcategories.length > 0 ? (
                           subcategories.map((sub) => (
                             <Link
                               key={sub.id}
                               href={`/catalog?subcategory=${encodeURIComponent(sub.name)}`}
-                              className="block px-3 py-2 text-sm hover:bg-[#FFF9F0] rounded transition-colors"
+                              className="block rounded px-3 py-2 text-sm text-[#1C1C1C] transition-colors hover:bg-[#F2F2F0]"
                               onClick={() => setCatalogOpen(false)}
                             >
                               {sub.name}
@@ -299,19 +311,19 @@ export default function Header() {
                         ) : hoveredCategoryId ? (
                           <Link
                             href={`/catalog?categoryId=${hoveredCategoryId}`}
-                            className="block px-3 py-2 text-sm text-[#8B5E3F] underline"
+                            className="block px-3 py-2 text-sm font-medium text-[var(--site-accent)] underline"
                             onClick={() => setCatalogOpen(false)}
                           >
                             Переглянути всі
                           </Link>
                         ) : (
-                          <p className="px-3 py-2 text-sm text-gray-400">Оберіть категорію</p>
+                          <p className="px-3 py-2 text-sm text-black/45">Оберіть категорію</p>
                         )}
                       </div>
                     </div>
                     <Link
                       href="/catalog"
-                      className="block mx-3 mt-2 pt-2 border-t border-[#E8E0D5] text-sm font-medium text-[#8B5E3F] hover:underline"
+                      className="mx-3 mt-2 block border-t border-[#E0E0DE] pt-2 text-sm font-medium text-[var(--site-accent)] hover:underline"
                       onClick={() => setCatalogOpen(false)}
                     >
                       Весь каталог
@@ -328,7 +340,7 @@ export default function Header() {
                     const hashId = getMainNavHashId(link.href);
                     if (hashId) handleHomeAnchorClick(e, hashId);
                   }}
-                  className="whitespace-nowrap hover:text-[#8B5E3F] transition-colors"
+                  className={`whitespace-nowrap font-bold transition-colors ${navHoverClass}`}
                 >
                   {link.label}
                 </Link>
@@ -338,42 +350,44 @@ export default function Header() {
             <button
               type="button"
               onClick={() => setIsSearchOpen(true)}
-              className={`flex items-center gap-2 h-10 px-4 rounded-full text-[#3D1A00]/60 transition-colors min-w-[180px] xl:min-w-[220px] max-w-[280px] shrink-0 ${
+              className={`flex items-center gap-2 h-10 px-4 rounded-full transition-colors min-w-[180px] xl:min-w-[220px] max-w-[280px] shrink-0 ${
                 headerTransparent
-                  ? "bg-white/75 hover:bg-white/90 backdrop-blur-sm"
-                  : "bg-[#F5F0E8] hover:bg-[#EDE8DF]"
+                  ? "bg-white/15 text-white/90 backdrop-blur-sm hover:bg-white/25"
+                  : "bg-[#EAEAE8] text-[#1C1C1C]/60 hover:bg-[#E0E0DE]"
               }`}
               aria-label="Пошук"
             >
-              <Image src={ICON_SEARCH} alt="" width={18} height={18} className="h-[18px] w-[18px] shrink-0 opacity-60" />
-              <span className="font-['Montserrat'] text-sm">Пошук</span>
+              <Image
+                src={ICON_SEARCH}
+                alt=""
+                width={18}
+                height={18}
+                className={`h-[18px] w-[18px] shrink-0 ${headerTransparent ? "brightness-0 invert opacity-90" : "opacity-60"}`}
+              />
+              <span className="font-['Montserrat'] text-sm font-bold">Пошук</span>
             </button>
 
             <div className="flex items-center gap-2 shrink-0">
               <Link
                 href="/cart"
-                className={`relative flex h-11 w-11 items-center justify-center rounded-full transition-colors ${
-                  headerTransparent ? "hover:bg-white/30" : "hover:bg-[#FFF9F0]"
-                }`}
+                className={`relative flex h-11 w-11 items-center justify-center rounded-full transition-colors ${iconHoverClass}`}
                 aria-label="Кошик"
               >
-                <Image src={ICON_CART} alt="" width={23} height={21} className="h-5 w-auto" />
+                <Image src={ICON_CART} alt="" width={23} height={21} className={`h-5 w-auto ${iconFilterClass}`} />
                 {totalItems > 0 && (
-                  <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center text-[10px] font-bold text-white bg-[#8B5E3F] rounded-full">
+                  <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center text-[10px] font-bold text-white bg-[var(--site-accent)] rounded-full">
                     {totalItems > 99 ? "99+" : totalItems}
                   </span>
                 )}
               </Link>
               <Link
                 href="/favorites"
-                className={`relative flex h-11 w-11 items-center justify-center rounded-full transition-colors ${
-                  headerTransparent ? "hover:bg-white/30" : "hover:bg-[#FFF9F0]"
-                }`}
+                className={`relative flex h-11 w-11 items-center justify-center rounded-full transition-colors ${iconHoverClass}`}
                 aria-label="Вішлист"
               >
-                <Image src={ICON_LIKE} alt="" width={20} height={19} className="h-5 w-auto" />
+                <Image src={ICON_LIKE} alt="" width={20} height={19} className={`h-5 w-auto ${iconFilterClass}`} />
                 {favoritesCount > 0 && (
-                  <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center text-[10px] font-bold text-white bg-[#8B5E3F] rounded-full">
+                  <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center text-[10px] font-bold text-white bg-[var(--site-accent)] rounded-full">
                     {favoritesCount > 99 ? "99+" : favoritesCount}
                   </span>
                 )}
@@ -383,13 +397,13 @@ export default function Header() {
         </div>
 
         {/* Мобільний */}
-        <div className={`lg:hidden border-b transition-all duration-300 ${shellClass}`}>
-          <div className="min-h-[64px] py-1 px-4 flex items-center gap-2">
+        <div className={`lg:hidden overflow-visible border-b transition-all duration-300 ${shellClass}`}>
+          <div className="flex min-h-[var(--site-nav-height)] items-center gap-2 overflow-visible px-4 py-2.5">
             <div className="flex min-w-0 flex-1 items-center gap-2">
               <button
                 type="button"
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="flex h-10 w-10 shrink-0 items-center justify-center text-[#3D1A00]"
+                className={`flex h-10 w-10 shrink-0 items-center justify-center transition-colors ${navToneClass}`}
                 aria-label="Меню"
               >
                 {isSidebarOpen ? (
@@ -403,55 +417,54 @@ export default function Header() {
                 )}
               </button>
 
-              <Link
-                href="/"
-                className="flex min-w-0 shrink items-center"
-                onClick={() => isSidebarOpen && setIsSidebarOpen(false)}
-              >
-                <Image
-                  src="/images/logos/logo_brown.svg"
-                  alt="Plywood Present"
-                  width={80}
-                  height={70}
-                  className="h-16 w-auto max-w-[calc(100vw-11rem)] object-left object-contain"
-                />
-              </Link>
+              <BrandLogo
+                compact
+                variant={headerTransparent ? "onHero" : "default"}
+                className="max-w-[calc(100vw-11rem)] self-center"
+                onNavigate={() => isSidebarOpen && setIsSidebarOpen(false)}
+              />
             </div>
 
             <div className="flex shrink-0 items-center gap-1">
               <button
                 type="button"
                 onClick={() => setIsSearchOpen(true)}
-                className={`flex h-10 items-center gap-1.5 px-3 rounded-full text-[#3D1A00]/70 transition-colors ${
+                className={`flex h-10 items-center gap-1.5 px-3 rounded-full transition-colors ${
                   headerTransparent
-                    ? "bg-white/75 hover:bg-white/90 backdrop-blur-sm"
-                    : "bg-[#F5F0E8]"
+                    ? "bg-white/15 text-white backdrop-blur-sm"
+                    : "bg-[#EAEAE8] text-[#1C1C1C]/70"
                 }`}
                 aria-label="Пошук"
               >
-                <Image src={ICON_SEARCH} alt="" width={16} height={16} className="h-4 w-4 shrink-0 opacity-70" />
-                <span className="text-xs font-['Montserrat'] hidden xs:inline">Пошук</span>
+                <Image
+                  src={ICON_SEARCH}
+                  alt=""
+                  width={16}
+                  height={16}
+                  className={`h-4 w-4 shrink-0 ${headerTransparent ? "brightness-0 invert" : "opacity-70"}`}
+                />
+                <span className="text-xs font-['Montserrat'] font-bold hidden xs:inline">Пошук</span>
               </button>
               <Link
                 href="/favorites"
                 className="relative flex h-10 w-10 items-center justify-center"
                 aria-label="Вішлист"
               >
-                <Image src={ICON_LIKE} alt="" width={20} height={19} className="h-[18px] w-auto" />
+                <Image src={ICON_LIKE} alt="" width={20} height={19} className={`h-[18px] w-auto ${iconFilterClass}`} />
                 {favoritesCount > 0 && (
-                  <span className="absolute top-0 right-0 min-w-[16px] h-4 px-0.5 flex items-center justify-center text-[9px] font-bold text-white bg-[#8B5E3F] rounded-full">
+                  <span className="absolute top-0 right-0 min-w-[16px] h-4 px-0.5 flex items-center justify-center text-[9px] font-bold text-white bg-[var(--site-accent)] rounded-full">
                     {favoritesCount > 99 ? "99+" : favoritesCount}
                   </span>
                 )}
               </Link>
               <Link
                 href="/cart"
-                className="relative flex h-10 w-10 items-center justify-center"
+                className={`relative flex h-10 w-10 items-center justify-center rounded-full transition-colors ${iconHoverClass}`}
                 aria-label="Кошик"
               >
-                <Image src={ICON_CART} alt="" width={23} height={21} className="h-[18px] w-auto" />
+                <Image src={ICON_CART} alt="" width={23} height={21} className={`h-[18px] w-auto ${iconFilterClass}`} />
                 {totalItems > 0 && (
-                  <span className="absolute top-0 right-0 min-w-[16px] h-4 px-0.5 flex items-center justify-center text-[9px] font-bold text-white bg-[#8B5E3F] rounded-full">
+                  <span className="absolute top-0 right-0 min-w-[16px] h-4 px-0.5 flex items-center justify-center text-[9px] font-bold text-white bg-[var(--site-accent)] rounded-full">
                     {totalItems}
                   </span>
                 )}

@@ -146,7 +146,7 @@ export default function ProductMediaLightbox({
                   ) : (
                     <Image
                       src={`/api/images/${item.url}`}
-                      alt={`${productName} — фото ${i + 1}`}
+                      alt={`${productName} — фото ${i + 1} з ${media.length}, 13pm tactic`}
                       width={1600}
                       height={2000}
                       className="h-auto max-h-full w-auto max-w-full bg-transparent object-contain"

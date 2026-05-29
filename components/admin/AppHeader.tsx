@@ -124,12 +124,13 @@ const AppHeader: React.FC = () => {
           </button>
 
           <Link href="/admin" className="lg:hidden">
-            <Image
-              width={140}
-              height={40}
-              src="/images/logos/logo_brown.svg"
-              alt="Plywood Present"
-              className="h-9 w-auto"
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/13pm-mark-black.svg"
+              alt="13pm tactic"
+              width={110}
+              height={44}
+              className="h-9 w-auto object-contain"
             />
           </Link>
 

@@ -1,7 +1,7 @@
 import { twMerge } from "tailwind-merge";
 
 /** Акцент бренду на бейджах картки */
-export const PRODUCT_CARD_ACCENT = "#8B5E3F";
+export const PRODUCT_CARD_ACCENT = "var(--site-accent)";
 
 /** Корінь картки (Link або обгортка) */
 export function productCardRootClass(className?: string): string {
@@ -39,7 +39,7 @@ export function productCardFavoriteWrapClass(): string {
 }
 
 export function productCardGiftBadgeClass(): string {
-  return "absolute right-2 top-12 z-20 rounded border border-[#3D1A00]/15 bg-white/90 px-1.5 py-0.5 font-['Montserrat'] text-[10px] font-semibold text-[#3D1A00] shadow-sm";
+  return "absolute right-2 top-12 z-20 rounded border border-[#1C1C1C]/15 bg-white/90 px-1.5 py-0.5 font-['Montserrat'] text-[10px] font-semibold text-[#1C1C1C] shadow-sm";
 }
 
 /** Нижні бейджі (акція, хіт) */
@@ -52,11 +52,11 @@ export function productCardBottomBadgesRowClass(): string {
 }
 
 export function productCardPromoBadgeClass(): string {
-  return "rounded-md bg-white/95 px-2 py-0.5 font-['Montserrat'] text-[10px] font-bold uppercase text-[#3D1A00]";
+  return "rounded-md bg-white/95 px-2 py-0.5 font-['Montserrat'] text-[10px] font-bold uppercase text-[#1C1C1C]";
 }
 
 export function productCardHitBadgeClass(): string {
-  return "rounded-md bg-[#8B5E3F] px-2 py-0.5 font-['Montserrat'] text-[10px] font-bold uppercase text-white";
+  return "rounded-md bg-[var(--site-accent)] px-2 py-0.5 font-['Montserrat'] text-[10px] font-bold uppercase text-white";
 }
 
 export function productCardInlineNewBadgeClass(): string {
@@ -85,11 +85,11 @@ export function productCardPriceRowClass(): string {
 }
 
 export function productCardStrikePriceClass(): string {
-  return "font-['Montserrat'] text-sm text-black/40 line-through sm:text-[15px]";
+  return "font-['Montserrat'] text-sm text-black/40 line-through sm:text-base";
 }
 
 export function productCardPriceClass(): string {
-  return "font-['Montserrat'] text-base font-semibold text-black sm:text-lg";
+  return "font-['Montserrat'] text-lg font-bold text-black sm:text-xl";
 }
 
 /** Слот каруселі (головна, кошик, PDP) */

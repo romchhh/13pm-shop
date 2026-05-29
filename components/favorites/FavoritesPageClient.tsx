@@ -10,7 +10,7 @@ import CatalogProductCard, {
 import type { FavoriteProductSnapshot } from "@/lib/favoritesStorage";
 import { addProductCardToCart } from "@/lib/productCardAddToCart";
 
-const ACCENT = "#8B5E3F";
+const ACCENT = "var(--site-accent)";
 
 function toCardItem(p: FavoriteProductSnapshot): CatalogProductCardItem {
   return {
@@ -74,7 +74,7 @@ export default function FavoritesPageClient() {
         >
           <ol className="flex flex-wrap items-center gap-x-1 gap-y-1">
             <li>
-              <Link href="/" className="hover:text-[#8B5E3F]">
+              <Link href="/" className="hover:text-[var(--site-accent)]">
                 Головна
               </Link>
             </li>

@@ -86,11 +86,13 @@ export function parseAdminProductPayload(body: Record<string, unknown>): AdminPr
         : [];
 
   const pairTogether =
-    body.pair_together_ids !== undefined
-      ? parseIdArray(body.pair_together_ids)
-      : body.paired_product_ids !== undefined
-        ? parseIdArray(body.paired_product_ids)
-        : [];
+    body.color_linked_ids !== undefined
+      ? parseIdArray(body.color_linked_ids)
+      : body.pair_together_ids !== undefined
+        ? parseIdArray(body.pair_together_ids)
+        : body.paired_product_ids !== undefined
+          ? parseIdArray(body.paired_product_ids)
+          : [];
 
   const giftRaw = body.gift_product_id;
   const gift_product_id =

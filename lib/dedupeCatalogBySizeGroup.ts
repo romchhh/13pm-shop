@@ -1,4 +1,4 @@
-import { parseSizeVariants } from "@/lib/productOptions";
+import { isLegacyLinkedSizeVariants, parseSizeVariants } from "@/lib/productOptions";
 import { isMultiProductSizeGroup } from "@/lib/sizeGroupLabels";
 
 /**
@@ -9,6 +9,10 @@ export function getCatalogRepresentativeId(
   productId: number,
   sizeVariantsRaw: unknown
 ): number {
+  if (!isLegacyLinkedSizeVariants(sizeVariantsRaw)) {
+    return productId;
+  }
+
   const variants = parseSizeVariants(sizeVariantsRaw);
   const memberIds = [
     ...new Set(variants.map((v) => v.productId).filter((n) => Number.isInteger(n) && n > 0)),

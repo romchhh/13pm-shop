@@ -2,15 +2,15 @@ import type { Metadata } from "next";
 import {
   SITE_STORE_NAME,
   SITE_WORDMARK,
-  siteFooterLead,
+  siteDefaultOgImageAlt,
   siteMetaDescription,
   siteMetadataIcons,
-  siteOfficialRepLine,
+  siteRootSeoTitle,
   siteSeoKeywords,
 } from "@/lib/siteBrand";
 
 /** Шлях до OG-зображення за замовчуванням (1200×630 рекомендовано). */
-export const DEFAULT_OG_IMAGE_PATH = "/images/pages/hero-desktop.jpg";
+export const DEFAULT_OG_IMAGE_PATH = "/hero-main.png";
 
 const META_DESCRIPTION_MAX = 160;
 
@@ -89,6 +89,18 @@ function buildOpenGraph(
   };
 }
 
+const defaultRobots: Metadata["robots"] = {
+  index: true,
+  follow: true,
+  googleBot: {
+    index: true,
+    follow: true,
+    "max-image-preview": "large",
+    "max-snippet": -1,
+    "max-video-preview": -1,
+  },
+};
+
 /** Уніфіковані meta title, description, Open Graph, Twitter, canonical. */
 export function buildPageMetadata(input: PageSeoInput): Metadata {
   const baseUrl = getSiteBaseUrl();
@@ -98,37 +110,36 @@ export function buildPageMetadata(input: PageSeoInput): Metadata {
     : `${input.title} | ${SITE_STORE_NAME}`;
   const description = truncateMetaDescription(input.description);
   const imageUrl = absoluteUrl(input.imagePath ?? DEFAULT_OG_IMAGE_PATH);
-  const imageAlt = input.imageAlt ?? `${SITE_STORE_NAME} — ${input.title}`;
+  const imageAlt = input.imageAlt ?? siteDefaultOgImageAlt;
 
   return {
     title: fullTitle,
     description,
     keywords: input.keywords ?? siteSeoKeywords,
+    applicationName: SITE_STORE_NAME,
+    authors: [{ name: SITE_STORE_NAME, url: baseUrl }],
+    creator: SITE_STORE_NAME,
+    publisher: SITE_STORE_NAME,
+    category: "shopping",
     metadataBase: new URL(baseUrl),
     openGraph: buildOpenGraph(fullTitle, description, canonical, imageUrl, imageAlt),
     twitter: {
       card: "summary_large_image",
       title: fullTitle,
       description,
-      images: [imageUrl],
+      images: [{ url: imageUrl, alt: imageAlt }],
     },
     alternates: { canonical },
     ...(input.noIndex
       ? { robots: { index: false, follow: false } }
-      : {
-          robots: {
-            index: true,
-            follow: true,
-            googleBot: { index: true, follow: true },
-          },
-        }),
+      : { robots: defaultRobots }),
   };
 }
 
 /** Кореневі metadata для layout сайту. */
 export function buildRootSiteMetadata(): Metadata {
   const baseUrl = getSiteBaseUrl();
-  const title = `${SITE_STORE_NAME} — ${siteOfficialRepLine}`;
+  const title = `${SITE_STORE_NAME} — ${siteRootSeoTitle}`;
   const description = siteMetaDescription;
   const imageUrl = absoluteUrl(DEFAULT_OG_IMAGE_PATH);
 
@@ -140,18 +151,25 @@ export function buildRootSiteMetadata(): Metadata {
     },
     description,
     keywords: siteSeoKeywords,
-    openGraph: buildOpenGraph(title, siteFooterLead, baseUrl, imageUrl, SITE_STORE_NAME),
+    applicationName: SITE_STORE_NAME,
+    authors: [{ name: SITE_STORE_NAME, url: baseUrl }],
+    creator: SITE_STORE_NAME,
+    publisher: SITE_STORE_NAME,
+    category: "shopping",
+    openGraph: buildOpenGraph(
+      title,
+      description,
+      baseUrl,
+      imageUrl,
+      siteDefaultOgImageAlt
+    ),
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: [imageUrl],
+      images: [{ url: imageUrl, alt: siteDefaultOgImageAlt }],
     },
-    robots: {
-      index: true,
-      follow: true,
-      googleBot: { index: true, follow: true },
-    },
+    robots: defaultRobots,
     alternates: { canonical: baseUrl },
     icons: siteMetadataIcons,
   };
@@ -166,21 +184,23 @@ export type ProductSeoInput = {
   price: number;
   discount_percentage?: number | null;
   category_name?: string | null;
+  subcategory_name?: string | null;
   first_media?: { url: string; type: string } | null;
 };
 
 export function buildProductMetadata(product: ProductSeoInput): Metadata {
   const path = productCanonicalPath(product.slug, product.id);
-  const categoryName = product.category_name || "подарунки з фанери";
+  const categoryName = product.category_name?.trim() || "тактичний одяг";
+  const subcategory = product.subcategory_name?.trim();
   const price =
     product.discount_percentage && product.discount_percentage > 0
       ? Math.round(product.price * (1 - product.discount_percentage / 100))
       : Math.round(product.price);
 
   const rawDescription =
-    product.description?.trim() ||
+    product.description?.replace(/[#*_`[\]]/g, " ").trim() ||
     product.subtitle?.trim() ||
-    `${product.name} — дерев'яний декор і подарунок з фанери, категорія «${categoryName}». Ціна від ${price} ₴. ${SITE_STORE_NAME}, Україна.`;
+    `Купити «${product.name}» — ${categoryName}${subcategory ? `, ${subcategory}` : ""} від ${SITE_STORE_NAME}. Ціна ${price.toLocaleString("uk-UA")} ₴. Власне виробництво в Україні, доставка Нова Пошта.`;
 
   const imagePath = product.first_media?.url
     ? `/api/images/${product.first_media.url}`
@@ -190,20 +210,20 @@ export function buildProductMetadata(product: ProductSeoInput): Metadata {
     product.name,
     SITE_STORE_NAME,
     categoryName,
-    "подарунки з фанери",
-    "дерев'яний декор",
-    "фанера",
-    "Україна",
+    subcategory,
+    "купити тактичний одяг",
+    "тактичний одяг Україна",
+    "13pm tactic",
   ]
     .filter(Boolean)
     .join(", ");
 
   return buildPageMetadata({
-    title: product.name,
+    title: `Купити ${product.name}`,
     description: rawDescription,
     path,
     imagePath,
-    imageAlt: `${product.name} — ${SITE_STORE_NAME}`,
+    imageAlt: `${product.name} — тактичний одяг ${SITE_STORE_NAME}, ${categoryName}`,
     keywords,
   });
 }
@@ -217,14 +237,14 @@ export type CategorySeoInput = {
 export function buildCategoryMetadata(category: CategorySeoInput): Metadata {
   const path = categoryCanonicalPath(category.slug, category.name);
   const rawDescription =
-    category.description?.trim() ||
-    `Категорія «${category.name}» — дерев'яний декор і подарунки з фанери в ${SITE_STORE_NAME}. Доставка по Україні.`;
+    category.description?.replace(/[#*_`[\]]/g, " ").trim() ||
+    `Купити ${category.name.toLowerCase()} в каталозі ${SITE_STORE_NAME}. Тактичний одяг власного виробництва в Україні — лінійки ALPHA, BRAVO, DELTA. Доставка по Україні та світу.`;
 
   return buildPageMetadata({
-    title: `${category.name} — каталог`,
+    title: `${category.name} — купити тактичний одяг`,
     description: rawDescription,
     path,
-    imageAlt: `${category.name} — ${SITE_WORDMARK}`,
-    keywords: `${category.name}, ${SITE_STORE_NAME}, подарунки з фанери, дерев'яний декор, Україна`,
+    imageAlt: `${category.name} — каталог ${SITE_WORDMARK}`,
+    keywords: `${category.name}, тактичний одяг, ${SITE_STORE_NAME}, купити ${category.name.toLowerCase()}, Україна`,
   });
 }

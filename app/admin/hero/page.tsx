@@ -4,7 +4,7 @@ import { Metadata } from "next";
 import React from "react";
 
 export const metadata: Metadata = {
-  title: "Hero-банери | Plywood Present Admin",
+  title: "Hero-банери | 13pm tactic Admin",
   description: "Управління слайдами головного банера (десктоп і мобільна версія)",
 };
 

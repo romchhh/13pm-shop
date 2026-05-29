@@ -1,52 +1,79 @@
 import type { Metadata } from "next";
 
 /** Публічна назва магазину (для title, schema.org, юридичних сторінок). */
-export const SITE_STORE_NAME = "Plywood Present";
+export const SITE_STORE_NAME = "13pm tactic";
 
-/** Favicon, вкладка браузера, PWA та apple-touch-icon (джерело). */
-export const SITE_ICON_PATH = "/images/logos/site-icon.png";
+/** Favicon, вкладка браузера, PWA (джерело). */
+export const SITE_ICON_PATH = "/13pm.svg";
 
 /** Узгоджені іконки для metadata Next.js (сайт + адмінка). */
 export const siteMetadataIcons: NonNullable<Metadata["icons"]> = {
-  icon: [
-    { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
-    { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
-    { url: SITE_ICON_PATH, type: "image/png" },
-  ],
+  icon: [{ url: SITE_ICON_PATH, type: "image/svg+xml" }],
   shortcut: SITE_ICON_PATH,
-  apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  apple: [{ url: SITE_ICON_PATH, type: "image/svg+xml" }],
 };
 
 /** Словесний знак у хедері/футері (коротка форма). */
-export const SITE_WORDMARK = "Plywood Present";
+export const SITE_WORDMARK = "13pm tactic";
 
 /** Бренд продукції на сайті. */
-export const SITE_PRODUCT_BRAND = "Plywood Present";
+export const SITE_PRODUCT_BRAND = "13pm tactic";
 
-/** Підзаголовок для title (Н1-стиль у meta title). */
-export const siteOfficialRepLine =
-  "Дерев'яний декор та іменні подарунки з фанери";
+/** Instagram / TikTok handle */
+export const SITE_SOCIAL_HANDLE = "@13pm.tactic";
+
+/** Маркетинговий слоган (UI, не завжди в title). */
+export const siteOfficialRepLine = "твій тактичний одяг";
 
 /**
- * Короткий SEO-опис для meta description (бажано до ~160 символів).
+ * Головний SEO title (корінь сайту, ~60 символів).
+ */
+export const siteRootSeoTitle = "Тактичний одяг в Україні — власне виробництво";
+
+/**
+ * Meta description для головної та за замовчуванням (~155 символів).
  */
 export const siteMetaDescription =
-  "Plywood Present — іменні подарунки та декор із фанери: рамки, метрики, ключниці, колажі. Власне виробництво в Україні. Доставка Новою Поштою, замовлення онлайн.";
+  "13pm tactic — тактичний одяг власного виробництва в Україні. Лінійки ALPHA, BRAVO та DELTA: куртки, штани, фліс, поло. Доставка Нова Пошта 1–3 дні, −10% для силових структур.";
 
-/** Розширений абзац для Open Graph, ai.txt та контексту. */
+/** Розширений абзац для Open Graph, schema.org та ai.txt. */
 export const siteFooterLead =
-  "Plywood Present — інтернет-магазин дерев'яного декору та подарунків із березової фанери. Фоторамки на замовлення, сімейні метрики, ключниці та унікальні колажі: лазерне різання, гравіювання й ручна збірка. Створюємо затишні подарунки з характером по всій Україні.";
+  "13pm tactic — тактичний одяг, розроблений для дії та створений для тебе. Власне виробництво в Україні: куртки, штани, флісові кофти, поло та аксесуари для щоденного носіння та професійного використання.";
 
 export const siteFooterLegalNote =
-  "Інтернет-магазин Plywood Present. Каталог — вироби з натуральної фанери та дерева власного виробництва.";
+  "Офіційний інтернет-магазин 13pm tactic. Каталог тактичного одягу та аксесуарів власного виробництва в Україні.";
 
-/** Ключові фрази для meta keywords та внутрішньої узгодженості. */
-export const siteSeoKeywords =
-  "Plywood Present, подарунки з фанери, дерев'яний декор, іменні подарунки, фоторамки на замовлення, лазерне різання фанери, сувеніри ручної роботи, декор для дому, метрика дитяча дерев'яна, ключниця з фанери, подарунок на день народження, Україна";
+/** Alt для дефолтного OG / hero зображення. */
+export const siteDefaultOgImageAlt =
+  "13pm tactic — тактичний одяг власного виробництва, колекція ALPHA BRAVO DELTA";
+
+/**
+ * Ключові фрази (meta keywords; Google ігнорує, але корисно для внутрішньої узгодженості та деяких систем).
+ */
+export const siteSeoKeywords = [
+  "13pm tactic",
+  "13pm.tactic",
+  "тактичний одяг",
+  "тактичний одяг Україна",
+  "tactical clothing Ukraine",
+  "тактичні куртки",
+  "тактичні штани cargo",
+  "тактичне поло",
+  "флісова кофта тактична",
+  "одяг для ЗСУ",
+  "одяг для силових структур",
+  "власне виробництво одяг",
+  "ALPHA BRAVO DELTA",
+  "купити тактичний одяг онлайн",
+].join(", ");
 
 /** Підпис до поля «курс» на картках і сторінці товару (якщо використовується в БД). */
 export const LABEL_PRODUCT_COURSE = "Термін виготовлення";
 export const LABEL_PRODUCT_PACKAGE = "Розміри / фасування";
 
-/** Плашка у хедері про безкоштовну доставку від суми. */
-export const LABEL_FREE_DELIVERY_FROM_2000 = "Безкоштовна доставка від 2 000 грн";
+/** Плашка у хедері про переваги бренду. */
+export const LABEL_FREE_DELIVERY_FROM_2000 = "-10% для силових структур · доставка 1–3 дні";
+
+/** Підпис для Telegram-сповіщень */
+export const TELEGRAM_BRAND_FOOTER =
+  "🏷 <b>13pm tactic</b> | @13pm.tactic\n▪️ розроблено для дії, створено для тебе\n▪️ власне виробництво · доставка по всьому світу";

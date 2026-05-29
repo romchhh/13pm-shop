@@ -2,12 +2,12 @@
  * Creates a new PostgreSQL database and optionally updates .env with DATABASE_URL.
  *
  * Usage:
- *   npm run create-new-db              # create plywood_present_site, update .env
+ *   npm run create-new-db              # create 13pm_tactic_site, update .env
  *   npm run create-new-db -- my_db     # create my_db, update .env
  *   NEW_DB_NAME=my_db npm run create-new-db
  *   npm run create-new-db -- --no-write-env  # only create DB, print URL
  *
- * If db_name is omitted, uses "plywood_present_site".
+ * If db_name is omitted, uses "13pm_tactic_site".
  * Connection params from .env DATABASE_URL, or default: current OS user @ localhost:5432 (macOS/Homebrew).
  */
 
@@ -15,7 +15,7 @@ import { Pool } from "pg";
 import * as fs from "fs";
 import * as path from "node:path";
 
-const DEFAULT_DB_NAME = "plywood_present_site";
+const DEFAULT_DB_NAME = "13pm_tactic_site";
 
 /** On macOS/Homebrew Postgres the default superuser is the current OS user, not "postgres". */
 function getDefaultBaseUrl(): string {

@@ -12,7 +12,7 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 2. **Створення нової бази даних**
 
-   **Варіант A (рекомендовано):** у `.env` вже вказано `DATABASE_URL` з назвою бази (наприклад `plywood_present_site`). Тоді просто:
+   **Варіант A (рекомендовано):** у `.env` вже вказано `DATABASE_URL` з назвою бази (наприклад `13pm_tactic_site`). Тоді просто:
    ```bash
    npm run create-db
    ```
@@ -38,9 +38,9 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 **Ручне створення БД через psql:**
 ```bash
 psql -U your_username -h your_host
-CREATE DATABASE plywood_present_site;
+CREATE DATABASE 13pm_tactic_site;
 ```
-Потім у `.env` вкажіть: `DATABASE_URL="postgresql://user:password@host:5432/plywood_present_site"`.
+Потім у `.env` вкажіть: `DATABASE_URL="postgresql://user:password@host:5432/13pm_tactic_site"`.
 
 ### Running the Development Server
 

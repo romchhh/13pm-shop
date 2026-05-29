@@ -5,7 +5,7 @@ import HomeProductCarousel from "./HomeProductCarousel";
 export default function Bestsellers() {
   return (
     <HomeProductCarousel
-      title="Хіти продажів"
+      title="BESTSELLERS"
       catalogHref="/catalog?hits=1"
       topSale
     />

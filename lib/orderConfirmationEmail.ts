@@ -1,5 +1,5 @@
 /**
- * HTML лист підтвердження замовлення (Plywood Present).
+ * HTML лист підтвердження замовлення (13pm tactic).
  * Відправка через Resend після оплати замовлення.
  */
 
@@ -7,8 +7,9 @@ import { sendEmail } from "@/lib/email";
 import { PAYMENT_TYPE_LABELS_LONG } from "@/lib/paymentTypeLabels";
 import { SITE_STORE_NAME } from "@/lib/siteBrand";
 import { siteContact } from "@/lib/siteContact";
+import { SITE_ACCENT } from "@/lib/siteColors";
 
-const ACCENT = "#8B5E3F";
+const ACCENT = SITE_ACCENT;
 const TEXT = "#1a1a1a";
 const MUTED = "rgba(26,26,26,0.72)";
 const BG = "#faf9f7";
@@ -55,14 +56,14 @@ function escapeHtml(s: string): string {
 }
 
 /**
- * Побудова HTML листа в стилі Plywood Present (#8B5E3F, Montserrat).
+ * Побудова HTML листа в стилі 13pm tactic (var(--site-accent), Montserrat).
  */
 export function buildOrderConfirmationHtml(
   order: OrderForEmail,
   baseUrl: string,
   productImageUrls: Map<number, string>
 ): string {
-  const logoUrl = baseUrl + "/images/logos/logo_brown.svg";
+  const logoUrl = baseUrl + "/13pm-mark-black.svg";
   const total = order.items.reduce(
     (sum, item) => sum + Number(item.price) * item.quantity,
     0
@@ -189,7 +190,7 @@ export function buildOrderConfirmationHtml(
                 <a href="${escapeHtml(siteContact.telegramUrl)}" target="_blank" rel="noopener" style="display:inline-block;color:${ACCENT};font-size:14px;font-weight:500;text-decoration:none;">Telegram</a>
               </p>
               <p style="margin:0;font-size:12px;color:${MUTED};line-height:1.5;">
-                ${escapeHtml(SITE_STORE_NAME)} — дерев&apos;яний декор та іменні подарунки з фанери.<br />
+                ${escapeHtml(SITE_STORE_NAME)} — tactical clothing UA | твій тактичний одяг.<br />
                 <a href="${escapeHtml(baseUrl)}" style="color:${ACCENT};text-decoration:none;">${escapeHtml(baseUrl.replace(/^https?:\/\//, ""))}</a>
               </p>
             </td>

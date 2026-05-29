@@ -75,8 +75,8 @@ export default async function CatalogServer(props: CatalogServerProps) {
   const catalogUrl = `${baseUrl}/catalog${categoryName ? `?category=${encodeURIComponent(categoryName)}` : ""}`;
   const pageName = categoryName || "Каталог товарів";
   const pageDescription = categoryName
-    ? `Товари категорії «${categoryName}» в інтернет-магазині ${SITE_STORE_NAME}: дерев'яний декор і подарунки з фанери ${SITE_PRODUCT_BRAND}.`
-    : `Каталог дерев'яного декору та іменних подарунків ${SITE_PRODUCT_BRAND} — ${SITE_STORE_NAME}. Фанера, лазерне різання, доставка по Україні.`;
+    ? `Товари категорії «${categoryName}» в інтернет-магазині ${SITE_STORE_NAME}: тактичний одяг ${SITE_PRODUCT_BRAND}.`
+    : `Каталог тактичного одягу ${SITE_PRODUCT_BRAND} — ${SITE_STORE_NAME}. Власне виробництво, доставка по Україні та світу.`;
 
   const breadcrumbs = [
     { name: "Головна", url: baseUrl },

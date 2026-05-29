@@ -5,12 +5,18 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useCategories } from "@/lib/CategoriesProvider";
 import { siteContact } from "@/lib/siteContact";
-import { getMainNavHashId, mainNavLinks } from "@/lib/siteNav";
+import { CATALOG_PROMO_HREF, getMainNavHashId, mainNavLinks } from "@/lib/siteNav";
+import { categoryCanonicalPath } from "@/lib/seo";
 import { useBodyScrollLock } from "@/lib/useBodyScrollLock";
 
 interface SidebarMenuProps {
   isOpen: boolean;
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+function getCategoryMenuHref(cat: { id: number; name: string; slug?: string | null }) {
+  if (cat.slug?.trim()) return categoryCanonicalPath(cat.slug, cat.name);
+  return `/catalog?categoryId=${cat.id}`;
 }
 
 export default function SidebarMenu({
@@ -19,11 +25,7 @@ export default function SidebarMenu({
 }: SidebarMenuProps) {
   const router = useRouter();
   const pathname = usePathname();
-  // Use categories from context instead of fetching
-  const { categories, subcategories: subcategoriesMap, loading, error, fetchSubcategoriesForCategory } = useCategories();
-  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
-  const [loadingSubcategories, setLoadingSubcategories] = useState(false);
-  // Avoid hydration mismatch: server and initial client render show placeholder; real content after mount
+  const { categories, loading, error } = useCategories();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -31,7 +33,6 @@ export default function SidebarMenu({
     e.preventDefault();
     setIsOpen(false);
     if (pathname === "/") {
-      // Якщо вже на головній сторінці, просто прокручуємо до якоря
       setTimeout(() => {
         const element = document.getElementById(anchor.replace("#", ""));
         if (element) {
@@ -39,9 +40,7 @@ export default function SidebarMenu({
         }
       }, 100);
     } else {
-      // Якщо на іншій сторінці, переходимо на головну з якорем
       router.push(`/${anchor}`);
-      // Після переходу прокручуємо до якоря
       setTimeout(() => {
         const element = document.getElementById(anchor.replace("#", ""));
         if (element) {
@@ -51,77 +50,49 @@ export default function SidebarMenu({
     }
   };
 
-  // Convert Map to array for selected category
-  const selectedSubcategories = selectedCategoryId 
-    ? subcategoriesMap.get(selectedCategoryId) || [] 
-    : [];
-
-  // Load subcategories when category is selected
-  const handleCategorySelect = async (categoryId: number) => {
-    setSelectedCategoryId(categoryId);
-    
-    // If subcategories not loaded yet, fetch them
-    if (!subcategoriesMap.has(categoryId)) {
-      setLoadingSubcategories(true);
-      await fetchSubcategoriesForCategory(categoryId);
-      setLoadingSubcategories(false);
-    }
-  };
-
-  // Select first category by default when categories load
-  useEffect(() => {
-    if (categories.length > 0 && selectedCategoryId === null) {
-      handleCategorySelect(categories[0].id);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- only run when categories/selectedCategoryId change
-  }, [categories, selectedCategoryId]);
-
   useBodyScrollLock(isOpen);
-
-  const selectedCategory = categories.find((cat) => cat.id === selectedCategoryId);
 
   return (
     <div className="relative z-[var(--z-site-overlay)]">
-      {/* Overlay - only below header */}
       {isOpen && (
         <div
           className="fixed top-[var(--site-header-offset)] left-0 right-0 bottom-0 bg-black/40 z-[var(--z-site-overlay-backdrop)]"
-          onClick={() => {
-            setIsOpen(false);
-          }}
+          onClick={() => setIsOpen(false)}
         />
       )}
 
-      {/* Sidebar — одразу під фіксованим хедером (висота = --site-header-offset) */}
       <div
         className={`fixed top-[var(--site-header-offset)] left-0 h-[calc(100vh-var(--site-header-offset))] w-full sm:w-4/5 sm:max-w-md bg-white shadow-md z-[var(--z-site-overlay)] transform transition-transform duration-300 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         } overflow-hidden flex flex-col`}
       >
-        {/* Categories Scroll - Top */}
-        <div className="border-b border-[#3D1A00]/10 bg-white">
+        <div className="border-b border-[#1C1C1C]/10 bg-white">
           <div className="overflow-x-auto scrollbar-hide">
             <div className="flex flex-row gap-3 px-4 py-4 min-w-max">
               {!mounted ? (
-                <div className="px-4 py-2 text-sm text-[#3D1A00]/60 font-['Montserrat']">Завантаження...</div>
+                <div className="px-4 py-2 text-sm text-[#1C1C1C]/60 font-['Montserrat']">Завантаження...</div>
               ) : loading ? (
-                <div className="px-4 py-2 text-sm text-[#3D1A00]/60 font-['Montserrat']">Завантаження...</div>
+                <div className="px-4 py-2 text-sm text-[#1C1C1C]/60 font-['Montserrat']">Завантаження...</div>
               ) : error ? (
                 <div className="px-4 py-2 text-sm text-red-500 font-['Montserrat']">Помилка: {error}</div>
               ) : (
                 <>
-                  {categories.map((cat) => (
-                  <button
-                    key={cat.id}
-                    onClick={() => handleCategorySelect(cat.id)}
-                    className={`px-5 py-3 rounded-full text-base font-semibold whitespace-nowrap transition-all duration-200 font-['Montserrat'] ${
-                      selectedCategoryId === cat.id
-                        ? "bg-[#3D1A00] text-white"
-                        : "bg-[#3D1A00]/10 text-[#3D1A00] hover:bg-[#3D1A00]/20"
-                    }`}
+                  <Link
+                    href={CATALOG_PROMO_HREF}
+                    onClick={() => setIsOpen(false)}
+                    className="rounded-full bg-[var(--site-accent)] px-5 py-3 font-['Montserrat'] text-base font-semibold whitespace-nowrap text-white transition-opacity hover:opacity-90"
                   >
-                    {cat.name}
-                  </button>
+                    Акції
+                  </Link>
+                  {categories.map((cat) => (
+                    <Link
+                      key={cat.id}
+                      href={getCategoryMenuHref(cat)}
+                      onClick={() => setIsOpen(false)}
+                      className="rounded-full bg-[#1C1C1C]/10 px-5 py-3 font-['Montserrat'] text-base font-semibold whitespace-nowrap text-[#1C1C1C] transition-all duration-200 hover:bg-[#1C1C1C]/20"
+                    >
+                      {cat.name}
+                    </Link>
                   ))}
                 </>
               )}
@@ -129,69 +100,15 @@ export default function SidebarMenu({
           </div>
         </div>
 
-        {/* Main Content - Scrollable */}
         <div className="flex-1 overflow-y-auto">
-          {/* Subcategories */}
-          {selectedCategory && (
-            <div className="px-6 pt-6 pb-2">
-              {loadingSubcategories ? (
-                <div className="py-4 text-center text-sm text-[#3D1A00]/60 font-['Montserrat']">
-                  Завантаження...
-                </div>
-              ) : selectedSubcategories.length > 0 ? (
-                <>
-                  <div className="space-y-1">
-                    {selectedSubcategories.map((sub) => (
-                      <Link
-                        key={sub.id}
-                        href={`/catalog?subcategory=${encodeURIComponent(sub.name)}`}
-                        className="block py-3 text-base text-[#3D1A00] hover:text-[#3D1A00]/70 transition-colors border-b border-[#3D1A00]/5 font-['Montserrat']"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        {sub.name}
-                      </Link>
-                    ))}
-                  </div>
-                  <div className="pt-4 pb-0 mt-2 border-t border-[#3D1A00]/10">
-                    <Link
-                      href="/catalog"
-                      className="text-base text-[#3D1A00] hover:text-[#3D1A00]/70 transition-colors font-medium font-['Montserrat']"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      Подивитися все
-                    </Link>
-                  </div>
-                </>
-              ) : (
-                <div className="pt-2 pb-2">
-                  <Link
-                    href="/catalog"
-                    className="text-base text-[#3D1A00] hover:text-[#3D1A00]/70 transition-colors font-medium font-['Montserrat']"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Подивитися все
-                  </Link>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Divider */}
-          {selectedCategory && (
-            <div className="px-6 py-4">
-              <div className="border-t border-[#3D1A00]/10"></div>
-            </div>
-          )}
-
-          {/* Навігація — ті самі пункти, що в десктопному меню */}
           <div className="px-6 py-4">
-            <h3 className="mb-4 font-['Montserrat'] text-sm font-semibold uppercase tracking-wider text-[#3D1A00]/60">
+            <h3 className="mb-4 font-['Montserrat'] text-sm font-semibold uppercase tracking-wider text-[#1C1C1C]/60">
               Меню
             </h3>
             <nav className="space-y-1">
               <Link
                 href="/catalog"
-                className="block py-2 font-['Montserrat'] text-base text-[#3D1A00] transition-colors hover:text-[#3D1A00]/70"
+                className="block py-2 font-['Montserrat'] text-base font-bold text-[#1C1C1C] transition-colors hover:text-[#1C1C1C]/70"
                 onClick={() => setIsOpen(false)}
               >
                 Каталог товарів
@@ -202,7 +119,7 @@ export default function SidebarMenu({
                   <Link
                     key={link.href}
                     href={link.href}
-                    className="block py-2 font-['Montserrat'] text-base text-[#3D1A00] transition-colors hover:text-[#3D1A00]/70"
+                    className="block py-2 font-['Montserrat'] text-base font-bold text-[#1C1C1C] transition-colors hover:text-[#1C1C1C]/70"
                     onClick={(e) => {
                       if (hashId) {
                         handleAnchorClick(e, `#${hashId}`);
@@ -217,13 +134,11 @@ export default function SidebarMenu({
               })}
             </nav>
           </div>
-
         </div>
 
-        {/* Social Media Section - Fixed at bottom */}
-        <div className="border-t border-[#3D1A00]/10 bg-white">
+        <div className="border-t border-[#1C1C1C]/10 bg-white">
           <div className="px-6 py-4">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-[#3D1A00]/60 mb-4 font-['Montserrat']">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-[#1C1C1C]/60 mb-4 font-['Montserrat']">
               ЗВ&apos;ЯЗОК
             </h3>
             <div className="flex flex-row gap-4 flex-wrap">
@@ -231,7 +146,7 @@ export default function SidebarMenu({
                 href={siteContact.instagramUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-base text-[#3D1A00] hover:text-[#3D1A00]/70 transition-colors font-['Montserrat']"
+                className="flex items-center gap-2 text-base text-[#1C1C1C] hover:text-[#1C1C1C]/70 transition-colors font-['Montserrat']"
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden className="shrink-0">
                   <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
@@ -242,7 +157,7 @@ export default function SidebarMenu({
                 href={siteContact.tiktokUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-base text-[#3D1A00] hover:text-[#3D1A00]/70 transition-colors font-['Montserrat']"
+                className="flex items-center gap-2 text-base text-[#1C1C1C] hover:text-[#1C1C1C]/70 transition-colors font-['Montserrat']"
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden className="shrink-0">
                   <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64v-3.5a6.67 6.67 0 1 0 5.79 6.61V8.57a8.16 8.16 0 0 0 4.32 1.24V6.69Z" />
@@ -253,7 +168,7 @@ export default function SidebarMenu({
                 href={siteContact.telegramUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-base text-[#3D1A00] hover:text-[#3D1A00]/70 transition-colors font-['Montserrat']"
+                className="flex items-center gap-2 text-base text-[#1C1C1C] hover:text-[#1C1C1C]/70 transition-colors font-['Montserrat']"
               >
                 <svg
                   className="w-6 h-6"

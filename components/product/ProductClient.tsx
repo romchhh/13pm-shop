@@ -8,24 +8,26 @@ import Link from "next/link";
 import Alert from "@/components/shared/Alert";
 import CartAlert from "@/components/shared/CartAlert";
 import { getFirstProductImage } from "@/lib/getFirstProductImage";
-import {
-  getDefaultColorIndex,
-  getWhiteColorSurcharge,
-  getUnitPriceWithColor,
-  WHITE_COLOR_SURCHARGE_UAH,
-} from "@/lib/colorPricing";
+import { getDiscountedPrice } from "@/lib/pricing";
 import {
   GA4_BRAND,
   GA4_CURRENCY,
   GA4_VERTICAL,
   pushGA4EcommerceEvent,
 } from "@/lib/ga4Ecommerce";
+import { LABEL_FREE_DELIVERY_FROM_2000 } from "@/lib/siteBrand";
+import { productGalleryImageAlt } from "@/lib/seoCopy";
 import {
-  LABEL_FREE_DELIVERY_FROM_2000,
-} from "@/lib/siteBrand";
-import type { ProductColorOption, ProductSizeVariant } from "@/lib/productOptions";
+  parseSizeStock,
+  parseSizeVariants,
+  productHasSizeStockAvailable,
+  type ProductColorOption,
+  type ProductSizeStock,
+  type ProductSizeVariant,
+} from "@/lib/productOptions";
 import OneClickOrderModal from "@/components/product/OneClickOrderModal";
 import ProductDeliveryPaymentTab from "@/components/product/ProductDeliveryPaymentTab";
+import ProductSizePickerBlock from "@/components/product/ProductSizePickerBlock";
 import { ProductDetailDescription } from "@/components/product/ProductDetailDescription";
 import ProductMediaLightbox from "@/components/product/ProductMediaLightbox";
 import YouMightLike from "@/components/product/YouMightLike";
@@ -36,7 +38,7 @@ import { productToFavoriteSnapshot } from "@/lib/favoritesStorage";
 import FavoriteButton from "@/components/shared/FavoriteButton";
 import { scrollPageToTopReliable } from "@/lib/scrollPageToTop";
 
-const ACCENT = "#8B5E3F";
+const ACCENT = "var(--site-accent)";
 
 type TabId = "details" | "delivery_payment";
 
@@ -81,7 +83,13 @@ interface ProductClientProps {
     }[];
     color_options?: ProductColorOption[];
     white_color_surcharge_enabled?: boolean;
-    size_variants?: ProductSizeVariant[];
+    size_variants?: unknown;
+    color_linked_products?: {
+      id: number;
+      name: string;
+      slug?: string | null;
+      color_options?: ProductColorOption[];
+    }[];
   };
 }
 
@@ -95,9 +103,7 @@ export default function ProductClient({ product }: ProductClientProps) {
   const [quantity, setQuantity] = useState(1);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<TabId>("details");
-  const [selectedColorIndex, setSelectedColorIndex] = useState(() =>
-    getDefaultColorIndex(product.color_options ?? [])
-  );
+  const [selectedColorIndex, setSelectedColorIndex] = useState(0);
   const { addItem } = useBasket();
   const [showCartAlert, setShowCartAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
@@ -110,52 +116,62 @@ export default function ProductClient({ product }: ProductClientProps) {
   const mobileGalleryScrollRef = useRef<HTMLDivElement>(null);
 
   const colors = product.color_options ?? [];
-  const sizeVariants = product.size_variants ?? [];
+  const sizeStock = useMemo(
+    () => parseSizeStock(product.size_variants),
+    [product.size_variants]
+  );
+  const legacySizeVariants = useMemo(
+    () => parseSizeVariants(product.size_variants),
+    [product.size_variants]
+  );
+
+  const colorLinked = product.color_linked_products ?? [];
+
+  const [selectedSizeIndex, setSelectedSizeIndex] = useState(0);
 
   useEffect(() => {
     setActiveImageIndex(0);
-    setSelectedColorIndex(getDefaultColorIndex(product.color_options ?? []));
+    setSelectedColorIndex(0);
     setQuantity(1);
+    const firstAvailable = sizeStock.findIndex((row) => row.stock > 0);
+    setSelectedSizeIndex(firstAvailable >= 0 ? firstAvailable : 0);
     const el = mobileGalleryScrollRef.current;
     if (el) el.scrollTo({ left: 0, behavior: "auto" });
-  }, [product.id, product.color_options]);
+  }, [product.id, product.color_options, sizeStock]);
 
   useEffect(() => {
     if (selectedColorIndex >= colors.length) {
-      setSelectedColorIndex(getDefaultColorIndex(colors));
+      setSelectedColorIndex(0);
     }
   }, [colors, colors.length, selectedColorIndex]);
 
+  const selectedSizeRow: ProductSizeStock | null =
+    sizeStock.length > 0 ? sizeStock[selectedSizeIndex] ?? sizeStock[0] : null;
+
   const currentSizeLabel = useMemo(() => {
-    const v = sizeVariants.find((s) => s.productId === product.id);
+    if (selectedSizeRow?.label) return selectedSizeRow.label;
+    const v = legacySizeVariants.find((s) => s.productId === product.id);
     return v?.label ?? "—";
-  }, [sizeVariants, product.id]);
+  }, [selectedSizeRow, legacySizeVariants, product.id]);
 
   const selectedColorName =
     colors.length > 0 && colors[selectedColorIndex]
       ? colors[selectedColorIndex].name
       : undefined;
 
-  const materialTexts = useMemo(
-    () => ({
-      description: product.description,
-      short_description: product.short_description,
-      main_info: product.main_info,
-      white_color_surcharge_enabled: product.white_color_surcharge_enabled,
-    }),
-    [
-      product.description,
-      product.short_description,
-      product.main_info,
-      product.white_color_surcharge_enabled,
-    ]
-  );
-
-  const colorSurchargeUah = getWhiteColorSurcharge(selectedColorName, colors, materialTexts);
   const analyticsCategory = product.subcategory_name ?? product.category_name ?? null;
+  const displayPrice = Math.round(
+    getDiscountedPrice(product.price, product.discount_percentage)
+  );
 
   const handleAddToCart = async () => {
     if (isAddingToCartRef.current) return;
+    if (sizeStock.length > 0 && (!selectedSizeRow || selectedSizeRow.stock <= 0)) {
+      setAlertMessage("Оберіть розмір, який є в наявності");
+      setAlertType("warning");
+      setTimeout(() => setAlertMessage(null), 4000);
+      return;
+    }
     if (!addItem) {
       setAlertMessage("Кошик недоступний. Спробуйте оновити сторінку.");
       setAlertType("error");
@@ -176,7 +192,6 @@ export default function ProductClient({ product }: ProductClientProps) {
         discount_percentage: product.discount_percentage ?? undefined,
         subtitle: product.subtitle || product.short_description || undefined,
         color: selectedColorName,
-        color_surcharge_uah: colorSurchargeUah > 0 ? colorSurchargeUah : undefined,
         category_name: analyticsCategory,
       });
       setShowCartAlert(true);
@@ -194,18 +209,13 @@ export default function ProductClient({ product }: ProductClientProps) {
   };
 
   const media = product.media || [];
-  const outOfStock = isProductOutOfStock({
-    in_stock: product.in_stock,
-    stock: product.stock,
-  });
-  const displayPrice = getUnitPriceWithColor(
-    product.price,
-    product.discount_percentage,
-    selectedColorName,
-    colors,
-    materialTexts
-  );
-
+  const outOfStock =
+    isProductOutOfStock({
+      in_stock: product.in_stock,
+      stock: product.stock,
+    }) ||
+    (sizeStock.length > 0 &&
+      !productHasSizeStockAvailable(sizeStock, selectedSizeRow?.label ?? null));
   const categorySlug =
     product.category_slug ?? (product.category_name ? encodeURIComponent(product.category_name) : null);
   const categoryUrl = categorySlug ? `/catalog/${categorySlug}` : "/catalog";
@@ -220,44 +230,27 @@ export default function ProductClient({ product }: ProductClientProps) {
     if (lastViewItemIdRef.current === product.id) return;
 
     lastViewItemIdRef.current = product.id;
-    const unitPrice = getUnitPriceWithColor(
-      product.price,
-      product.discount_percentage,
-      selectedColorName,
-      colors,
-      materialTexts
-    );
-
     pushGA4EcommerceEvent("view_item", {
       currency: GA4_CURRENCY,
-      value: unitPrice,
+      value: displayPrice,
       items: [
         {
           item_id: String(product.id),
           item_name: product.name,
           item_brand: GA4_BRAND,
           item_category: analyticsCategory ?? "Каталог",
-          price: unitPrice,
+          price: displayPrice,
           quantity: 1,
           google_business_vertical: GA4_VERTICAL,
         },
       ],
     });
-  }, [
-    analyticsCategory,
-    isMounted,
-    product.discount_percentage,
-    product.id,
-    product.name,
-    product.price,
-    selectedColorName,
-    colors,
-  ]);
+  }, [analyticsCategory, displayPrice, isMounted, product.id, product.name]);
 
   if (!isMounted) return null;
 
   const shortText =
-    product.description || product.main_info || product.subtitle || "";
+    product.short_description || product.description || product.main_info || product.subtitle || "";
 
   const onSizeClick = (v: ProductSizeVariant) => {
     if (v.productId === product.id) return;
@@ -421,7 +414,7 @@ export default function ProductClient({ product }: ProductClientProps) {
                     ) : (
                       <Image
                         src={`/api/images/${item.url}`}
-                        alt=""
+                        alt={productGalleryImageAlt(product.name, i, media.length)}
                         fill
                         className="object-cover"
                         sizes="88px"
@@ -465,10 +458,14 @@ export default function ProductClient({ product }: ProductClientProps) {
                         <button
                           type="button"
                           onClick={() => openLightbox(i)}
-                          className="relative aspect-[3/4] w-full max-w-[min(400px,90vw)] shrink-0 overflow-hidden rounded-2xl border-0 bg-transparent p-0 shadow-none outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[#8B5E3F]/40 focus-visible:ring-offset-2"
+                          className="relative aspect-[3/4] w-full max-w-[min(400px,90vw)] shrink-0 overflow-hidden rounded-2xl border-0 bg-transparent p-0 shadow-none outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--site-accent)]/40 focus-visible:ring-offset-2"
                           aria-label={`Відкрити фото ${i + 1} у повному розмірі`}
                         >
-                          {renderMediaSlide(item, `${product.name} — ${i + 1}`, i === 0)}
+                          {renderMediaSlide(
+                            item,
+                            productGalleryImageAlt(product.name, i, media.length),
+                            i === 0
+                          )}
                           {i === 0 ? productBadgesOverlay : null}
                         </button>
                       </div>
@@ -485,7 +482,7 @@ export default function ProductClient({ product }: ProductClientProps) {
                           aria-label={`Слайд ${i + 1}`}
                           onClick={() => scrollMobileGalleryTo(i)}
                           className={`h-1.5 rounded-full transition-all ${
-                            i === activeImageIndex ? "w-5 bg-[#8B5E3F]" : "w-1.5 bg-black/20"
+                            i === activeImageIndex ? "w-5 bg-[var(--site-accent)]" : "w-1.5 bg-black/20"
                           }`}
                         />
                       ))}
@@ -499,12 +496,16 @@ export default function ProductClient({ product }: ProductClientProps) {
             <button
               type="button"
               onClick={() => media.length > 0 && openLightbox(activeImageIndex)}
-              className="relative order-1 hidden min-h-[520px] w-full flex-1 cursor-zoom-in overflow-hidden rounded-2xl border-0 bg-transparent p-0 shadow-none outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[#8B5E3F]/40 focus-visible:ring-offset-2 lg:block"
+              className="relative order-1 hidden min-h-[520px] w-full flex-1 cursor-zoom-in overflow-hidden rounded-2xl border-0 bg-transparent p-0 shadow-none outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--site-accent)]/40 focus-visible:ring-offset-2 lg:block"
               aria-label="Збільшити фото"
               disabled={media.length === 0}
             >
               {media[activeImageIndex] ? (
-                renderMediaSlide(media[activeImageIndex], product.name, true)
+                renderMediaSlide(
+                  media[activeImageIndex],
+                  productGalleryImageAlt(product.name, activeImageIndex, media.length),
+                  true
+                )
               ) : (
                 <div className="flex h-full w-full items-center justify-center font-['Montserrat'] text-black/35">
                   Немає зображення
@@ -524,16 +525,16 @@ export default function ProductClient({ product }: ProductClientProps) {
 
           {/* Info */}
           <div className="flex w-full flex-col gap-5 font-['Montserrat'] lg:max-w-[44%]">
-            <h1 className="text-2xl font-semibold capitalize leading-tight text-black sm:text-3xl lg:text-4xl">
+            <h1 className="text-[1.75rem] font-bold capitalize leading-[1.12] tracking-tight text-black sm:text-4xl lg:text-[2.75rem] xl:text-5xl">
               {product.name}
             </h1>
 
-            <div className="flex flex-wrap items-baseline gap-3">
-              <span className="text-xl font-semibold text-black sm:text-2xl">
+            <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+              <span className="text-2xl font-bold text-black sm:text-3xl lg:text-4xl">
                 {displayPrice.toLocaleString("uk-UA")} грн
               </span>
               {product.old_price != null && Number(product.old_price) > displayPrice && (
-                <span className="text-base text-black/40 line-through">
+                <span className="text-lg text-black/40 line-through sm:text-xl">
                   {Math.round(Number(product.old_price)).toLocaleString("uk-UA")} грн
                 </span>
               )}
@@ -545,47 +546,50 @@ export default function ProductClient({ product }: ProductClientProps) {
               <p className="text-base leading-relaxed text-black/85">{shortText}</p>
             ) : null}
 
-            {colors.length > 0 && (
+            {(colors.length > 0 || colorLinked.length > 0) && (
               <div className="border-t border-black/10 pt-5">
-                <p
-                  className={`text-sm text-black/45 ${colorSurchargeUah > 0 ? "mb-1" : "mb-3"}`}
-                >
-                  Оберіть колір
-                </p>
-                {colorSurchargeUah > 0 && (
-                  <p className="mb-3 text-sm text-black/70">
-                    Білий колір — +{WHITE_COLOR_SURCHARGE_UAH.toLocaleString("uk-UA")} грн до ціни
-                  </p>
-                )}
+                <p className="mb-3 text-sm text-black/45">Колір</p>
                 <div className="flex flex-wrap gap-3">
-                  {colors.map((c, i) => (
-                    <button
-                      key={`${c.hex}-${c.name}-${i}`}
-                      type="button"
-                      onClick={() => setSelectedColorIndex(i)}
-                      className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 shadow-sm transition-transform hover:scale-105 ${
-                        c.hex.toLowerCase() === "#ffffff" || c.hex.toLowerCase() === "#fff"
-                          ? "border-black/25"
-                          : "border-black/10"
-                      }`}
-                      style={{ backgroundColor: c.hex }}
-                      title={c.name}
-                      aria-label={c.name}
-                      aria-pressed={selectedColorIndex === i}
+                  {colors.length > 0 && (
+                    <span
+                      className="relative flex h-10 w-10 items-center justify-center rounded-full border-2 shadow-sm ring-2 ring-offset-2"
+                      style={{
+                        backgroundColor: colors[0].hex,
+                        borderColor: "rgba(0,0,0,0.15)",
+                        boxShadow: `0 0 0 1px ${ACCENT}`,
+                      }}
+                      title={colors[0].name}
                     >
-                      {selectedColorIndex === i && (
-                        <svg className="h-5 w-5 text-white drop-shadow" viewBox="0 0 24 24" fill="none" aria-hidden>
-                          <path
-                            d="M20 6L9 17l-5-5"
-                            stroke="currentColor"
-                            strokeWidth="2.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      )}
-                    </button>
-                  ))}
+                      <svg className="h-5 w-5 text-white drop-shadow" viewBox="0 0 24 24" fill="none" aria-hidden>
+                        <path
+                          d="M20 6L9 17l-5-5"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </span>
+                  )}
+                  {colorLinked.map((linked) => {
+                    const linkedColors = linked.color_options ?? [];
+                    const c = linkedColors[0];
+                    if (!c) return null;
+                    const isWhite =
+                      c.hex.toLowerCase() === "#ffffff" || c.hex.toLowerCase() === "#fff";
+                    return (
+                      <Link
+                        key={linked.id}
+                        href={productHref(linked.slug, linked.id)}
+                        className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 shadow-sm transition-transform hover:scale-105 ${
+                          isWhite ? "border-black/25" : "border-black/10"
+                        }`}
+                        style={{ backgroundColor: c.hex }}
+                        title={c.name}
+                        aria-label={c.name}
+                      />
+                    );
+                  })}
                 </div>
                 {selectedColorName && (
                   <p className="mt-2 text-xs text-black/50">{selectedColorName}</p>
@@ -593,29 +597,17 @@ export default function ProductClient({ product }: ProductClientProps) {
               </div>
             )}
 
-            {sizeVariants.length > 0 && (
-              <div className="border-t border-black/10 pt-5">
-                <p className="mb-3 text-sm text-black/45">Оберіть розмір</p>
-                <div className="flex flex-wrap gap-2">
-                  {sizeVariants.map((v) => {
-                    const active = v.productId === product.id;
-                    return (
-                      <button
-                        key={`${v.label}-${v.productId}`}
-                        type="button"
-                        onClick={() => onSizeClick(v)}
-                        className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                          active ? "text-white" : "bg-black/[0.06] text-black/55 hover:bg-black/10"
-                        }`}
-                        style={active ? { backgroundColor: ACCENT } : undefined}
-                      >
-                        {v.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+            <ProductSizePickerBlock
+              productId={product.id}
+              categoryName={product.category_name}
+              categorySlug={product.category_slug}
+              subcategoryName={product.subcategory_name}
+              sizeVariants={product.size_variants}
+              currentSizeLabel={currentSizeLabel}
+              selectedSizeIndex={selectedSizeIndex}
+              onSelectSizeIndex={setSelectedSizeIndex}
+              onLegacySizeClick={onSizeClick}
+            />
 
             {product.gift_product && (
               <div className="rounded-xl border border-black/10 bg-[#faf8f5] p-4 text-sm">
@@ -632,7 +624,7 @@ export default function ProductClient({ product }: ProductClientProps) {
             {/* Кількість + кошик в один ряд (десктоп / планшет) */}
             <div className="hidden gap-3 border-t border-black/10 pt-5 sm:flex sm:items-stretch">
               <div
-                className="flex h-12 w-[7.5rem] shrink-0 items-center justify-between rounded-xl px-2 sm:w-32"
+                className="flex h-14 w-[7.5rem] shrink-0 items-center justify-between rounded-2xl px-2 sm:h-[3.75rem] sm:w-32"
                 style={{ backgroundColor: "rgba(0,0,0,0.06)" }}
               >
                 <button
@@ -654,8 +646,9 @@ export default function ProductClient({ product }: ProductClientProps) {
                 </button>
               </div>
               <AddToCartButton
-                size="md"
-                className="min-w-0 flex-1 rounded-xl"
+                size="lg"
+                variant="dark"
+                className="min-w-0 flex-1 rounded-2xl"
                 label={isAddingToCart ? "Додавання…" : "В кошик"}
                 disabled={outOfStock}
                 loading={isAddingToCart}
@@ -672,9 +665,9 @@ export default function ProductClient({ product }: ProductClientProps) {
               type="button"
               onClick={() => !outOfStock && setOneClickOpen(true)}
               disabled={outOfStock}
-              className="text-center text-sm text-black/50 underline-offset-2 hover:underline disabled:opacity-45"
+              className="w-full text-center font-['Montserrat'] text-sm font-semibold text-black/55 underline decoration-black/25 underline-offset-[3px] transition-colors hover:text-black hover:decoration-black/50 disabled:opacity-45"
             >
-              Швидке замовлення
+              Купити в 1 клік
             </button>
 
             <CartAlert
@@ -705,20 +698,16 @@ export default function ProductClient({ product }: ProductClientProps) {
               quantity={quantity}
             />
 
-            {product.category_description && (
-              <div className="border-t border-black/10 pt-6">
-                <p className="text-xs font-semibold uppercase tracking-wider text-black/45">Про категорію</p>
-                <div className="mt-2">
-                  <CategoryDescriptionMarkdown content={product.category_description} />
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
         {product.bought_together_products && product.bought_together_products.length > 0 && (
           <div className="mt-12">
-            <YouMightLike title="Купують разом" suggestedProducts={product.bought_together_products} />
+            <YouMightLike
+              title="Купують разом"
+              suggestedProducts={product.bought_together_products}
+              showCatalogLink={false}
+            />
           </div>
         )}
 
@@ -769,6 +758,17 @@ export default function ProductClient({ product }: ProductClientProps) {
               <ProductDeliveryPaymentTab />
             )}
           </div>
+
+          {product.category_description?.trim() ? (
+            <div className="mt-10 border-t border-black/10 pt-8">
+              <p className="font-['Montserrat'] text-xs font-semibold uppercase tracking-wider text-black/45">
+                Про категорію
+              </p>
+              <div className="mt-3 max-w-3xl">
+                <CategoryDescriptionMarkdown content={product.category_description} />
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
 
@@ -779,13 +779,13 @@ export default function ProductClient({ product }: ProductClientProps) {
       >
         <div className="mx-auto flex max-w-[1920px] items-stretch gap-2">
           <div
-            className="flex h-12 w-[7.5rem] shrink-0 items-center justify-between rounded-xl px-1"
+            className="flex h-14 w-[7.5rem] shrink-0 items-center justify-between rounded-2xl px-1"
             style={{ backgroundColor: "rgba(0,0,0,0.06)" }}
           >
             <button
               type="button"
               onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-              className="flex h-10 w-9 items-center justify-center rounded-lg text-xl text-black"
+              className="flex h-11 w-9 items-center justify-center rounded-lg text-xl text-black"
               aria-label="Зменшити"
             >
               −
@@ -794,15 +794,16 @@ export default function ProductClient({ product }: ProductClientProps) {
             <button
               type="button"
               onClick={() => setQuantity((q) => q + 1)}
-              className="flex h-10 w-9 items-center justify-center rounded-lg text-xl text-black"
+              className="flex h-11 w-9 items-center justify-center rounded-lg text-xl text-black"
               aria-label="Збільшити"
             >
               +
             </button>
           </div>
           <AddToCartButton
-            size="md"
-            className="min-w-0 flex-1 rounded-xl"
+            size="lg"
+            variant="dark"
+            className="min-w-0 flex-1 rounded-2xl"
             label={isAddingToCart ? "…" : "В кошик"}
             disabled={outOfStock}
             loading={isAddingToCart}

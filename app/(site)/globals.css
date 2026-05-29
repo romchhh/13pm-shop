@@ -1,8 +1,12 @@
 @import "tailwindcss";
 
 :root {
-  --background-color-light: #FFF9F0;
-  --background-warm-yellow: #FFF9F0;
+  --site-accent: #5A6B47;
+  --site-accent-hover: #4A5A3A;
+  --site-accent-dark: #1C1C1C;
+  --site-bar-dark: #2A2A2A;
+  --background-color-light: #F2F2F0;
+  --background-warm-yellow: #F2F2F0;
   --text-color-light: #1e1e1e;
   
   /* Extended spacing scale for consistency */
@@ -84,10 +88,10 @@
   --z-popover: 1060;
   --z-tooltip: 1070;
 
-  /* Контактна смуга (#8B5E3F) — hero починається одразу під нею */
+  /* Контактна смуга — hero починається одразу під нею */
   --site-contact-bar-height: 2.5rem;
   /* Висота рядка навігації (лого + меню) */
-  --site-nav-height: 4rem;
+  --site-nav-height: 4.25rem;
   /* Повний хедер — для інших сторінок і відступу контенту */
   --site-header-offset: calc(var(--site-contact-bar-height) + var(--site-nav-height));
 
@@ -101,8 +105,12 @@
 @media (min-width: 1024px) {
   :root {
     --site-contact-bar-height: 2.75rem;
-    --site-nav-height: 5.75rem;
+    --site-nav-height: 6.25rem;
   }
+}
+
+.hero-serif {
+  font-family: var(--font-playfair), "Playfair Display", Georgia, "Times New Roman", serif;
 }
 
 body {
@@ -191,7 +199,7 @@ input[type="range"]::-moz-range-thumb {
   height: 20px;
   margin-top: -7px;
   border-radius: 50%;
-  background: #8b5e3f;
+  background: var(--site-accent);
   border: 2px solid #fff;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22);
   cursor: grab;
@@ -212,7 +220,7 @@ input[type="range"]::-moz-range-thumb {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: #8b5e3f;
+  background: var(--site-accent);
   border: 2px solid #fff;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22);
   cursor: grab;
@@ -220,7 +228,7 @@ input[type="range"]::-moz-range-thumb {
 
 .catalog-price-range-input:focus-visible::-webkit-slider-thumb,
 .catalog-price-range-input:focus-visible::-moz-range-thumb {
-  outline: 2px solid #8b5e3f;
+  outline: 2px solid var(--site-accent);
   outline-offset: 2px;
 }
 

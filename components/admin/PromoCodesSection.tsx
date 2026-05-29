@@ -115,7 +115,7 @@ export default function PromoCodesSection() {
             <select
               value={type}
               onChange={(e) => setType(e.target.value as "percent" | "fixed")}
-              className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-[#3D1A00] focus:outline-none focus:ring-1 focus:ring-[#3D1A00]"
+              className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-[#1C1C1C] focus:outline-none focus:ring-1 focus:ring-[#1C1C1C]"
             >
               <option value="percent">Відсоток (%)</option>
               <option value="fixed">Фіксована сума (грн)</option>
@@ -170,7 +170,7 @@ export default function PromoCodesSection() {
             <button
               type="submit"
               disabled={submitting}
-              className="rounded bg-[#3D1A00] px-4 py-2 text-sm font-medium text-white hover:bg-[#2d1200] disabled:opacity-50"
+              className="rounded bg-[#1C1C1C] px-4 py-2 text-sm font-medium text-white hover:bg-[#2d1200] disabled:opacity-50"
             >
               {submitting ? "Створення…" : "Створити промокод"}
             </button>

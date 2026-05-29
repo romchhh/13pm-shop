@@ -99,7 +99,7 @@ export async function createOrderTtn(params: {
       cityName: city,
       warehouseDescription: postOffice,
       cost: orderTotal,
-      description: description || "Дерев'яний декор",
+      description: description || "Тактичний одяг 13pm tactic",
       serviceType,
       weight: dimensions.weight,
       volumeGeneral: dimensions.volumeGeneral,

@@ -2,16 +2,18 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SITE_STORE_NAME } from "@/lib/siteBrand";
 import { buildPageMetadata } from "@/lib/seo";
+import { seoCopy } from "@/lib/seoCopy";
 
 export const metadata: Metadata = buildPageMetadata({
-  title: "Доставка та оплата",
-  description: `Доставка дерев'яних подарунків і декору з фанери від ${SITE_STORE_NAME}: Нова Пошта, оплата карткою, Apple Pay, Google Pay, накладений платіж. Тарифи та терміни.`,
+  title: seoCopy.delivery.title,
+  description: seoCopy.delivery.description,
   path: "/delivery-and-payment",
+  imageAlt: seoCopy.delivery.imageAlt,
 });
 
 export default function DeliveryAndPaymentPage() {
   return (
-    <div className="min-h-screen w-full bg-[#FFFFFF] py-20 px-6">
+    <div className="min-h-screen w-full bg-[#FFFFFF] px-6 pb-16 pt-6 sm:pt-8">
       <div className="max-w-3xl mx-auto">
         <div className="mb-16">
           <Link
@@ -76,7 +78,7 @@ export default function DeliveryAndPaymentPage() {
                 href="https://novaposhta.ua/shipping-cost"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[#3D1A00] underline font-medium hover:opacity-80"
+                className="text-[#1C1C1C] underline font-medium hover:opacity-80"
               >
                 novaposhta.ua/shipping-cost
               </a>
@@ -113,7 +115,7 @@ export default function DeliveryAndPaymentPage() {
                   До відділення <strong>«Укрпошти»</strong>.
                 </li>
               </ul>
-              <p className="opacity-80 text-sm pl-1 border-l-2 border-[#3D1A00]/20 pl-4">
+              <p className="opacity-80 text-sm pl-1 border-l-2 border-[#1C1C1C]/20 pl-4">
                 Терміни адресної доставки кур’єром у межах України зазвичай збігаються з термінами
                 «Нової пошти» для вашого напрямку (див. блок «Терміни доставки по Україні» нижче).
               </p>
@@ -132,7 +134,7 @@ export default function DeliveryAndPaymentPage() {
                   href="https://novaposhta.ua/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="underline text-[#3D1A00] hover:opacity-80"
+                  className="underline text-[#1C1C1C] hover:opacity-80"
                 >
                   novaposhta.ua
                 </a>
@@ -175,7 +177,7 @@ export default function DeliveryAndPaymentPage() {
                   href="https://novaposhta.ua/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[#3D1A00] underline font-medium hover:opacity-80"
+                  className="text-[#1C1C1C] underline font-medium hover:opacity-80"
                 >
                   Графік роботи «Нової пошти» — novaposhta.ua
                 </a>
@@ -186,7 +188,7 @@ export default function DeliveryAndPaymentPage() {
                   href="https://ukrposhta.ua/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[#3D1A00] underline font-medium hover:opacity-80"
+                  className="text-[#1C1C1C] underline font-medium hover:opacity-80"
                 >
                   Графік роботи «Укрпошти» — ukrposhta.ua
                 </a>

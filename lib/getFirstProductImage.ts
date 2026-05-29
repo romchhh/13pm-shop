@@ -1,3 +1,12 @@
+/** Перше медіа для превʼю: пріоритет фото, інакше перший елемент. */
+export function pickFirstProductMedia(
+  media: { url: string; type: string }[] | undefined | null
+): { url: string; type: string } | null {
+  if (!media?.length) return null;
+  const photo = media.find((m) => m.type === "photo");
+  return photo ?? media[0] ?? null;
+}
+
 /**
  * Gets the first photo from a product's media array
  * @param media - Array of media items with url and type properties

@@ -4,10 +4,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { getProductImageSrc } from "@/lib/getFirstProductImage";
+import { getProductImageSrc, pickFirstProductMedia } from "@/lib/getFirstProductImage";
 import { scrollPageToTopReliable } from "@/lib/scrollPageToTop";
 import { useProducts } from "@/lib/useProducts";
 import { useBodyScrollLock } from "@/lib/useBodyScrollLock";
+import BrandLogo from "@/components/layout/BrandLogo";
 
 interface SearchSidebarProps {
   isOpen: boolean;
@@ -27,7 +28,7 @@ interface SearchHistoryItem {
   timestamp: number;
 }
 
-const ACCENT = "#8B5E3F";
+const ACCENT = "var(--site-accent)";
 const MAX_SEARCH_HISTORY = 10;
 const MAX_AUTOCOMPLETE_SUGGESTIONS = 5;
 
@@ -114,12 +115,43 @@ function QueryChip({
       onClick={onClick}
       className={`rounded-full border px-3.5 py-1.5 font-['Montserrat'] text-sm transition-colors ${
         variant === "accent"
-          ? "border-[#8B5E3F]/25 bg-[#8B5E3F]/8 text-[#3D1A00] hover:border-[#8B5E3F]/40 hover:bg-[#8B5E3F]/12"
-          : "border-black/[0.08] bg-white text-black/75 hover:border-[#8B5E3F]/30 hover:text-[#8B5E3F]"
+          ? "border-[var(--site-accent)]/25 bg-[var(--site-accent)]/8 text-[#1C1C1C] hover:border-[var(--site-accent)]/40 hover:bg-[var(--site-accent)]/12"
+          : "border-black/[0.08] bg-white text-black/75 hover:border-[var(--site-accent)]/30 hover:text-[var(--site-accent)]"
       }`}
     >
       {label}
     </button>
+  );
+}
+
+function SearchProductThumb({ product }: { product: Product }) {
+  const media =
+    product.first_media ??
+    pickFirstProductMedia(
+      (product as Product & { media?: { url: string; type: string }[] }).media
+    );
+
+  if (media?.type === "video") {
+    return (
+      <video
+        src={`/api/images/${media.url}`}
+        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+        muted
+        playsInline
+        preload="metadata"
+        aria-hidden
+      />
+    );
+  }
+
+  return (
+    <Image
+      src={getProductImageSrc(media, "https://placehold.co/112x144/f5f5f4/999999?text=13pm")}
+      alt={product.name}
+      width={56}
+      height={72}
+      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+    />
   );
 }
 
@@ -147,16 +179,10 @@ function ProductResultRow({
         className="group flex items-center gap-3 rounded-2xl border border-black/[0.06] bg-white p-3 shadow-[0_4px_16px_rgba(0,0,0,0.04)] transition-shadow hover:shadow-[0_6px_20px_rgba(0,0,0,0.07)]"
       >
         <div className="relative h-[72px] w-[56px] shrink-0 overflow-hidden rounded-xl bg-[#f5f5f4]">
-          <Image
-            src={getProductImageSrc(product.first_media, "https://placehold.co/112x144")}
-            alt={product.name}
-            width={56}
-            height={72}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-          />
+          <SearchProductThumb product={product} />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="line-clamp-2 font-['Montserrat'] text-sm font-medium leading-snug text-black group-hover:text-[#8B5E3F]">
+          <p className="line-clamp-2 font-['Montserrat'] text-sm font-medium leading-snug text-black group-hover:text-[var(--site-accent)]">
             {highlightText(product.name, query)}
           </p>
           <p className="mt-1 font-['Montserrat'] text-sm font-semibold text-black">
@@ -164,7 +190,7 @@ function ProductResultRow({
           </p>
         </div>
         <svg
-          className="h-5 w-5 shrink-0 text-black/25 transition-colors group-hover:text-[#8B5E3F]"
+          className="h-5 w-5 shrink-0 text-black/25 transition-colors group-hover:text-[var(--site-accent)]"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -273,6 +299,13 @@ export default function SearchSidebar({
     return Array.from(suggestions).slice(0, MAX_AUTOCOMPLETE_SUGGESTIONS);
   }, [debouncedQuery, allProducts, searchHistory]);
 
+  const enrichProductMedia = useCallback((product: Product): Product => {
+    if (product.first_media?.url) return product;
+    const fromCatalog = allProducts.find((p) => p.id === product.id);
+    if (!fromCatalog?.first_media) return product;
+    return { ...product, first_media: fromCatalog.first_media };
+  }, [allProducts]);
+
   const filteredProducts = useMemo(() => {
     if (!query.trim()) return [];
     const lowerQuery = query.toLowerCase();
@@ -281,12 +314,17 @@ export default function SearchSidebar({
 
     allProducts.forEach((product) => {
       const name = product.name.toLowerCase();
-      if (name.startsWith(lowerQuery)) exactMatches.push(product);
-      else if (name.includes(lowerQuery)) partialMatches.push(product);
+      if (name.startsWith(lowerQuery)) exactMatches.push(enrichProductMedia(product));
+      else if (name.includes(lowerQuery)) partialMatches.push(enrichProductMedia(product));
     });
 
     return [...exactMatches, ...partialMatches];
-  }, [allProducts, query]);
+  }, [allProducts, query, enrichProductMedia]);
+
+  const displayPopularProducts = useMemo(
+    () => popularProducts.map(enrichProductMedia),
+    [popularProducts, enrichProductMedia]
+  );
 
   const handleQueryChange = (value: string) => {
     setQuery(value);
@@ -374,7 +412,7 @@ export default function SearchSidebar({
       part.toLowerCase() === searchQuery.toLowerCase() ? (
         <mark
           key={index}
-          className="rounded bg-[#8B5E3F]/15 px-0.5 font-medium text-[#3D1A00]"
+          className="rounded bg-[var(--site-accent)]/15 px-0.5 font-medium text-[#1C1C1C]"
         >
           {part}
         </mark>
@@ -407,7 +445,7 @@ export default function SearchSidebar({
 
   const searchField = (
     <div className="relative mb-5 lg:mb-6">
-      <div className="relative flex items-center rounded-full border border-black/10 bg-white transition-shadow focus-within:ring-2 focus-within:ring-[#8B5E3F]/25 lg:border-0 lg:bg-[#F5F0E8] lg:ring-1 lg:ring-[#E8E0D5] lg:focus-within:bg-white">
+      <div className="relative flex items-center rounded-full border border-black/10 bg-white transition-shadow focus-within:ring-2 focus-within:ring-[var(--site-accent)]/25 lg:border-0 lg:bg-[#EAEAE8] lg:ring-1 lg:ring-[#E0E0DE] lg:focus-within:bg-white">
               <Image
                 src="/images/icons/search.svg"
                 alt=""
@@ -423,14 +461,14 @@ export default function SearchSidebar({
                 onKeyDown={handleKeyDown}
                 onFocus={() => query.length >= 2 && setShowSuggestions(true)}
                 placeholder="Назва товару або розмір…"
-                className="w-full rounded-full bg-transparent py-3.5 pl-11 pr-11 text-base text-[#3D1A00] placeholder:text-black/40 focus:outline-none"
+                className="w-full rounded-full bg-transparent py-3.5 pl-11 pr-11 text-base text-[#1C1C1C] placeholder:text-black/40 focus:outline-none"
                 autoComplete="off"
               />
               {query ? (
                 <button
                   type="button"
                   onClick={handleClearInput}
-                  className="absolute right-3 flex h-8 w-8 items-center justify-center rounded-full text-black/40 transition-colors hover:bg-[#8B5E3F]/10 hover:text-[#8B5E3F]"
+                  className="absolute right-3 flex h-8 w-8 items-center justify-center rounded-full text-black/40 transition-colors hover:bg-[var(--site-accent)]/10 hover:text-[var(--site-accent)]"
                   aria-label="Очистити поле"
                 >
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
@@ -452,7 +490,7 @@ export default function SearchSidebar({
                     onClick={() => handleSuggestionClick(suggestion)}
                     className={`mx-1 flex w-[calc(100%-0.5rem)] items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm transition-colors ${
                       index === selectedSuggestionIndex
-                        ? "bg-[#8B5E3F]/10 text-[#3D1A00]"
+                        ? "bg-[var(--site-accent)]/10 text-[#1C1C1C]"
                         : "text-black/80 hover:bg-[#faf9f7]"
                     }`}
                   >
@@ -481,7 +519,7 @@ export default function SearchSidebar({
                 className="mb-4 flex h-14 w-14 items-center justify-center rounded-full"
                 style={{ backgroundColor: `${ACCENT}14` }}
               >
-                <svg className="h-7 w-7 text-[#8B5E3F]/60" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                <svg className="h-7 w-7 text-[var(--site-accent)]/60" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -492,7 +530,7 @@ export default function SearchSidebar({
               </div>
               <p className="text-base font-semibold text-black">Нічого не знайдено</p>
               <p className="mt-2 max-w-xs text-sm text-black/50">
-                Спробуйте інші слова або перегляньте хіти продажів нижче
+                Спробуйте інші слова або перегляньте BESTSELLERS нижче
               </p>
               <Link
                 href="/catalog"
@@ -509,7 +547,7 @@ export default function SearchSidebar({
             <div>
               <p className="mb-3 text-sm text-black/45">
                 Знайдено{" "}
-                <span className="font-semibold text-[#3D1A00]">{filteredProducts.length}</span>{" "}
+                <span className="font-semibold text-[#1C1C1C]">{filteredProducts.length}</span>{" "}
                 {filteredProducts.length === 1 ? "товар" : "товарів"}
               </p>
               <ul className="flex flex-col gap-3">
@@ -535,7 +573,7 @@ export default function SearchSidebar({
                     <button
                       type="button"
                       onClick={handleClearHistory}
-                      className="hidden text-xs font-medium text-[#8B5E3F] transition-opacity hover:opacity-80 lg:inline"
+                      className="hidden text-xs font-medium text-[var(--site-accent)] transition-opacity hover:opacity-80 lg:inline"
                     >
                       Очистити
                     </button>
@@ -571,9 +609,9 @@ export default function SearchSidebar({
               <SearchSection title="Люди часто цікавляться">
                 {loadingPopular ? (
                   skeletonRows
-                ) : popularProducts.length > 0 ? (
+                ) : displayPopularProducts.length > 0 ? (
                   <ul className="flex flex-col gap-3">
-                    {popularProducts.map((product) => (
+                    {displayPopularProducts.map((product) => (
                       <ProductResultRow
                         key={product.id}
                         product={product}
@@ -644,7 +682,7 @@ export default function SearchSidebar({
 
       {/* Десктоп — права панель на всю висоту екрана */}
       <div
-        className={`fixed inset-y-0 right-0 z-[var(--z-site-overlay)] hidden h-screen w-full max-w-md flex-col border-l border-[#E8E0D5] bg-[#faf9f7] shadow-[-8px_0_32px_rgba(61,26,0,0.08)] transition-transform duration-300 lg:flex ${
+        className={`fixed inset-y-0 right-0 z-[var(--z-site-overlay)] hidden h-screen w-full max-w-md flex-col border-l border-[#E0E0DE] bg-[#faf9f7] shadow-[-8px_0_32px_rgba(61,26,0,0.08)] transition-transform duration-300 lg:flex ${
           isOpen ? "translate-x-0" : "translate-x-full pointer-events-none"
         }`}
         role="dialog"
@@ -652,24 +690,18 @@ export default function SearchSidebar({
         aria-label="Пошук товарів"
         aria-hidden={!isOpen}
       >
-        <div className="shrink-0 border-b border-[#E8E0D5] bg-white px-6 py-5">
+        <div className="shrink-0 border-b border-[#E0E0DE] bg-white px-6 py-5">
           <div className="flex items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
-              <Image
-                src="/images/logos/logo_brown.svg"
-                alt=""
-                width={40}
-                height={36}
-                className="h-9 w-auto shrink-0"
-              />
+              <BrandLogo compact className="pointer-events-none" />
               <div>
-                <p className="text-lg font-semibold text-[#3D1A00]">Пошук</p>
-                <p className="text-xs text-black/45">Знайдіть подарунок або декор</p>
+                <p className="text-lg font-semibold text-[#1C1C1C]">Пошук</p>
+                <p className="text-xs text-black/45">Знайдіть тактичний одяг</p>
               </div>
             </div>
             <button
               type="button"
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#3D1A00]/70 transition-colors hover:bg-[#F5F0E8] hover:text-[#3D1A00]"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#1C1C1C]/70 transition-colors hover:bg-[#EAEAE8] hover:text-[#1C1C1C]"
               onClick={() => setIsOpen(false)}
               aria-label="Закрити пошук"
             >

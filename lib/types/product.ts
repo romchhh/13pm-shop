@@ -1,4 +1,4 @@
-import type { ProductColorOption, ProductSizeVariant } from "@/lib/productOptions";
+import type { ProductColorOption } from "@/lib/productOptions";
 
 export interface ProductMedia {
   url: string;
@@ -48,7 +48,8 @@ export interface Product {
   color_options?: ProductColorOption[];
   /** Адмін-перемикач доплати за білий колір (+150 грн). */
   white_color_surcharge_enabled?: boolean;
-  size_variants?: ProductSizeVariant[];
+  /** Legacy: [{ label, productId }] або одяг: [{ label, stock }] */
+  size_variants?: unknown;
   gift_product?: {
     id: number;
     name: string;

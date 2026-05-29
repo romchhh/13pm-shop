@@ -1,10 +1,10 @@
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
 import HeroServer from "@/components/main-page/HeroServer";
-import { siteFooterLead, siteMetaDescription, siteOfficialRepLine } from "@/lib/siteBrand";
+import { siteDefaultOgImageAlt, siteMetaDescription, siteRootSeoTitle } from "@/lib/siteBrand";
 import { buildPageMetadata } from "@/lib/seo";
+import AboutUsSection from "@/components/main-page/AboutUsSection";
 import CategoriesShowcase from "@/components/main-page/CategoriesShowcase";
-import HowWeWork from "@/components/main-page/HowWeWork";
 import HomeHashScroll from "@/components/shared/HomeHashScroll";
 
 const Bestsellers = dynamic(() => import("@/components/main-page/Bestsellers"), {
@@ -20,10 +20,10 @@ export const revalidate = 300;
 export const runtime = "nodejs";
 
 export const metadata = buildPageMetadata({
-  title: siteOfficialRepLine,
+  title: siteRootSeoTitle,
   description: siteMetaDescription,
   path: "/",
-  imageAlt: siteFooterLead.slice(0, 120),
+  imageAlt: siteDefaultOgImageAlt,
 });
 
 export default function Home() {
@@ -36,7 +36,7 @@ export default function Home() {
         fallback={
           <section className="w-full bg-white py-6 lg:py-8">
             <div className="max-w-[1920px] mx-auto px-6">
-              <p className="text-[#3D1A00] font-['Montserrat']">Завантаження категорій...</p>
+              <p className="text-[#1C1C1C] font-['Montserrat']">Завантаження категорій...</p>
             </div>
           </section>
         }
@@ -52,7 +52,7 @@ export default function Home() {
         <NewArrivals />
       </Suspense>
 
-      <HowWeWork />
+      <AboutUsSection />
 
       <Reviews />
 

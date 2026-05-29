@@ -7,7 +7,7 @@ import { getItemSubtotal } from "@/lib/pricing";
 import CartLineItems from "@/components/cart/CartLineItems";
 import CartRecommendations from "@/components/cart/CartRecommendations";
 
-const ACCENT = "#8B5E3F";
+const ACCENT = "var(--site-accent)";
 
 function getSubtotal(
   items: {
@@ -56,7 +56,7 @@ export default function CartPageClient() {
         <nav className="mb-4 font-['Montserrat'] text-sm text-black/45" aria-label="Breadcrumb">
           <ol className="flex flex-wrap items-center gap-x-1 gap-y-1">
             <li>
-              <Link href="/" className="hover:text-[#8B5E3F]">
+              <Link href="/" className="hover:text-[var(--site-accent)]">
                 Головна
               </Link>
             </li>

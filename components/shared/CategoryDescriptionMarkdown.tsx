@@ -8,19 +8,19 @@ import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
 
 const bodyClass =
-  "font-['Montserrat'] text-sm leading-relaxed tracking-[-0.02em] text-[#3D1A00]/85 sm:text-base";
+  "font-['Montserrat'] text-sm leading-relaxed tracking-[-0.02em] text-[#1C1C1C]/85 sm:text-base";
 
 const markdownComponents: Components = {
   p: ({ children }) => (
     <p className={`mb-2 last:mb-0 ${bodyClass}`}>{children}</p>
   ),
   h2: ({ children }) => (
-    <h2 className="mb-2 mt-4 font-['Montserrat'] text-base font-semibold leading-snug tracking-[-0.02em] text-[#3D1A00] first:mt-0 sm:text-lg">
+    <h2 className="mb-2 mt-4 font-['Montserrat'] text-base font-semibold leading-snug tracking-[-0.02em] text-[#1C1C1C] first:mt-0 sm:text-lg">
       {children}
     </h2>
   ),
   h3: ({ children }) => (
-    <h3 className="mb-1.5 mt-3 font-['Montserrat'] text-sm font-semibold leading-snug tracking-[-0.02em] text-[#3D1A00] first:mt-0 sm:text-base">
+    <h3 className="mb-1.5 mt-3 font-['Montserrat'] text-sm font-semibold leading-snug tracking-[-0.02em] text-[#1C1C1C] first:mt-0 sm:text-base">
       {children}
     </h3>
   ),
@@ -32,11 +32,11 @@ const markdownComponents: Components = {
   ),
   li: ({ children }) => <li className="leading-relaxed">{children}</li>,
   strong: ({ children }) => (
-    <strong className="font-semibold text-[#3D1A00]">{children}</strong>
+    <strong className="font-semibold text-[#1C1C1C]">{children}</strong>
   ),
-  b: ({ children }) => <b className="font-semibold text-[#3D1A00]">{children}</b>,
-  em: ({ children }) => <em className="italic text-[#3D1A00]/90">{children}</em>,
-  i: ({ children }) => <i className="italic text-[#3D1A00]/90">{children}</i>,
+  b: ({ children }) => <b className="font-semibold text-[#1C1C1C]">{children}</b>,
+  em: ({ children }) => <em className="italic text-[#1C1C1C]/90">{children}</em>,
+  i: ({ children }) => <i className="italic text-[#1C1C1C]/90">{children}</i>,
   a: ({ href, children }) => (
     <a
       href={href}
@@ -48,29 +48,29 @@ const markdownComponents: Components = {
     </a>
   ),
   blockquote: ({ children }) => (
-    <blockquote className="mb-2 border-l-4 border-[#8B9A47]/40 pl-3 font-['Montserrat'] text-sm italic text-[#3D1A00]/75 sm:text-base">
+    <blockquote className="mb-2 border-l-4 border-[#8B9A47]/40 pl-3 font-['Montserrat'] text-sm italic text-[#1C1C1C]/75 sm:text-base">
       {children}
     </blockquote>
   ),
-  hr: () => <hr className="my-4 border-[#3D1A00]/15" />,
+  hr: () => <hr className="my-4 border-[#1C1C1C]/15" />,
   br: () => <br />,
   div: ({ children }) => <div className="mb-2 last:mb-0 [&:last-child]:mb-0">{children}</div>,
   span: ({ children }) => <span>{children}</span>,
   table: ({ children }) => (
     <div className="mb-3 max-w-full overflow-x-auto">
-      <table className="min-w-full border-collapse border border-[#3D1A00]/15 text-left text-sm">
+      <table className="min-w-full border-collapse border border-[#1C1C1C]/15 text-left text-sm">
         {children}
       </table>
     </div>
   ),
-  thead: ({ children }) => <thead className="bg-[#3D1A00]/05">{children}</thead>,
+  thead: ({ children }) => <thead className="bg-[#1C1C1C]/05">{children}</thead>,
   tbody: ({ children }) => <tbody>{children}</tbody>,
-  tr: ({ children }) => <tr className="border-b border-[#3D1A00]/10">{children}</tr>,
+  tr: ({ children }) => <tr className="border-b border-[#1C1C1C]/10">{children}</tr>,
   th: ({ children }) => (
-    <th className="border border-[#3D1A00]/15 px-2 py-1.5 font-semibold text-[#3D1A00]">{children}</th>
+    <th className="border border-[#1C1C1C]/15 px-2 py-1.5 font-semibold text-[#1C1C1C]">{children}</th>
   ),
   td: ({ children }) => (
-    <td className="border border-[#3D1A00]/10 px-2 py-1.5 text-[#3D1A00]/85">{children}</td>
+    <td className="border border-[#1C1C1C]/10 px-2 py-1.5 text-[#1C1C1C]/85">{children}</td>
   ),
 };
 

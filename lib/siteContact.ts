@@ -20,8 +20,9 @@ export const siteContact = {
     "Пн.-Пт.: 09.00 - 18.00",
     "Сб.-Нд.: за попередньою домовленістю",
   ] as const,
-  instagramUrl: "https://www.instagram.com/plywood_present",
-  instagramHandle: "@plywood_present",
-  tiktokUrl: "https://www.tiktok.com/@plywood_present",
-  tiktokHandle: "@plywood_present",
+  instagramUrl:
+    "https://www.instagram.com/13pm.tactic?igsh=ZTFjdTA5aGlkZHg5&utm_source=qr",
+  instagramHandle: "@13pm.tactic",
+  tiktokUrl: "https://www.tiktok.com/@13pm.tactic",
+  tiktokHandle: "@13pm.tactic",
 };

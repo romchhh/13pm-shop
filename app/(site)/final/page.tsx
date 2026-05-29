@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import FinalCard from "@/components/final-card/FinalCard";
-import { SITE_STORE_NAME } from "@/lib/siteBrand";
 import { buildPageMetadata } from "@/lib/seo";
+import { seoCopy } from "@/lib/seoCopy";
 
 export const metadata: Metadata = buildPageMetadata({
-  title: "Оформлення замовлення",
-  description: `Завершіть замовлення подарунків з фанери в ${SITE_STORE_NAME}: доставка Новою Поштою, оплата онлайн або накладений платіж.`,
+  title: seoCopy.checkout.title,
+  description: seoCopy.checkout.description,
   path: "/final",
   noIndex: true,
 });

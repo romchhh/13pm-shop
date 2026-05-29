@@ -26,6 +26,11 @@ import {
 } from "@/lib/catalogVisibleCount";
 import { isCatalogPromoProduct } from "@/lib/isCatalogPromoProduct";
 import { productMatchesColorFilter } from "@/lib/catalogColorFilter";
+import {
+  buildCatalogColorOptions,
+  buildCatalogSizeOptions,
+  productMatchesCatalogSizes,
+} from "@/lib/catalogFilterOptions";
 import type { ProductColorOption } from "@/lib/productOptions";
 
 interface Product {
@@ -57,6 +62,7 @@ interface Product {
   package_weight?: string | null;
   course?: string | null;
   color_options?: ProductColorOption[];
+  size_variants?: unknown;
 }
 
 interface Category {
@@ -120,6 +126,8 @@ export default function CatalogClient({
   const [maxPriceInput, setMaxPriceInput] = useState("");
   const [selectedColorInput, setSelectedColorInput] = useState<string | null>(null);
   const [selectedColorFilter, setSelectedColorFilter] = useState<string | null>(null);
+  const [selectedSizesInput, setSelectedSizesInput] = useState<string[]>([]);
+  const [selectedSizesFilter, setSelectedSizesFilter] = useState<string[]>([]);
   const [isFiltering, setIsFiltering] = useState(false);
   const [basketError, setBasketError] = useState<string | null>(null);
   const initializedFromQueryRef = useRef(false);
@@ -182,23 +190,6 @@ export default function CatalogClient({
     const exists = categories.some((c) => c.id === idNum);
     if (!exists) return;
 
-    const hasProductsInCategory = initialProducts.some((p) => {
-      const ids =
-        p.category_ids && p.category_ids.length > 0
-          ? p.category_ids
-          : p.category_id != null
-            ? [p.category_id]
-            : [];
-      return ids.includes(idNum);
-    });
-
-    // Старі категорії без товарів (напр. з попереднього наповнення БД) — не фільтруємо
-    if (!hasProductsInCategory) {
-      setSelectedCategories([]);
-      setSelectedSubcategories([]);
-      return;
-    }
-
     setSelectedCategories([idNum]);
     setSelectedSubcategories([]);
     setMinPrice(null);
@@ -236,6 +227,16 @@ export default function CatalogClient({
     };
   }, [initialProducts]);
 
+  const catalogColorOptions = useMemo(
+    () => buildCatalogColorOptions(initialProducts),
+    [initialProducts]
+  );
+
+  const catalogSizeOptions = useMemo(
+    () => buildCatalogSizeOptions(initialProducts),
+    [initialProducts]
+  );
+
   const filteredProducts = useMemo(() => {
     return initialProducts.filter((product) => {
       const productCategoryIds =
@@ -267,6 +268,7 @@ export default function CatalogClient({
         product.color_options,
         selectedColorFilter
       );
+      const matchesSize = productMatchesCatalogSizes(product, selectedSizesFilter);
       return (
         matchesCategory &&
         matchesSubcategory &&
@@ -275,7 +277,8 @@ export default function CatalogClient({
         matchesPromo &&
         matchesHits &&
         matchesNew &&
-        matchesColor
+        matchesColor &&
+        matchesSize
       );
     });
   }, [
@@ -288,6 +291,7 @@ export default function CatalogClient({
     hitsOnly,
     newOnly,
     selectedColorFilter,
+    selectedSizesFilter,
   ]);
 
   useEffect(() => {
@@ -304,18 +308,51 @@ export default function CatalogClient({
     hitsOnly,
     newOnly,
     selectedColorFilter,
+    selectedSizesFilter,
   ]);
 
   const hasPromoProducts = useMemo(() => {
     return initialProducts.some((p) => isCatalogPromoProduct(p));
   }, [initialProducts]);
 
-  const singleSelectedCategoryDescription = useMemo(() => {
-    if (selectedCategoryDescription) return selectedCategoryDescription;
-    if (selectedCategories.length !== 1) return null;
-    const cat = categories.find((c) => c.id === selectedCategories[0]);
-    return cat?.description ?? null;
-  }, [categories, selectedCategories, selectedCategoryDescription]);
+  const activeCategoryForDescription = useMemo(() => {
+    if (selectedCategories.length > 1) return null;
+
+    const fromProp = selectedCategoryDescription?.trim();
+    if (fromProp) {
+      const id =
+        selectedCategories.length === 1
+          ? selectedCategories[0]
+          : initialSelectedCategoryIds?.[0] ?? null;
+      const cat = id != null ? categories.find((c) => c.id === id) : undefined;
+      return { name: cat?.name ?? null, description: fromProp };
+    }
+
+    let categoryId: number | null = null;
+    if (selectedCategories.length === 1) {
+      categoryId = selectedCategories[0];
+    } else if (initialSelectedCategoryIds?.length === 1) {
+      categoryId = initialSelectedCategoryIds[0];
+    } else {
+      const param = searchParams.get("categoryId");
+      if (param) {
+        const parsed = Number(param);
+        if (!Number.isNaN(parsed)) categoryId = parsed;
+      }
+    }
+
+    if (categoryId == null) return null;
+    const cat = categories.find((c) => c.id === categoryId);
+    const description = cat?.description?.trim();
+    if (!cat || !description) return null;
+    return { name: cat.name, description };
+  }, [
+    categories,
+    selectedCategories,
+    selectedCategoryDescription,
+    initialSelectedCategoryIds,
+    searchParams,
+  ]);
 
   const sortedProducts = useMemo(() => {
     const sorted = [...filteredProducts];
@@ -363,6 +400,8 @@ export default function CatalogClient({
         promoOnly,
         hitsOnly,
         newOnly,
+        selectedColorFilter,
+        selectedSizesFilter,
         total: sortedProducts.length,
       }),
     [
@@ -374,6 +413,8 @@ export default function CatalogClient({
       promoOnly,
       hitsOnly,
       newOnly,
+      selectedColorFilter,
+      selectedSizesFilter,
       sortedProducts.length,
     ]
   );
@@ -466,6 +507,7 @@ export default function CatalogClient({
     setMinPrice(minPriceInput ? Number(minPriceInput) : null);
     setMaxPrice(maxPriceInput ? Number(maxPriceInput) : null);
     setSelectedColorFilter(selectedColorInput);
+    setSelectedSizesFilter(selectedSizesInput);
     setMobileFiltersOpen(false);
   };
 
@@ -478,9 +520,17 @@ export default function CatalogClient({
     setMaxPriceInput("");
     setSelectedColorInput(null);
     setSelectedColorFilter(null);
+    setSelectedSizesInput([]);
+    setSelectedSizesFilter([]);
     setPromoOnly(false);
     setHitsOnly(false);
     setNewOnly(false);
+  };
+
+  const toggleSizeInput = (size: string) => {
+    setSelectedSizesInput((prev) =>
+      prev.includes(size) ? prev.filter((s) => s !== size) : [...prev, size]
+    );
   };
 
   const toggleCategory = (id: number) => {
@@ -506,6 +556,14 @@ export default function CatalogClient({
     );
   };
 
+  const catalogPageTitle = promoOnly
+    ? "Акції"
+    : hitsOnly
+      ? "BESTSELLERS"
+      : newOnly
+        ? "Новинки"
+        : "Каталог товарів";
+
   return (
     <>
       <section className="max-w-[1824px] mx-auto px-4 sm:px-6 lg:px-12 pt-4 pb-20 bg-white min-h-screen">
@@ -526,7 +584,7 @@ export default function CatalogClient({
           </nav>
 
           <h1 className="font-['Montserrat'] text-xl font-bold tracking-tight text-black lg:hidden">
-            Каталог товарів
+            {catalogPageTitle}
           </h1>
 
           {/* Мобільна панель: фільтр + лічильник + сортування в один ряд */}
@@ -554,7 +612,7 @@ export default function CatalogClient({
               <select
                 value={sortOrder}
                 onChange={(e) => setSortOrder(e.target.value as typeof sortOrder)}
-                className="max-w-[min(11rem,42vw)] rounded-lg border border-black/10 bg-white py-2 pl-2 pr-6 font-['Montserrat'] text-[11px] text-black focus:border-[#8B5E3F] focus:outline-none focus:ring-1 focus:ring-[#8B5E3F]/30 sm:max-w-[13rem] sm:text-xs"
+                className="max-w-[min(11rem,42vw)] rounded-lg border border-black/10 bg-white py-2 pl-2 pr-6 font-['Montserrat'] text-[11px] text-black focus:border-[var(--site-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--site-accent)]/30 sm:max-w-[13rem] sm:text-xs"
                 aria-label="Сортування"
               >
                 <option value="recommended">Найпопулярніші</option>
@@ -569,7 +627,7 @@ export default function CatalogClient({
           {/* Десктоп: заголовок на одному рівні з лічильником і сортуванням */}
           <div className="hidden lg:flex lg:flex-wrap lg:items-baseline lg:justify-between lg:gap-x-8 lg:gap-y-2">
             <h1 className="font-['Montserrat'] text-4xl font-bold tracking-tight text-black">
-              Каталог товарів
+              {catalogPageTitle}
             </h1>
             <div className="flex flex-wrap items-baseline justify-end gap-x-8 gap-y-2">
               <p className="font-['Montserrat'] text-sm text-black/50">
@@ -586,7 +644,7 @@ export default function CatalogClient({
                 <select
                   value={sortOrder}
                   onChange={(e) => setSortOrder(e.target.value as typeof sortOrder)}
-                  className="min-w-[220px] rounded-lg border border-black/10 bg-white py-2.5 pl-3 pr-8 font-['Montserrat'] text-sm text-black focus:border-[#8B5E3F] focus:outline-none focus:ring-1 focus:ring-[#8B5E3F]/30"
+                  className="min-w-[220px] rounded-lg border border-black/10 bg-white py-2.5 pl-3 pr-8 font-['Montserrat'] text-sm text-black focus:border-[var(--site-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--site-accent)]/30"
                 >
                   <option value="recommended">Найпопулярніші</option>
                   <option value="newest">За новизною</option>
@@ -624,8 +682,12 @@ export default function CatalogClient({
                 promoOnly={promoOnly}
                 setPromoOnly={setPromoOnly}
                 hasPromoProducts={hasPromoProducts}
+                colorOptions={catalogColorOptions}
                 selectedColorInput={selectedColorInput}
                 setSelectedColorInput={setSelectedColorInput}
+                sizeOptions={catalogSizeOptions}
+                selectedSizesInput={selectedSizesInput}
+                toggleSizeInput={toggleSizeInput}
                 onClear={handleClearFilters}
                 onSave={handleApplyFilters}
                 onClose={() => setMobileFiltersOpen(false)}
@@ -655,8 +717,12 @@ export default function CatalogClient({
                 promoOnly={promoOnly}
                 setPromoOnly={setPromoOnly}
                 hasPromoProducts={hasPromoProducts}
+                colorOptions={catalogColorOptions}
                 selectedColorInput={selectedColorInput}
                 setSelectedColorInput={setSelectedColorInput}
+                sizeOptions={catalogSizeOptions}
+                selectedSizesInput={selectedSizesInput}
+                toggleSizeInput={toggleSizeInput}
                 onClear={handleClearFilters}
                 onSave={handleApplyFilters}
               />
@@ -679,7 +745,7 @@ export default function CatalogClient({
                 ))
               ) : visibleProducts.length === 0 ? (
                 <div className="col-span-full flex flex-col items-center justify-center py-20 gap-4">
-                  <h3 className="text-xl font-bold font-['Montserrat'] uppercase tracking-wider text-[#3D1A00]">
+                  <h3 className="text-xl font-bold font-['Montserrat'] uppercase tracking-wider text-[#1C1C1C]">
                     Товарів не знайдено
                   </h3>
                   <p className="text-sm font-['Montserrat'] text-gray-400 text-center max-w-md">
@@ -699,18 +765,6 @@ export default function CatalogClient({
               )}
             </div>
 
-            {/* Опис категорії — тільки коли обрана одна категорія (Markdown, без фону) */}
-            {singleSelectedCategoryDescription && (
-              <div className="mt-10 border-t border-[#3D1A00]/10 pt-8">
-                <p className="text-xs uppercase tracking-wider text-[#3D1A00]/60 font-['Montserrat'] font-semibold">
-                  Про категорію
-                </p>
-                <div className="mt-3 max-w-3xl">
-                  <CategoryDescriptionMarkdown content={singleSelectedCategoryDescription} />
-                </div>
-              </div>
-            )}
-
             {/* Пагінація / показати ще */}
             {hasMoreProducts && (
               <div className="mt-10 flex justify-center">
@@ -720,7 +774,7 @@ export default function CatalogClient({
                       (prev) => prev + catalogLoadMoreIncrement(isCatalogDesktop)
                     )
                   }
-                  className="px-8 py-3 bg-[#3D1A00] text-white font-semibold font-['Montserrat'] uppercase tracking-wider hover:bg-[#3D1A00]/90 transition-colors rounded-lg min-h-[44px]"
+                  className="px-8 py-3 bg-[#1C1C1C] text-white font-semibold font-['Montserrat'] uppercase tracking-wider hover:bg-[#1C1C1C]/90 transition-colors rounded-lg min-h-[44px]"
                 >
                   Показати ще
                 </button>
@@ -728,6 +782,19 @@ export default function CatalogClient({
             )}
           </div>
         </div>
+
+        {activeCategoryForDescription && (
+          <div className="mt-12 border-t border-[#1C1C1C]/10 pt-10 lg:mt-16 lg:pt-12">
+            {activeCategoryForDescription.name && (
+              <h2 className="font-['Montserrat'] text-lg font-bold tracking-tight text-[#1C1C1C] lg:text-2xl">
+                {activeCategoryForDescription.name}
+              </h2>
+            )}
+            <div className={`max-w-3xl ${activeCategoryForDescription.name ? "mt-4" : ""}`}>
+              <CategoryDescriptionMarkdown content={activeCategoryForDescription.description} />
+            </div>
+          </div>
+        )}
       </section>
 
       <SidebarMenu isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />

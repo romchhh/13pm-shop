@@ -1,8 +1,10 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import type { CatalogColorFilterOption } from "@/lib/catalogFilterOptions";
+import { isLightSwatch } from "@/lib/catalogFilterOptions";
 
-const ACCENT = "#8B5E3F";
+const ACCENT = "var(--site-accent)";
 
 interface Category {
   id: number;
@@ -31,37 +33,69 @@ interface CatalogFiltersProps {
   promoOnly: boolean;
   setPromoOnly: (v: boolean | ((b: boolean) => boolean)) => void;
   hasPromoProducts: boolean;
+  colorOptions: CatalogColorFilterOption[];
   selectedColorInput: string | null;
   setSelectedColorInput: (id: string | null) => void;
+  sizeOptions: string[];
+  selectedSizesInput: string[];
+  toggleSizeInput: (size: string) => void;
   onClear: () => void;
   onSave: () => void;
   onClose?: () => void;
 }
 
-const COLOR_SWATCHES = [
-  { id: "black", className: "bg-black" },
-  { id: "white", className: "bg-white border-2 border-black/20" },
-  { id: "brown", className: "bg-[#5C4033]" },
-  { id: "orange", className: "bg-[#E8A87C]" },
-] as const;
-
-const MATERIALS = [
-  { id: "wood", label: "Деревина" },
-  { id: "mdf", label: "МДФ" },
-  { id: "hdf", label: "ХДФ" },
-] as const;
-
 function FilterIcon({ className = "w-5 h-5" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden>
-      <path
-        strokeLinecap="round"
-        d="M4 6h16M8 12h8M10 18h4"
-      />
+      <path strokeLinecap="round" d="M4 6h16M8 12h8M10 18h4" />
       <circle cx="6" cy="6" r="1.8" fill="currentColor" stroke="none" />
       <circle cx="18" cy="12" r="1.8" fill="currentColor" stroke="none" />
       <circle cx="14" cy="18" r="1.8" fill="currentColor" stroke="none" />
     </svg>
+  );
+}
+
+function SwatchCheckIcon({ light }: { light: boolean }) {
+  return (
+    <svg className={`h-4 w-4 ${light ? "text-black" : "text-white"}`} viewBox="0 0 12 10" fill="none" aria-hidden>
+      <path d="M1 5l3 3 7-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+const filterCheckboxClass =
+  "h-4 w-4 shrink-0 rounded border-black/30 text-[var(--site-accent)] focus:ring-[var(--site-accent)] focus:ring-offset-0";
+
+function FilterCheckRow({
+  checked,
+  onChange,
+  label,
+  className = "",
+  labelClassName = "text-sm",
+}: {
+  checked: boolean;
+  onChange: () => void;
+  label: string;
+  className?: string;
+  labelClassName?: string;
+}) {
+  return (
+    <label
+      className={`flex cursor-pointer items-center gap-3 py-3.5 text-left font-['Montserrat'] hover:text-black ${className}`}
+    >
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={onChange}
+        className={filterCheckboxClass}
+        aria-label={label}
+      />
+      <span
+        className={`${labelClassName} ${checked ? "font-semibold text-[#1a1a1a]" : "text-black/80"}`}
+      >
+        {label}
+      </span>
+    </label>
   );
 }
 
@@ -81,16 +115,19 @@ export default function CatalogFilters({
   promoOnly,
   setPromoOnly,
   hasPromoProducts,
+  colorOptions,
   selectedColorInput,
   setSelectedColorInput,
+  sizeOptions,
+  selectedSizesInput,
+  toggleSizeInput,
   onClear,
   onSave,
   onClose,
 }: CatalogFiltersProps) {
   const [openPrice, setOpenPrice] = useState(true);
   const [openColors, setOpenColors] = useState(true);
-  const [openMaterial, setOpenMaterial] = useState(true);
-  const [selectedMaterials, setSelectedMaterials] = useState<Set<string>>(new Set(["wood"]));
+  const [openSizes, setOpenSizes] = useState(true);
 
   const sliderMinBound = priceRange.min;
   const sliderMaxBound = priceRange.max;
@@ -118,16 +155,6 @@ export default function CatalogFilters({
     }),
     [rangeMin, rangeMax, sliderMinBound, sliderMaxBound]
   );
-
-  const toggleMaterial = (id: string) => {
-    setSelectedMaterials((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      if (next.size === 0) next.add(id);
-      return next;
-    });
-  };
 
   const SectionHeader = ({
     title,
@@ -163,29 +190,25 @@ export default function CatalogFilters({
         const subs = subcategories.filter((sc) => sc.category_id === cat.id);
         return (
           <div key={cat.id} className="border-b border-black/5 last:border-0">
-            <button
-              type="button"
-              onClick={() => toggleCategory(cat.id)}
-              className="flex w-full items-center justify-between gap-2 py-3.5 text-left font-['Montserrat'] text-sm text-black/80 hover:text-black"
-            >
-              <span className={active ? "font-semibold text-[#1a1a1a]" : ""}>{cat.name}</span>
-              <svg className="h-4 w-4 shrink-0 text-black/40" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
+            <FilterCheckRow
+              checked={active}
+              onChange={() => toggleCategory(cat.id)}
+              label={cat.name}
+              className="py-3"
+            />
             {active && subs.length > 0 && (
-              <ul className="mb-2 space-y-1 pb-3 pl-2">
+              <ul className="mb-2 space-y-0.5 border-l-2 border-[var(--site-accent)]/25 pb-3 pl-3 ml-2">
                 {subs.map((sc) => {
                   const scOn = selectedSubcategories.includes(sc.id);
                   return (
                     <li key={sc.id}>
-                      <button
-                        type="button"
-                        onClick={() => toggleSubcategory(sc.id)}
-                        className={`font-['Montserrat'] text-xs ${scOn ? "font-semibold text-[#8B5E3F]" : "text-black/65"}`}
-                      >
-                        {sc.name}
-                      </button>
+                      <FilterCheckRow
+                        checked={scOn}
+                        onChange={() => toggleSubcategory(sc.id)}
+                        label={sc.name}
+                        className="py-2"
+                        labelClassName="text-xs"
+                      />
                     </li>
                   );
                 })}
@@ -247,52 +270,74 @@ export default function CatalogFilters({
 
   const ColorsBlock = (
     <div className={`pb-3 ${openColors ? "block" : "hidden"}`}>
-      <div className="flex flex-wrap gap-3 pt-2">
-        {COLOR_SWATCHES.map((c) => (
-          <button
-            key={c.id}
-            type="button"
-            onClick={() =>
-              setSelectedColorInput(selectedColorInput === c.id ? null : c.id)
-            }
-            className={`flex h-10 w-10 items-center justify-center rounded-full ${c.className} shadow-inner ring-2 ring-offset-2 ${
-              selectedColorInput === c.id ? "ring-[#8B5E3F]" : "ring-transparent"
-            }`}
-            aria-label={c.id}
-          >
-            {selectedColorInput === c.id && c.id !== "white" && (
-              <svg className="h-5 w-5 text-white" viewBox="0 0 12 10" fill="none">
-                <path d="M1 5l3 3 7-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            )}
-            {selectedColorInput === c.id && c.id === "white" && (
-              <svg className="h-5 w-5 text-black" viewBox="0 0 12 10" fill="none">
-                <path d="M1 5l3 3 7-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            )}
-          </button>
-        ))}
-      </div>
+      {colorOptions.length === 0 ? (
+        <p className="pt-2 font-['Montserrat'] text-xs text-black/45">Кольори з&apos;являться після додавання товарів</p>
+      ) : (
+        <div className="-mx-1 overflow-x-auto px-1 pb-1 pt-2 scrollbar-hide">
+          <div className="flex min-w-min gap-3">
+            {colorOptions.map((color) => {
+              const selected = selectedColorInput === color.key;
+              const light = isLightSwatch(color.hex);
+              return (
+                <button
+                  key={color.key}
+                  type="button"
+                  onClick={() => setSelectedColorInput(selected ? null : color.key)}
+                  className="group flex w-[4.5rem] shrink-0 flex-col items-center gap-2"
+                  aria-label={color.name}
+                  aria-pressed={selected}
+                >
+                  <span
+                    className={`flex h-10 w-10 items-center justify-center rounded-full shadow-inner ring-2 ring-offset-2 transition-transform group-hover:scale-105 ${
+                      light ? "border border-black/15" : ""
+                    } ${selected ? "ring-[var(--site-accent)]" : "ring-transparent"}`}
+                    style={{ background: color.hex }}
+                  >
+                    {selected ? <SwatchCheckIcon light={light} /> : null}
+                  </span>
+                  <span
+                    className={`max-w-full truncate text-center font-['Montserrat'] text-[10px] leading-tight ${
+                      selected ? "font-semibold text-[#1a1a1a]" : "text-black/55"
+                    }`}
+                  >
+                    {color.name}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 
-  const MaterialBlock = (
-    <div className={`flex flex-wrap gap-2 pb-2 pt-2 ${openMaterial ? "flex" : "hidden"}`}>
-      {MATERIALS.map((m) => (
-        <button
-          key={m.id}
-          type="button"
-          onClick={() => toggleMaterial(m.id)}
-          className={`rounded-full px-4 py-2 font-['Montserrat'] text-xs font-medium transition-colors ${
-            selectedMaterials.has(m.id)
-              ? "text-white"
-              : "bg-black/[0.06] text-black/60"
-          }`}
-          style={selectedMaterials.has(m.id) ? { backgroundColor: ACCENT } : undefined}
-        >
-          {m.label}
-        </button>
-      ))}
+  const SizesBlock = (
+    <div className={`pb-2 pt-2 ${openSizes ? "block" : "hidden"}`}>
+      {sizeOptions.length === 0 ? (
+        <p className="font-['Montserrat'] text-xs text-black/45">Розміри з&apos;являться після додавання товарів</p>
+      ) : (
+        <div className="-mx-1 overflow-x-auto px-1 pb-1 scrollbar-hide">
+          <div className="flex min-w-min flex-wrap gap-2">
+            {sizeOptions.map((size) => {
+              const active = selectedSizesInput.includes(size);
+              return (
+                <button
+                  key={size}
+                  type="button"
+                  onClick={() => toggleSizeInput(size)}
+                  className={`shrink-0 rounded-full px-4 py-2 font-['Montserrat'] text-xs font-medium transition-colors ${
+                    active ? "text-white" : "bg-black/[0.06] text-black/60"
+                  }`}
+                  style={active ? { backgroundColor: ACCENT } : undefined}
+                  aria-pressed={active}
+                >
+                  {size}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -304,7 +349,7 @@ export default function CatalogFilters({
             type="checkbox"
             checked={promoOnly}
             onChange={() => setPromoOnly((v) => !v)}
-            className="mt-0.5 h-4 w-4 rounded border-black/30 text-[#8B5E3F] focus:ring-[#8B5E3F]"
+            className={`mt-0.5 ${filterCheckboxClass}`}
           />
           <span className="font-['Montserrat'] text-sm text-black/75">Лише акційні товари</span>
         </label>
@@ -350,15 +395,19 @@ export default function CatalogFilters({
         {PriceBlock}
       </div>
 
-      <div>
-        <SectionHeader title="Кольори" open={openColors} onToggle={() => setOpenColors((v) => !v)} />
-        {ColorsBlock}
-      </div>
+      {colorOptions.length > 0 && (
+        <div>
+          <SectionHeader title="Колір" open={openColors} onToggle={() => setOpenColors((v) => !v)} />
+          {ColorsBlock}
+        </div>
+      )}
 
-      <div>
-        <SectionHeader title="Матеріал" open={openMaterial} onToggle={() => setOpenMaterial((v) => !v)} />
-        {MaterialBlock}
-      </div>
+      {sizeOptions.length > 0 && (
+        <div>
+          <SectionHeader title="Розмір" open={openSizes} onToggle={() => setOpenSizes((v) => !v)} />
+          {SizesBlock}
+        </div>
+      )}
 
       {PromoBlock}
 
