@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "13pm-tactic-catalog-api",
     "name": "13pm tactic — Catalog API",
-    "description": "Адмін API: товари, категорії, підкатегорії, завантаження медіа.\n\n1. Спочатку виконайте «Admin Login».\n2. Увімкніть збереження cookies в Postman.\n3. Змінні: baseUrl, adminUser, adminPass.",
+    "description": "Адмін API каталогу **13pm tactic** (тактичний одяг): товари, категорії, підкатегорії, медіа.\n\n1. Виконайте «Admin Login».\n2. У Postman увімкніть збереження cookies.\n3. Змінні: `baseUrl`, `adminUser`, `adminPass` (з `.env`).\n4. Після `npm run seed-tactic-categories` slug категорій: `komplekty`, `futbolky`, `shtany` тощо.\n\nДокументація: `docs/CATALOG_API.md`.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -10,7 +10,8 @@
     { "key": "adminUser", "value": "admin" },
     { "key": "adminPass", "value": "password" },
     { "key": "productId", "value": "1" },
-    { "key": "categorySlug", "value": "ramky" }
+    { "key": "categorySlug", "value": "futbolky" },
+    { "key": "categoryId", "value": "2" }
   ],
   "item": [
     {
@@ -63,10 +64,10 @@
       ]
     },
     {
-      "name": "Products",
+      "name": "Products (admin)",
       "item": [
         {
-          "name": "Create product (JSON)",
+          "name": "Create product — apparel (JSON)",
           "event": [
             {
               "listen": "test",
@@ -86,7 +87,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Тестовий товар API\",\n  \"subtitle\": \"30×40 см\",\n  \"short_description\": \"Короткий опис\",\n  \"description\": \"Повний опис\",\n  \"price\": 890,\n  \"old_price\": 990,\n  \"discount_percentage\": 10,\n  \"in_stock\": true,\n  \"stock\": 50,\n  \"is_new\": true,\n  \"is_hit\": false,\n  \"priority\": 0,\n  \"category_id\": 1,\n  \"category_ids\": [1],\n  \"subcategory_ids\": [],\n  \"bought_together_ids\": [],\n  \"pair_together_ids\": [],\n  \"color_options\": [{ \"hex\": \"#8B5E3F\", \"name\": \"Дуб\" }],\n  \"size_variants\": [],\n  \"season\": [],\n  \"media\": []\n}"
+              "raw": "{\n  \"name\": \"Футболка тактична ALPHA\",\n  \"subtitle\": \"Лінійка ALPHA\",\n  \"short_description\": \"Бавовняна футболка з посиленими плечима.\",\n  \"description\": \"Футболка **ALPHA** — базовий шар для щоденного носіння.\\n\\n- Склад: бавовна з еластаном\\n- Посилені плечі\",\n  \"fabric_composition\": \"95% бавовна, 5% еластан\",\n  \"has_lining\": false,\n  \"lining_description\": null,\n  \"price\": 890,\n  \"old_price\": 990,\n  \"discount_percentage\": 10,\n  \"in_stock\": true,\n  \"stock\": 0,\n  \"is_new\": true,\n  \"is_hit\": false,\n  \"is_promo\": false,\n  \"top_sale\": false,\n  \"limited_edition\": false,\n  \"priority\": 10,\n  \"category_id\": 2,\n  \"category_ids\": [2],\n  \"subcategory_ids\": [],\n  \"color_options\": [\n    { \"hex\": \"#1a1a1a\", \"name\": \"Чорний\" },\n    { \"hex\": \"#4a5d3f\", \"name\": \"Олива\" }\n  ],\n  \"white_color_surcharge_enabled\": false,\n  \"size_variants\": [\n    { \"label\": \"S\", \"stock\": 5 },\n    { \"label\": \"M\", \"stock\": 8 },\n    { \"label\": \"L\", \"stock\": 6 },\n    { \"label\": \"XL\", \"stock\": 4 }\n  ],\n  \"bought_together_ids\": [],\n  \"color_linked_ids\": [],\n  \"media\": []\n}"
             },
             "url": "{{baseUrl}}/api/admin/catalog/products"
           }
@@ -100,7 +101,7 @@
               "formdata": [
                 {
                   "key": "data",
-                  "value": "{\"name\":\"Товар з фото\",\"price\":1200,\"category_ids\":[1],\"in_stock\":true}",
+                  "value": "{\"name\":\"Штани тактичні BRAVO\",\"short_description\":\"Міцні штани з посиленими колінами.\",\"fabric_composition\":\"65% поліестер, 35% бавовна\",\"price\":2190,\"category_ids\":[5],\"in_stock\":true,\"is_hit\":true,\"size_variants\":[{\"label\":\"M\",\"stock\":3},{\"label\":\"L\",\"stock\":5},{\"label\":\"XL\",\"stock\":2}],\"color_options\":[{\"hex\":\"#2b2b2b\",\"name\":\"Чорний\"}],\"media\":[]}",
                   "type": "text"
                 },
                 { "key": "images", "type": "file", "src": [] },
@@ -124,7 +125,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Тестовий товар API (оновлено)\",\n  \"price\": 950,\n  \"in_stock\": true,\n  \"bought_together_ids\": [2, 3],\n  \"pair_together_ids\": [4],\n  \"media\": []\n}"
+              "raw": "{\n  \"name\": \"Футболка тактична ALPHA (оновлено)\",\n  \"price\": 920,\n  \"in_stock\": true,\n  \"is_hit\": true,\n  \"fabric_composition\": \"95% бавовна, 5% еластан\",\n  \"size_variants\": [\n    { \"label\": \"S\", \"stock\": 4 },\n    { \"label\": \"M\", \"stock\": 10 },\n    { \"label\": \"L\", \"stock\": 7 },\n    { \"label\": \"XL\", \"stock\": 3 }\n  ],\n  \"bought_together_ids\": [3, 4],\n  \"color_linked_ids\": [5],\n  \"media\": []\n}"
             },
             "url": "{{baseUrl}}/api/admin/catalog/products/{{productId}}"
           }
@@ -139,7 +140,7 @@
       ]
     },
     {
-      "name": "Categories",
+      "name": "Categories (admin)",
       "item": [
         {
           "name": "Create category (JSON)",
@@ -153,6 +154,9 @@
                   "  if (j.category && j.category.slug) {",
                   "    pm.collectionVariables.set('categorySlug', j.category.slug);",
                   "  }",
+                  "  if (j.category && j.category.id) {",
+                  "    pm.collectionVariables.set('categoryId', String(j.category.id));",
+                  "  }",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -164,7 +168,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Нова категорія API\",\n  \"priority\": 5,\n  \"description\": \"Опис категорії\"\n}"
+              "raw": "{\n  \"name\": \"Футболки\",\n  \"priority\": 65,\n  \"description\": \"Тактичні футболки та поло 13pm tactic.\"\n}"
             },
             "url": "{{baseUrl}}/api/admin/catalog/categories"
           }
@@ -178,7 +182,7 @@
               "formdata": [
                 {
                   "key": "data",
-                  "value": "{\"name\":\"Категорія з фото\",\"priority\":10}",
+                  "value": "{\"name\":\"Аксесуари\",\"priority\":40,\"description\":\"Ремені, рукавички та інше спорядження.\"}",
                   "type": "text"
                 },
                 { "key": "image", "type": "file", "src": [] }
@@ -201,22 +205,15 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Нова категорія API\",\n  \"priority\": 15,\n  \"description\": \"Оновлений опис\"\n}"
+              "raw": "{\n  \"name\": \"Футболки\",\n  \"priority\": 66,\n  \"description\": \"Оновлений опис категорії футболок.\"\n}"
             },
             "url": "{{baseUrl}}/api/admin/catalog/categories/{{categorySlug}}"
-          }
-        },
-        {
-          "name": "List categories (public)",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/categories?revalidate=1"
           }
         }
       ]
     },
     {
-      "name": "Subcategories",
+      "name": "Subcategories (admin)",
       "item": [
         {
           "name": "Create subcategory",
@@ -225,9 +222,59 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Підкатегорія API\",\n  \"category_id\": 1\n}"
+              "raw": "{\n  \"name\": \"Лінійка ALPHA\",\n  \"category_id\": {{categoryId}}\n}"
             },
             "url": "{{baseUrl}}/api/admin/catalog/subcategories"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Public catalog",
+      "item": [
+        {
+          "name": "List categories",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/categories"
+          }
+        },
+        {
+          "name": "Catalog products (storefront)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/products/catalog?limit=20&offset=0"
+          }
+        },
+        {
+          "name": "Bestsellers (top_sale)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/products/top-sale"
+          }
+        },
+        {
+          "name": "Products by category slug",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/products/category?category={{categorySlug}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "category"],
+              "query": [{ "key": "category", "value": "{{categorySlug}}" }]
+            }
+          }
+        },
+        {
+          "name": "Check size stock",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": {{productId}},\n  \"sizeLabel\": \"M\",\n  \"quantity\": 1\n}"
+            },
+            "url": "{{baseUrl}}/api/products/check-stock"
           }
         }
       ]

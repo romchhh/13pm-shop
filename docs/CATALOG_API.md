@@ -1,8 +1,12 @@
-# Catalog API (адмін)
+# Catalog API — 13pm tactic
 
-Захищені ендпоінти для додавання та оновлення **товарів** і **категорій** через зовнішні інтеграції (Postman, скрипти, CRM).
+Захищені ендпоінти для додавання та оновлення **товарів** і **категорій** тактичного одягу через Postman, скрипти або CRM.
 
 **Базовий URL:** `https://ВАШ_ДОМЕН` (локально: `http://localhost:3000`)
+
+**Сід каталогу:** `npm run seed-tactic-categories` / `npm run seed-tactic-products`
+
+---
 
 ## Авторизація
 
@@ -20,25 +24,23 @@ Content-Type: application/json
 }
 ```
 
-У відповіді встановлюється cookie `admin_auth` (httpOnly). У Postman увімкніть **Automatically follow redirects** і зберігайте cookies між запитами.
+У відповіді встановлюється cookie `admin_auth` (httpOnly). У Postman увімкніть збереження cookies між запитами.
 
-### Альтернатива (Postman / curl)
-
-Після логіну можна передати cookie вручну:
+### Альтернатива (curl)
 
 ```
 Cookie: admin_auth=<base64("логін:пароль")>
 ```
 
-де значення — `Buffer.from("login:password").toString("base64")` (те саме, що робить `/api/auth/login`).
+Значення — `Buffer.from("login:password").toString("base64")` (як у `/api/auth/login`).
 
 ---
 
-## Товари
+## Товари (одяг)
 
 ### `POST /api/admin/catalog/products`
 
-Створення товару з усіма полями БД + кілька фото/відео.
+Створення товару з полями БД + медіа.
 
 #### Варіант A — JSON
 
@@ -48,51 +50,94 @@ Content-Type: application/json
 Cookie: admin_auth=...
 
 {
-  "name": "Рамка іменна",
-  "subtitle": "30×40 см",
-  "short_description": "Короткий опис",
-  "description": "Повний опис HTML/текст",
+  "name": "Футболка тактична ALPHA",
+  "subtitle": "Лінійка ALPHA",
+  "short_description": "Бавовняна футболка з посиленими плечима.",
+  "description": "Повний опис (Markdown/HTML).",
+  "fabric_composition": "95% бавовна, 5% еластан",
+  "has_lining": false,
+  "lining_description": null,
   "price": 890,
   "old_price": 990,
   "discount_percentage": 10,
   "in_stock": true,
-  "stock": 100,
+  "stock": 0,
   "is_new": true,
   "is_hit": false,
-  "priority": 5,
-  "category_id": 1,
-  "subcategory_id": 3,
-  "category_ids": [1, 2],
-  "subcategory_ids": [3],
+  "is_promo": false,
+  "top_sale": false,
+  "limited_edition": false,
+  "priority": 10,
+  "category_id": 2,
+  "category_ids": [2],
+  "subcategory_ids": [],
+  "color_options": [
+    { "hex": "#1a1a1a", "name": "Чорний" },
+    { "hex": "#4a5d3f", "name": "Олива" }
+  ],
+  "white_color_surcharge_enabled": false,
+  "size_variants": [
+    { "label": "S", "stock": 5 },
+    { "label": "M", "stock": 8 },
+    { "label": "L", "stock": 6 },
+    { "label": "XL", "stock": 4 }
+  ],
   "bought_together_ids": [12, 15],
-  "pair_together_ids": [20, 21],
-  "related_product_ids": [12, 15],
+  "color_linked_ids": [20, 21],
   "gift_product_id": null,
-  "color_options": [{ "hex": "#8B5E3F", "name": "Дуб" }],
-  "size_variants": [],
-  "size_group_ordered_ids": [0, 101, 102],
-  "season": ["весна", "літо"],
-  "media": [
-    { "type": "photo", "url": "abc.webp" }
-  ]
+  "media": [{ "type": "photo", "url": "abc.webp" }]
 }
 ```
 
-> **Схожі товари** на сайті (`YouMightLike`) **не зберігаються в БД** — підбираються автоматично за підкатегорією → категорією. Для зв’язків використовуйте `bought_together_ids` / `pair_together_ids` (або аліаси `related_product_ids` / `paired_product_ids`).
+#### Поля для 13pm tactic
 
-#### Варіант B — multipart (рекомендовано для фото)
+| Поле | Опис |
+|------|------|
+| `fabric_composition` | Склад тканини (текст) |
+| `has_lining` | Чи є підкладка |
+| `lining_description` | Опис підкладки |
+| `color_options` | `[{ hex, name }]` — кольори варіанту |
+| `size_variants` | `[{ label, stock }]` — розміри S/M/L/XL та залишок |
+| `is_hit` | Хіт / блок BESTSELLERS на головній |
+| `is_new` | Новинка |
+| `is_promo` | Акція |
+| `top_sale` | Позначка бестселера в каталозі |
+| `limited_edition` | Лімітована серія |
+
+#### Зв’язки між товарами
+
+| Поле в запиті | Зберігається як | Призначення |
+|---------------|-----------------|-------------|
+| `bought_together_ids` | `bought_together_ids` | «Купують разом» |
+| `color_linked_ids` | `pair_together_ids` | Інші кольори того ж товару |
+| `related_product_ids` | аліас `bought_together_ids` | |
+| `pair_together_ids` / `paired_product_ids` | аліас `color_linked_ids` | |
+
+> **Схожі товари** на картці (`YouMightLike`) підбираються автоматично за підкатегорією → категорією, окремого поля в API немає.
+
+#### Розмірні групи (рідко)
+
+| Поле | Дія |
+|------|-----|
+| `size_group_ordered_ids` | Синхронізує `size_variants` у всіх товарів групи |
+| `size_linked_ids` | Legacy-зв’язки окремих карток за id |
+
+#### Legacy (не використовується на вітрині одягу)
+
+Поля з попереднього домену (БАДи/рамки) все ще приймаються API, але для tactic їх можна не передавати: `release_form`, `course`, `main_action`, `season`, `dietitian_approved` тощо.
+
+#### Варіант B — multipart (фото)
 
 | Поле | Тип | Опис |
 |------|-----|------|
-| `data` | string (JSON) | Усі поля товару, як у JSON-прикладі (без `media` або з уже завантаженими url) |
-| `images` | file[] | Кілька файлів (jpg, png, webp → конвертація в webp; mp4 тощо — video) |
+| `data` | string (JSON) | Поля товару (без `media` або з уже завантаженими url) |
+| `images` | file[] | jpg, png, webp → webp; mp4 → video |
 
 ```bash
 curl -X POST "$BASE/api/admin/catalog/products" \
   -H "Cookie: admin_auth=..." \
-  -F 'data={"name":"Товар","price":500,"category_ids":[1]}' \
-  -F "images=@photo1.jpg" \
-  -F "images=@photo2.jpg"
+  -F 'data={"name":"Штани BRAVO","price":2190,"category_ids":[5],"size_variants":[{"label":"M","stock":3}]}' \
+  -F "images=@photo1.jpg"
 ```
 
 **Відповідь `201`:** `{ success, id, product, note_similar_products }`
@@ -101,7 +146,7 @@ curl -X POST "$BASE/api/admin/catalog/products" \
 
 ### `GET /api/admin/catalog/products/:id`
 
-Повний товар (усі поля + `media`, `bought_together_ids`, `pair_together_ids`, `size_variants`, …).
+Повний товар: `media`, `fabric_composition`, `size_variants`, `pair_together_ids` (колірні зв’язки), `bought_together_ids`, прапорці `is_hit` / `is_new` / `is_promo` тощо.
 
 ---
 
@@ -109,15 +154,8 @@ curl -X POST "$BASE/api/admin/catalog/products" \
 
 Оновлення. Ті самі формати, що й POST.
 
-- `media` у JSON — **повний** список медіа після змін (як у адмінці).
-- Нові файли в multipart додаються до списку `media`.
-
-Поля розмірної групи:
-
-| Поле | Дія |
-|------|-----|
-| `size_group_ordered_ids` | Синхронізує `size_variants` у всіх товарів групи |
-| `size_linked_ids` | Legacy: `[id, ...linked]` |
+- `media` у JSON — **повний** список медіа після змін.
+- Нові файли в multipart додаються до `media`.
 
 ---
 
@@ -129,15 +167,17 @@ curl -X POST "$BASE/api/admin/catalog/products" \
 
 ## Категорії
 
+Типові категорії після сіду: **Комплекти**, **Футболки**, **Флісова кофта**, **UBACS**, **Штани**, **Головні убори**, **Аксесуари** (slug: `komplekty`, `futbolky`, `flisova-kofta`, `ubacs`, `shtany`, …).
+
 ### `POST /api/admin/catalog/categories`
 
 #### JSON
 
 ```json
 {
-  "name": "Рамки",
-  "priority": 10,
-  "description": "Опис категорії",
+  "name": "Футболки",
+  "priority": 65,
+  "description": "Тактичні футболки 13pm tactic",
   "mediaType": "photo",
   "mediaUrl": "category-cover.webp"
 }
@@ -146,17 +186,17 @@ curl -X POST "$BASE/api/admin/catalog/products" \
 #### multipart
 
 - `data` — JSON категорії  
-- `image` — один файл обкладинки  
+- `image` — обкладинка  
 
-Файли зберігаються в `product-images/` і віддаються через `/api/images/{filename}`.
+Файли: `product-images/`, URL — `/api/images/{filename}`.
 
-> Якщо **не** вказати `mediaUrl`, на головній сторінці підставиться **фото першого товару** цієї категорії (логіка в `lib/categoryMediaFallback.ts`).
+> Без `mediaUrl` на головній підставиться фото **першого товару** категорії (`lib/categoryMediaFallback.ts`).
 
 ---
 
 ### `GET /api/admin/catalog/categories/:slug`
 
-Категорія за slug (з fallback-фото, якщо немає власного).
+Категорія за slug (наприклад `futbolky`, `shtany`).
 
 ---
 
@@ -172,14 +212,14 @@ curl -X POST "$BASE/api/admin/catalog/products" \
 
 ```json
 {
-  "name": "Іменні рамки",
-  "category_id": 1
+  "name": "Лінійка ALPHA",
+  "category_id": 2
 }
 ```
 
 ---
 
-## Додатково: завантаження медіа окремо
+## Завантаження медіа окремо
 
 ```http
 POST /api/images
@@ -189,7 +229,7 @@ Content-Type: multipart/form-data
 images: (файли)
 ```
 
-Відповідь: `{ "media": [{ "type": "photo", "url": "....webp" }] }` — ці `url` передавайте в `media` при створенні/оновленні товару.
+Відповідь: `{ "media": [{ "type": "photo", "url": "....webp" }] }` — ці `url` додайте в `media` товару.
 
 ---
 
@@ -197,24 +237,30 @@ images: (файли)
 
 | Метод | Шлях | Опис |
 |-------|------|------|
-| GET | `/api/products` | Список товарів |
-| POST | `/api/products` | Створення (legacy, без auth) |
-| GET | `/api/categories` | Категорії (з fallback-фото) |
+| GET | `/api/categories` | Категорії з fallback-фото |
+| GET | `/api/products/catalog` | Вітрина каталогу (`?limit=&offset=`) |
+| GET | `/api/products/top-sale` | BESTSELLERS (`top_sale`) |
+| GET | `/api/products/category?category=` | Товари за slug категорії |
+| GET | `/api/products/subcategory?subcategory=` | За slug підкатегорії |
+| GET | `/api/products/limited-edition` | Лімітовані |
+| GET | `/api/products/related-colors` | Колірні зв’язки |
+| POST | `/api/products/check-stock` | Перевірка залишку розміру |
+| GET | `/api/products` | Legacy-список |
+| POST | `/api/products` | Legacy-створення (без auth) |
 
-Для інтеграцій краще використовувати **`/api/admin/catalog/*`**.
+Для інтеграцій і адміністрування використовуйте **`/api/admin/catalog/*`**.
 
 ---
 
 ## Postman
 
-Колекція: [`docs/postman/Plywood-Present-Catalog-API.postman_collection.json`](./postman/Plywood-Present-Catalog-API.postman_collection.json) (файл Postman; назва колекції — 13pm tactic)
+Колекція: [`docs/postman/13pm-tactic-Catalog-API.postman_collection.json`](./postman/13pm-tactic-Catalog-API.postman_collection.json)
 
-Змінні колекції:
-
-| Змінна | Значення |
-|--------|----------|
+| Змінна | Приклад |
+|--------|---------|
 | `baseUrl` | `http://localhost:3000` |
-| `adminUser` | з `.env` |
-| `adminPass` | з `.env` |
+| `adminUser` / `adminPass` | з `.env` |
+| `categorySlug` | `futbolky` |
+| `productId` | id після створення товару |
 
-Порядок: **1. Admin Login** → далі запити каталогу.
+Порядок: **Admin Login** → запити **Products** / **Categories**.
