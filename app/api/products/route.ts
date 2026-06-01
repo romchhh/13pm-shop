@@ -5,6 +5,7 @@ import { sqlGetAllProducts, sqlPostProduct, sqlSyncSizeVariantsOrdered } from "@
 import { revalidateProducts } from "@/lib/revalidate";
 import { uploadProductMediaFiles } from "@/lib/uploadProductMedia";
 import { apiLogger } from "@/lib/logger";
+import { apiErrorJson } from "@/lib/apiError";
 
 // Helper function to determine file type
 function getFileType(mimeType: string, filename: string): "photo" | "video" {
@@ -59,10 +60,7 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     apiLogger.error("GET", "/api/products", error);
-    return NextResponse.json(
-      { error: "Failed to fetch products" },
-      { status: 500 }
-    );
+    return apiErrorJson(error, "Не вдалося завантажити товари");
   }
 }
 
@@ -126,9 +124,16 @@ export async function POST(req: Request) {
         size_group_ordered_ids: sizeGroupOrderedBody = undefined,
       } = body || {};
 
-      if (!name || typeof price !== "number") {
+      const priceNum = typeof price === "number" ? price : Number(price);
+      if (!name || typeof name !== "string" || !name.trim()) {
         return NextResponse.json(
-          { error: "Missing required fields: name, price" },
+          { error: "Вкажіть назву товару" },
+          { status: 400 }
+        );
+      }
+      if (!Number.isFinite(priceNum) || priceNum < 0) {
+        return NextResponse.json(
+          { error: "Вкажіть коректну ціну (число ≥ 0)" },
           { status: 400 }
         );
       }
@@ -149,7 +154,7 @@ export async function POST(req: Request) {
         usage_method: usage_method ?? null,
         contraindications: contraindications ?? null,
         storage_conditions: storage_conditions ?? null,
-        price,
+        price: priceNum,
         old_price,
         discount_percentage,
         priority,
@@ -253,9 +258,10 @@ export async function POST(req: Request) {
     const liningDescription =
       formData.get("lining_description")?.toString() || "";
 
-    if (!name || !price) {
+    const multipartPrice = Number(price);
+    if (!name || !Number.isFinite(multipartPrice) || multipartPrice < 0) {
       return NextResponse.json(
-        { error: "Missing required fields: name, price" },
+        { error: "Вкажіть назву товару та коректну ціну" },
         { status: 400 }
       );
     }
@@ -266,7 +272,7 @@ export async function POST(req: Request) {
     const product = await sqlPostProduct({
       name,
       description,
-      price,
+      price: multipartPrice,
       old_price: oldPrice,
       discount_percentage: discountPercentage,
       priority,
@@ -285,9 +291,6 @@ export async function POST(req: Request) {
     return NextResponse.json(product, { status: 201 });
   } catch (error) {
     apiLogger.error("POST", "/api/products", error);
-    return NextResponse.json(
-      { error: "Failed to create product" },
-      { status: 500 }
-    );
+    return apiErrorJson(error, "Не вдалося створити товар");
   }
 }

@@ -9,6 +9,7 @@ import Input from "@/components/admin/form/input/InputField";
 import DropzoneComponent from "@/components/admin/form/form-elements/DropZone";
 import Image from "next/image";
 import CategoryDescriptionMarkdown from "@/components/shared/CategoryDescriptionMarkdown";
+import { assertApiOk } from "@/lib/apiError";
 
 type Subcategory = {
   id?: number;
@@ -267,7 +268,7 @@ export default function EditCategoryPage() {
           body: uploadForm,
         });
 
-        if (!uploadRes.ok) throw new Error("File upload failed");
+        await assertApiOk(uploadRes, "Не вдалося завантажити зображення");
 
         const uploadData = await uploadRes.json();
         if (uploadData.media && uploadData.media.length > 0) {
@@ -291,12 +292,16 @@ export default function EditCategoryPage() {
         }
       );
 
-      if (!categoryRes.ok) throw new Error("Failed to update category");
+      await assertApiOk(categoryRes, "Не вдалося оновити категорію");
 
       for (const slug of deletedSubcategorySlugs) {
-        await fetch(`/api/subcategories/${encodeURIComponent(slug)}`, {
+        const delRes = await fetch(`/api/subcategories/${encodeURIComponent(slug)}`, {
           method: "DELETE",
         });
+        await assertApiOk(
+          delRes,
+          `Не вдалося видалити підкатегорію «${slug}»`
+        );
       }
 
       for (const sub of subcategories) {
@@ -304,7 +309,7 @@ export default function EditCategoryPage() {
         if (!trimmedName) continue;
 
         if (sub.slug) {
-          await fetch(`/api/subcategories/${encodeURIComponent(sub.slug)}`, {
+          const subRes = await fetch(`/api/subcategories/${encodeURIComponent(sub.slug)}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -312,8 +317,12 @@ export default function EditCategoryPage() {
               parent_category_id: categoryId,
             }),
           });
+          await assertApiOk(
+            subRes,
+            `Не вдалося оновити підкатегорію «${trimmedName}»`
+          );
         } else {
-          await fetch(`/api/subcategories`, {
+          const subRes = await fetch(`/api/subcategories`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -321,6 +330,10 @@ export default function EditCategoryPage() {
               parent_category_id: categoryId,
             }),
           });
+          await assertApiOk(
+            subRes,
+            `Не вдалося створити підкатегорію «${trimmedName}»`
+          );
         }
       }
 
@@ -328,7 +341,7 @@ export default function EditCategoryPage() {
       router.push("/admin/categories");
     } catch (err) {
       console.error(err);
-      setError("Не вдалося оновити категорію");
+      setError(err instanceof Error ? err.message : "Не вдалося оновити категорію");
     } finally {
       setLoading(false);
     }

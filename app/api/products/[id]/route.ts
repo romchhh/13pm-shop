@@ -10,6 +10,7 @@ import {
 } from "@/lib/sql";
 import { apiLogger } from "@/lib/logger";
 import { revalidateProducts } from "@/lib/revalidate";
+import { apiErrorJson } from "@/lib/apiError";
 
 // Enable ISR for this route
 export const revalidate = 1200; // 20 minutes
@@ -43,10 +44,7 @@ export async function GET(
     });
   } catch (error) {
     apiLogger.error("GET", `/api/products/${(await params).id}`, error);
-    return NextResponse.json(
-      { error: "Failed to fetch product" },
-      { status: 500 }
-    );
+    return apiErrorJson(error, "Не вдалося завантажити товар");
   }
 }
 
@@ -68,9 +66,17 @@ export async function PUT(
 
     const body = await req.json();
 
-    if (!body.name || !body.price) {
+    if (!body.name || typeof body.name !== "string" || !body.name.trim()) {
       return NextResponse.json(
-        { error: "Missing required fields: name, price" },
+        { error: "Вкажіть назву товару" },
+        { status: 400 }
+      );
+    }
+
+    const priceNum = Number(body.price);
+    if (!Number.isFinite(priceNum) || priceNum < 0) {
+      return NextResponse.json(
+        { error: "Вкажіть коректну ціну (число ≥ 0)" },
         { status: 400 }
       );
     }
@@ -167,7 +173,7 @@ export async function PUT(
       usage_method: body.usage_method ?? undefined,
       contraindications: body.contraindications ?? undefined,
       storage_conditions: body.storage_conditions ?? undefined,
-      price: body.price,
+      price: priceNum,
       old_price: oldPrice,
       discount_percentage: discountPercentage,
       priority,
@@ -209,10 +215,7 @@ export async function PUT(
     return NextResponse.json({ updated: true });
   } catch (error) {
     apiLogger.error("PUT", `/api/products/${(await params).id}`, error);
-    return NextResponse.json(
-      { error: "Failed to update product" },
-      { status: 500 }
-    );
+    return apiErrorJson(error, "Не вдалося оновити товар");
   }
 }
 
@@ -240,9 +243,6 @@ export async function DELETE(
     return NextResponse.json({ deleted: true });
   } catch (error) {
     apiLogger.error("DELETE", `/api/products/${(await params).id}`, error);
-    return NextResponse.json(
-      { error: "Failed to delete product" },
-      { status: 500 }
-    );
+    return apiErrorJson(error, "Не вдалося видалити товар");
   }
 }

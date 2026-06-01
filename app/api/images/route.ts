@@ -9,6 +9,7 @@ import {
   MAX_IMAGE_UPLOAD_BYTES,
   savePhotoBufferAsWebP,
 } from "@/lib/imageUpload";
+import { apiErrorJson } from "@/lib/apiError";
 
 const log = createLogger("POST /api/images");
 
@@ -21,7 +22,7 @@ export async function POST(req: NextRequest) {
     const files = formData.getAll("images") as File[];
 
     if (!files || files.length === 0) {
-      return NextResponse.json({ error: "No files provided" }, { status: 400 });
+      return NextResponse.json({ error: "Не обрано жодного файлу" }, { status: 400 });
     }
 
     const uploadDir = path.join(process.cwd(), "product-images");
@@ -32,7 +33,7 @@ export async function POST(req: NextRequest) {
     for (const file of files) {
       if (file.size > MAX_IMAGE_UPLOAD_BYTES) {
         return NextResponse.json(
-          { error: "Max file size is 15MB" },
+          { error: "Максимальний розмір файлу — 15 МБ" },
           { status: 413 }
         );
       }
@@ -65,6 +66,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ media: savedMedia }, { status: 201 });
   } catch (error) {
     log.error(error);
-    return NextResponse.json({ error: "File upload failed" }, { status: 500 });
+    return apiErrorJson(error, "Не вдалося завантажити файли");
   }
 }

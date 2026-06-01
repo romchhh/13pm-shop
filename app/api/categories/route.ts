@@ -3,6 +3,7 @@ import { revalidateTag } from "next/cache";
 import { sqlGetAllCategories, sqlPostCategory } from "@/lib/sql";
 import { apiLogger } from "@/lib/logger";
 import { revalidateCategories } from "@/lib/revalidate";
+import { apiErrorJson } from "@/lib/apiError";
 
 // Enable ISR for this route
 export const revalidate = 1200; // 20 minutes
@@ -26,10 +27,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     apiLogger.error("GET", "/api/categories", error);
-    return NextResponse.json(
-      { error: "Failed to fetch categories" },
-      { status: 500 }
-    );
+    return apiErrorJson(error, "Не вдалося завантажити категорії");
   }
 }
 
@@ -41,16 +39,25 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { name, priority, mediaType, mediaUrl, description } = body;
 
-    if (!name) {
+    if (!name || typeof name !== "string" || !name.trim()) {
       return NextResponse.json(
-        { error: "Category name is required" },
+        { error: "Вкажіть назву категорії" },
+        { status: 400 }
+      );
+    }
+
+    const priorityNum =
+      priority !== undefined && priority !== null ? Number(priority) : 0;
+    if (!Number.isFinite(priorityNum) || priorityNum < 0) {
+      return NextResponse.json(
+        { error: "Пріоритет має бути невід’ємним числом" },
         { status: 400 }
       );
     }
 
     const newCategory = await sqlPostCategory(
-      name, 
-      priority ?? 0,
+      name.trim(),
+      priorityNum,
       mediaType || null,
       mediaUrl || null,
       typeof description === "string" ? description : description == null ? null : String(description)
@@ -62,9 +69,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(newCategory, { status: 201 });
   } catch (error) {
     apiLogger.error("POST", "/api/categories", error);
-    return NextResponse.json(
-      { error: "Failed to create category" },
-      { status: 500 }
-    );
+    return apiErrorJson(error, "Не вдалося створити категорію");
   }
 }

@@ -10,6 +10,7 @@ import {
 } from "../ui/table";
 import Link from "next/link";
 import Image from "next/image";
+import { assertApiOk } from "@/lib/apiError";
 
 interface Category {
   id: number;
@@ -99,7 +100,7 @@ export default function CategoriesTable() {
           body: uploadForm,
         });
 
-        if (!uploadRes.ok) throw new Error("File upload failed");
+        await assertApiOk(uploadRes, "Не вдалося завантажити зображення");
 
         const uploadData = await uploadRes.json();
         if (uploadData.media && uploadData.media.length > 0) {
@@ -119,7 +120,7 @@ export default function CategoriesTable() {
         }),
       });
 
-      if (!res.ok) throw new Error("Failed to create category");
+      await assertApiOk(res, "Не вдалося створити категорію");
       
       const newCategory = await res.json();
       setCategories([...categories, newCategory]);
@@ -128,7 +129,9 @@ export default function CategoriesTable() {
       setIsAddingNew(false);
     } catch (error) {
       console.error("Error creating category:", error);
-      alert("Помилка при створенні категорії");
+      alert(
+        error instanceof Error ? error.message : "Помилка при створенні категорії"
+      );
     }
   }
 
@@ -145,7 +148,7 @@ export default function CategoriesTable() {
         body: JSON.stringify({ name: name.trim() }),
       });
 
-      if (!res.ok) throw new Error("Failed to update category");
+      await assertApiOk(res, "Не вдалося оновити категорію");
 
       const updatedCategory = await res.json();
       setCategories(
@@ -157,7 +160,9 @@ export default function CategoriesTable() {
       setEditingName("");
     } catch (error) {
       console.error("Error updating category:", error);
-      alert("Помилка при оновленні категорії");
+      alert(
+        error instanceof Error ? error.message : "Помилка при оновленні категорії"
+      );
     }
   }
 
@@ -169,12 +174,14 @@ export default function CategoriesTable() {
         method: "DELETE",
       });
 
-      if (!res.ok) throw new Error("Failed to delete category");
+      await assertApiOk(res, "Не вдалося видалити категорію");
 
       setCategories(categories.filter((cat) => cat.slug !== slug));
     } catch (error) {
       console.error("Error deleting category:", error);
-      alert("Помилка при видаленні категорії");
+      alert(
+        error instanceof Error ? error.message : "Помилка при видаленні категорії"
+      );
     }
   }
 

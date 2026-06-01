@@ -1,6 +1,7 @@
 // /app/api/subcategories/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { sqlGetSubcategoriesByCategory, sqlPostSubcategory, sqlGetAllSubcategories } from "@/lib/sql";
+import { apiErrorJson } from "@/lib/apiError";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -59,28 +60,25 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { name, parent_category_id } = body;
 
-    if (!name || typeof name !== "string") {
+    if (!name || typeof name !== "string" || !name.trim()) {
       return NextResponse.json(
-        { error: "Missing or invalid 'name'" },
+        { error: "Вкажіть назву підкатегорії" },
         { status: 400 }
       );
     }
 
     const categoryId = Number(parent_category_id);
-    if (!parent_category_id || isNaN(categoryId)) {
+    if (!parent_category_id || !Number.isInteger(categoryId) || categoryId <= 0) {
       return NextResponse.json(
-        { error: "Missing or invalid 'parent_category_id'" },
+        { error: "Невірний parent_category_id — оберіть категорію" },
         { status: 400 }
       );
     }
 
-    const newSubcategory = await sqlPostSubcategory(name, categoryId);
+    const newSubcategory = await sqlPostSubcategory(name.trim(), categoryId);
     return NextResponse.json(newSubcategory, { status: 201 });
   } catch (error) {
     console.error("Failed to create subcategory:", error);
-    return NextResponse.json(
-      { error: "Failed to create subcategory" },
-      { status: 500 }
-    );
+    return apiErrorJson(error, "Не вдалося створити підкатегорію");
   }
 }

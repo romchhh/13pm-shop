@@ -10,6 +10,7 @@ import {
   type ApparelProductApiBody,
   type ApparelProductFormValues,
 } from "@/lib/apparelProduct";
+import { readApiError } from "@/lib/apiError";
 
 export default function EditProductPage() {
   const params = useParams();
@@ -29,7 +30,9 @@ export default function EditProductPage() {
     (async () => {
       try {
         const res = await fetch(`/api/products/${productId}`, { cache: "no-store" });
-        if (!res.ok) throw new Error("Не вдалося завантажити товар");
+        if (!res.ok) {
+          throw new Error(await readApiError(res, "Не вдалося завантажити товар"));
+        }
         const data = await res.json();
         if (cancelled) return;
 
@@ -60,8 +63,7 @@ export default function EditProductPage() {
       body: JSON.stringify(body),
     });
     if (!res.ok) {
-      const errBody = await res.json().catch(() => ({}));
-      throw new Error(errBody.error || "Не вдалося зберегти");
+      throw new Error(await readApiError(res, "Не вдалося зберегти товар"));
     }
   };
 

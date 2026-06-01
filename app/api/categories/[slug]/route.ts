@@ -5,6 +5,7 @@ import {
   sqlDeleteCategory,
 } from "@/lib/sql";
 import { revalidateCategories } from "@/lib/revalidate";
+import { apiErrorJson } from "@/lib/apiError";
 
 export async function GET(
   _req: NextRequest,
@@ -30,10 +31,7 @@ export async function GET(
     return NextResponse.json(result);
   } catch (error) {
     console.error("[GET /api/categories/:slug]", error);
-    return NextResponse.json(
-      { error: "Failed to fetch category" },
-      { status: 500 }
-    );
+    return apiErrorJson(error, "Не вдалося завантажити категорію");
   }
 }
 
@@ -62,26 +60,26 @@ export async function PUT(
     const body = await req.json();
     const { name, priority, mediaType, mediaUrl, description } = body;
 
-    if (!name) {
+    if (!name || typeof name !== "string" || !name.trim()) {
       return NextResponse.json(
-        { error: "Category name is required" },
+        { error: "Вкажіть назву категорії" },
         { status: 400 }
       );
     }
-    if (
-      priority !== undefined &&
-      (typeof priority !== "number" || priority < 0)
-    ) {
+
+    const priorityNum =
+      priority !== undefined && priority !== null ? Number(priority) : 0;
+    if (!Number.isFinite(priorityNum) || priorityNum < 0) {
       return NextResponse.json(
-        { error: "Priority must be a non-negative number" },
+        { error: "Пріоритет має бути невід’ємним числом" },
         { status: 400 }
       );
     }
 
     const updated = await sqlPutCategory(
       existing.id,
-      name,
-      priority ?? 0,
+      name.trim(),
+      priorityNum,
       mediaType,
       mediaUrl,
       typeof description === "string" ? description : description == null ? null : String(description)
@@ -89,10 +87,7 @@ export async function PUT(
     return NextResponse.json(updated);
   } catch (error) {
     console.error("[PUT /api/categories/:slug]", error);
-    return NextResponse.json(
-      { error: "Failed to update category" },
-      { status: 500 }
-    );
+    return apiErrorJson(error, "Не вдалося оновити категорію");
   }
 }
 
@@ -121,9 +116,6 @@ export async function DELETE(
     return NextResponse.json({ deleted: true });
   } catch (error) {
     console.error("[DELETE /api/categories/:slug]", error);
-    return NextResponse.json(
-      { error: "Failed to delete category" },
-      { status: 500 }
-    );
+    return apiErrorJson(error, "Не вдалося видалити категорію");
   }
 }

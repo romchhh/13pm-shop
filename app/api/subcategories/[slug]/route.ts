@@ -4,6 +4,7 @@ import {
   sqlPutSubcategory,
   sqlDeleteSubcategory,
 } from "@/lib/sql";
+import { apiErrorJson } from "@/lib/apiError";
 
 export async function GET(
   _req: NextRequest,
@@ -31,10 +32,7 @@ export async function GET(
     return NextResponse.json(subcategory);
   } catch (error) {
     console.error("GET subcategory failed:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
+    return apiErrorJson(error, "Не вдалося завантажити підкатегорію");
   }
 }
 
@@ -63,34 +61,31 @@ export async function PUT(
     const body = await req.json();
     const { name, parent_category_id } = body;
 
-    if (!name || typeof name !== "string") {
+    if (!name || typeof name !== "string" || !name.trim()) {
       return NextResponse.json(
-        { error: "Invalid or missing name" },
+        { error: "Вкажіть назву підкатегорії" },
         { status: 400 }
       );
     }
 
     const categoryId = Number(parent_category_id);
-    if (isNaN(categoryId)) {
+    if (!Number.isInteger(categoryId) || categoryId <= 0) {
       return NextResponse.json(
-        { error: "Invalid parent_category_id" },
+        { error: "Невірний parent_category_id — оберіть категорію" },
         { status: 400 }
       );
     }
 
     const updatedSubcategory = await sqlPutSubcategory(
       existing.id,
-      name,
+      name.trim(),
       categoryId
     );
 
     return NextResponse.json(updatedSubcategory);
   } catch (error) {
     console.error("PUT subcategory failed:", error);
-    return NextResponse.json(
-      { error: "Failed to update subcategory" },
-      { status: 500 }
-    );
+    return apiErrorJson(error, "Не вдалося оновити підкатегорію");
   }
 }
 
@@ -120,9 +115,6 @@ export async function DELETE(
     return NextResponse.json({ deleted: true });
   } catch (error) {
     console.error("DELETE subcategory failed:", error);
-    return NextResponse.json(
-      { error: "Failed to delete subcategory" },
-      { status: 500 }
-    );
+    return apiErrorJson(error, "Не вдалося видалити підкатегорію");
   }
 }
