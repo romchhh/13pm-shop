@@ -1,5 +1,3 @@
-import { prisma } from "@/lib/prisma";
-
 /**
  * Групи пов’язаних товарів (інші кольори) за pair_together_ids.
  * Зв’язок двосторонній: якщо A → B, то B → A; при збереженні — повний клік у групі.
@@ -70,48 +68,4 @@ export function buildColorLinkGroupLabels(
     }
   }
   return out;
-}
-
-/**
- * Синхронізує pair_together_ids: двосторонні зв’язки + повний клік у групі.
- * Якщо A пов’язаний з B і C, у всіх трьох з’являться однакові посилання.
- */
-export async function syncColorLinkClique(
-  productId: number,
-  desiredLinkedIds: number[]
-): Promise<void> {
-  const desired = normalizePairTogetherIds(desiredLinkedIds, productId);
-  const clique = new Set<number>([productId, ...desired]);
-
-  const targetLinks = new Map<number, number[]>();
-  for (const memberId of clique) {
-    targetLinks.set(
-      memberId,
-      [...clique].filter((id) => id !== memberId).sort((a, b) => a - b)
-    );
-  }
-
-  const formerPeers = await prisma.product.findMany({
-    where: {
-      pairTogetherIds: { has: productId },
-      NOT: { id: { in: [...clique] } },
-    },
-    select: { id: true, pairTogetherIds: true },
-  });
-
-  for (const p of formerPeers) {
-    targetLinks.set(
-      p.id,
-      normalizePairTogetherIds(p.pairTogetherIds).filter((id) => id !== productId)
-    );
-  }
-
-  await Promise.all(
-    [...targetLinks.entries()].map(([id, links]) =>
-      prisma.product.update({
-        where: { id },
-        data: { pairTogetherIds: links },
-      })
-    )
-  );
 }
