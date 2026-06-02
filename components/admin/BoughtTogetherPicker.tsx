@@ -5,6 +5,7 @@ import Image from "next/image";
 import Label from "@/components/admin/form/Label";
 import Input from "@/components/admin/form/input/InputField";
 import { formatAdminProductPrice } from "@/lib/formatAdminProductPrice";
+import { buildColorLinkGroupLabels } from "@/lib/colorLinkGroups";
 import { buildSizeGroupLabels, groupProductsForAdminPicker } from "@/lib/sizeGroupLabels";
 
 type CatalogProduct = {
@@ -15,6 +16,7 @@ type CatalogProduct = {
   discount_percentage?: number | null;
   first_media?: { url: string; type: string } | null;
   size_variants?: unknown;
+  pair_together_ids?: unknown;
 };
 
 function thumbSrc(p: CatalogProduct | undefined): string | null {
@@ -27,12 +29,15 @@ type BoughtTogetherPickerProps = {
   value: number[];
   onChange: (ids: number[]) => void;
   excludeProductId?: number;
+  /** size — групи розмірів; color — групи пов’язаних кольорів */
+  groupLabelSource?: "size" | "color";
 };
 
 export default function BoughtTogetherPicker({
   value,
   onChange,
   excludeProductId,
+  groupLabelSource = "size",
 }: BoughtTogetherPickerProps) {
   const selectedIds = useMemo(
     () => Array.from(new Set(value.filter((n) => Number.isInteger(n) && n > 0))),
@@ -88,6 +93,7 @@ export default function BoughtTogetherPicker({
                     ? (r.first_media as { url: string; type: string })
                     : null,
                 size_variants: r.size_variants ?? [],
+                pair_together_ids: r.pair_together_ids ?? [],
               };
             })
           );
@@ -111,13 +117,25 @@ export default function BoughtTogetherPicker({
     return m;
   }, [catalog]);
 
-  const catalogGroupLabels = useMemo(
-    () =>
-      buildSizeGroupLabels(
-        catalog.map((p) => ({ id: p.id, size_variants: p.size_variants }))
-      ),
-    [catalog]
-  );
+  const catalogGroupLabels = useMemo(() => {
+    if (groupLabelSource === "color") {
+      return buildColorLinkGroupLabels(
+        catalog.map((p) => ({ id: p.id, pair_together_ids: p.pair_together_ids }))
+      );
+    }
+    return buildSizeGroupLabels(
+      catalog.map((p) => ({ id: p.id, size_variants: p.size_variants }))
+    );
+  }, [catalog, groupLabelSource]);
+
+  const selectionGroupLabel = useMemo(() => {
+    if (groupLabelSource !== "color" || excludeProductId == null) return null;
+    const allIds = [excludeProductId, ...selectedIds];
+    const labels = buildColorLinkGroupLabels(
+      allIds.map((id) => ({ id, pair_together_ids: catalog.find((p) => p.id === id)?.pair_together_ids }))
+    );
+    return labels.get(excludeProductId) ?? null;
+  }, [groupLabelSource, excludeProductId, selectedIds, catalog]);
 
   const filteredCatalog = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -139,9 +157,25 @@ export default function BoughtTogetherPicker({
 
   return (
     <div className="space-y-3">
-      <p className="text-xs text-gray-500">
-        Товари з блоку «Купують разом» на сторінці товару. Оберіть з каталогу або керуйте списком нижче.
-      </p>
+      {groupLabelSource === "color" ? (
+        <p className="text-xs text-gray-500">
+          Інші кольори того ж виробу. Після збереження зв’язок двосторонній (A↔B), усі в групі бачать одна
+          одну — у списках нижче позначено <strong>Група 1</strong>, <strong>Група 2</strong> тощо.
+        </p>
+      ) : (
+        <p className="text-xs text-gray-500">
+          Товари з блоку «Купують разом» на сторінці товару. Оберіть з каталогу або керуйте списком нижче.
+        </p>
+      )}
+
+      {selectionGroupLabel ? (
+        <p className="text-sm font-medium text-amber-900">
+          Поточна група:{" "}
+          <span className="rounded bg-amber-50 px-2 py-0.5 ring-1 ring-amber-200/70">
+            {selectionGroupLabel}
+          </span>
+        </p>
+      ) : null}
 
       {selectedIds.length > 0 && (
         <ul className="flex flex-col gap-2">

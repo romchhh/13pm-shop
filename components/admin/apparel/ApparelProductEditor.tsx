@@ -23,6 +23,7 @@ import {
   type ProductMediaSlot,
 } from "@/lib/adminProductMediaSlots";
 import {
+  apparelFormFromProduct,
   buildApparelProductApiBody,
   defaultApparelColor,
   defaultApparelSizeRows,
@@ -160,6 +161,14 @@ export default function ApparelProductEditor({
       const body = buildApparelProductApiBody(values, uploadedMedia);
       await onSubmit(body);
 
+      if (mode === "edit" && productId != null) {
+        const res = await fetch(`/api/products/${productId}`, { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          patch({ colorLinkedIds: apparelFormFromProduct(data).colorLinkedIds });
+        }
+      }
+
       if (mode === "create") {
         setSuccess("Товар успішно створено!");
         setValues({
@@ -280,7 +289,7 @@ export default function ApparelProductEditor({
             />
           </ComponentCard>
 
-          <ComponentCard title="Пов'язані товари (інші кольори)">
+          <ComponentCard title="Пов’язані товари — інші кольори (Група 1, 2…)">
             <ColorLinkedProductsPicker
               value={values.colorLinkedIds}
               onChange={(colorLinkedIds) => patch({ colorLinkedIds })}

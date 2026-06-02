@@ -13,6 +13,7 @@ import {
 } from "./productOptions";
 import { textToSlug, ensureUniqueSlug } from "./slug";
 import { pickFirstProductMedia } from "./getFirstProductImage";
+import { syncColorLinkClique } from "./colorLinkGroups";
 
 // Keep sql template literal for backward compatibility (used in migrate route)
 // This will be deprecated but kept for now
@@ -123,6 +124,7 @@ async function _sqlGetAllProducts() {
     size_variants: (p as any).sizeVariants ?? [],
     color_options: parseColorOptions((p as any).colorOptions ?? []),
     white_color_surcharge_enabled: (p as any).whiteColorSurchargeEnabled ?? true,
+    pair_together_ids: (p as any).pairTogetherIds ?? [],
   }));
 }
 
@@ -798,6 +800,8 @@ export async function sqlPostProduct(product: {
     });
   }
 
+  await syncColorLinkClique(created.id, product.pair_together_ids ?? []);
+
   return { id: created.id };
 }
 
@@ -989,6 +993,10 @@ export async function sqlPutProduct(
       });
     }
   });
+
+  if (update.pair_together_ids !== undefined) {
+    await syncColorLinkClique(id, update.pair_together_ids);
+  }
 
   // Step 4: Delete unused image files from disk
   for (const url of filesToDelete) {

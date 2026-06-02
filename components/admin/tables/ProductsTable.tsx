@@ -13,6 +13,7 @@ import Link from "next/link";
 import Image from "next/image";
 import Pagination from "./Pagination";
 import { getProductImageSrc } from "@/lib/getFirstProductImage";
+import { buildColorLinkGroupLabels } from "@/lib/colorLinkGroups";
 import { buildSizeGroupLabels } from "@/lib/sizeGroupLabels";
 
 const SIZE_MAP: Record<string, string> = {
@@ -41,6 +42,7 @@ interface Product {
   color: string;
   first_media?: { url: string; type: string } | null;
   size_variants?: unknown;
+  pair_together_ids?: number[];
 }
 
 interface CategoryOption {
@@ -158,6 +160,14 @@ export default function ProductsTable() {
     () =>
       buildSizeGroupLabels(
         products.map((p) => ({ id: p.id, size_variants: p.size_variants }))
+      ),
+    [products]
+  );
+
+  const colorLinkGroupLabelById = useMemo(
+    () =>
+      buildColorLinkGroupLabels(
+        products.map((p) => ({ id: p.id, pair_together_ids: p.pair_together_ids }))
       ),
     [products]
   );
@@ -336,6 +346,12 @@ export default function ProductsTable() {
                   isHeader
                   className="px-5 py-3 text-left text-sm font-semibold text-gray-900"
                 >
+                  Група кольорів
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="px-5 py-3 text-left text-sm font-semibold text-gray-900"
+                >
                   Категорія
                 </TableCell>
                 <TableCell
@@ -369,7 +385,7 @@ export default function ProductsTable() {
               {loading ? (
                 <TableRow>
                   <TableCell
-                    colSpan={11}
+                    colSpan={12}
                     className="text-center py-6 text-gray-600"
                   >
                     Завантаження...
@@ -378,7 +394,7 @@ export default function ProductsTable() {
               ) : filteredProducts.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={11}
+                    colSpan={12}
                     className="text-center py-6 text-gray-600"
                   >
                     {filterCategoryId != null
@@ -427,8 +443,17 @@ export default function ProductsTable() {
                     </TableCell>
                     <TableCell className="px-5 py-4 text-sm text-gray-700">
                       {sizeGroupLabelById.get(product.id) ? (
-                        <span className="inline-block rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-900 ring-1 ring-amber-200/80">
+                        <span className="inline-block rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-800 ring-1 ring-slate-200/80">
                           {sizeGroupLabelById.get(product.id)}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-sm text-gray-700">
+                      {colorLinkGroupLabelById.get(product.id) ? (
+                        <span className="inline-block rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-900 ring-1 ring-amber-200/80">
+                          {colorLinkGroupLabelById.get(product.id)}
                         </span>
                       ) : (
                         <span className="text-gray-400">—</span>
