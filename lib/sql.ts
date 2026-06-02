@@ -816,6 +816,28 @@ async function syncColorLinkClique(
   const desired = normalizePairTogetherIds(desiredLinkedIds, productId);
   const clique = new Set<number>([productId, ...desired]);
 
+  // Розширюємо групу транзитивно:
+  // якщо A пов'язали з B, а B вже в групі з C/D, то A автоматично стає в цю ж групу.
+  const queue = [...desired];
+  const visited = new Set<number>();
+  while (queue.length > 0) {
+    const currentId = queue.shift()!;
+    if (visited.has(currentId)) continue;
+    visited.add(currentId);
+
+    const current = await prisma.product.findUnique({
+      where: { id: currentId },
+      select: { pairTogetherIds: true },
+    });
+    const peers = normalizePairTogetherIds(current?.pairTogetherIds ?? [], currentId);
+    for (const peerId of peers) {
+      if (!clique.has(peerId)) {
+        clique.add(peerId);
+        queue.push(peerId);
+      }
+    }
+  }
+
   const targetLinks = new Map<number, number[]>();
   for (const memberId of clique) {
     targetLinks.set(
