@@ -3,6 +3,7 @@ import Link from "next/link";
 import { SITE_STORE_NAME } from "@/lib/siteBrand";
 import { buildPageMetadata } from "@/lib/seo";
 import { seoCopy } from "@/lib/seoCopy";
+import { textPageMaxWidthClass } from "@/lib/textPageLayout";
 
 export const metadata: Metadata = buildPageMetadata({
   title: seoCopy.privacy.title,
@@ -13,7 +14,7 @@ export const metadata: Metadata = buildPageMetadata({
 export default function PrivacyPolicyPage() {
   return (
     <div className="min-h-screen py-20 px-6">
-      <div className="max-w-3xl mx-auto">
+      <div className={textPageMaxWidthClass}>
         {/* Header */}
         <div className="mb-16">
           <Link

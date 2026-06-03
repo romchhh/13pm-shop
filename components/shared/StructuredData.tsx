@@ -152,13 +152,11 @@ export function OrganizationStructuredData({
       siteContact.tiktokUrl,
       siteContact.telegramUrl,
     ],
-    email: siteContact.email,
     telephone: siteContact.phones.map((p) => p.tel),
     contactPoint: {
       "@type": "ContactPoint",
       contactType: "Customer Service",
       telephone: siteContact.phoneTel,
-      email: siteContact.email,
       availableLanguage: ["Ukrainian"],
     },
   };

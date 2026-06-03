@@ -12,10 +12,10 @@ export const seoCopy = {
     description: `${SITE_STORE_NAME}: власне виробництво тактичного одягу в Україні, лінійки ALPHA, BRAVO, DELTA. Доставка по світу, знижка −10% для силових структур.`,
     imageAlt: `${SITE_STORE_NAME} — про бренд та виробництво`,
   },
-  contacts: {
-    title: "Контакти",
-    description: `Звʼязатися з ${SITE_STORE_NAME}: телефон, email, Instagram та TikTok ${SITE_STORE_NAME.replace(" ", ".")}, Telegram. Консультація з розмірами та замовленням.`,
-    imageAlt: `Контакти ${SITE_STORE_NAME}`,
+  cooperation: {
+    title: "Співпраця — опт, пошиття, контакти",
+    description: `Оптові закупівлі та співпраця з ${SITE_STORE_NAME}: гурт від 5 од., знижка до 30%, пошиття, дропшипінг. Телефон, форма зворотного звʼязку, Viber, Telegram.`,
+    imageAlt: `Співпраця та контакти — ${SITE_STORE_NAME}`,
   },
   delivery: {
     title: "Доставка та оплата",

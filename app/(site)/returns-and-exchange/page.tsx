@@ -3,6 +3,7 @@ import Link from "next/link";
 import { buildPageMetadata } from "@/lib/seo";
 import { seoCopy } from "@/lib/seoCopy";
 import { siteContact } from "@/lib/siteContact";
+import { textPageMaxWidthClass } from "@/lib/textPageLayout";
 
 export const metadata: Metadata = buildPageMetadata({
   title: seoCopy.returns.title,
@@ -14,7 +15,7 @@ export const metadata: Metadata = buildPageMetadata({
 export default function ReturnsAndExchangePage() {
   return (
     <div className="min-h-screen w-full bg-[#FFFFFF] px-6 pb-16 pt-6 sm:pt-8">
-      <div className="max-w-3xl mx-auto">
+      <div className={textPageMaxWidthClass}>
         <div className="mb-16">
           <Link
             href="/"
@@ -84,13 +85,21 @@ export default function ReturnsAndExchangePage() {
               <li>виробничий брак.</li>
             </ul>
             <p className="opacity-80">
-              📩 Напишіть:{" "}
+              📩 Звʼяжіться з нами:{" "}
               <a
-                href={`mailto:${siteContact.email}`}
+                href={`tel:${siteContact.phoneTel}`}
                 className="font-semibold underline underline-offset-2 hover:opacity-100"
               >
-                {siteContact.email}
+                {siteContact.phoneDisplay}
               </a>
+              {" "}або через{" "}
+              <Link
+                href="/cooperation#contact-form"
+                className="font-semibold underline underline-offset-2 hover:opacity-100"
+              >
+                форму на сторінці співпраці
+              </Link>
+              .
             </p>
             <p className="opacity-80">Додайте фото товару.</p>
             <p className="opacity-80">

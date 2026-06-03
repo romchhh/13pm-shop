@@ -34,7 +34,7 @@ export default function ForbiddenPage() {
             На головну
           </Link>
           <Link
-            href="/contacts"
+            href="/cooperation"
             className="px-6 py-3 border-2 border-[#1C1C1C] text-[#1C1C1C] font-['Montserrat'] font-medium text-sm uppercase tracking-wider hover:bg-[#1C1C1C] hover:text-[#F2F2F0] transition-colors rounded-full"
           >
             Зв&apos;язатися

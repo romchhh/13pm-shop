@@ -21,7 +21,7 @@
 - Товар: /product/{slug}
 - Про нас (повна): /about-us
 - Блок «Про нас» на головній: /#about
-- Контакти: /contacts
+- Співпраця, контакти, форма зворотного звʼязку: /cooperation
 - Доставка та оплата: /delivery-and-payment
 - Повернення та обмін: /returns-and-exchange
 - Публічна оферта: /terms-of-service
@@ -45,12 +45,11 @@ Robots: /robots.txt
 Валюта: UAH (₴)
 Canonical домен: змінна PUBLIC_URL / NEXT_PUBLIC_PUBLIC_URL
 
-## Контакти
-Телефон: +380 93 259 51 49, +380 93 864 20 33
-Email: plywood_@ukr.net
+## Контакти (сторінка співпраці)
+Телефон: +380 93 267 97 96 (+380932679796)
 Instagram: https://www.instagram.com/13pm.tactic
 TikTok: https://www.tiktok.com/@13pm.tactic
-Telegram: https://t.me/+380932595149
+Telegram: https://t.me/+380932679796
 
 ## Дозволи для AI-краулерів
 Дозволено індексувати публічний каталог, товари та інформаційні сторінки.

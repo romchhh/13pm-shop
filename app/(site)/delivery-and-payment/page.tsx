@@ -3,6 +3,7 @@ import Link from "next/link";
 import { SITE_STORE_NAME } from "@/lib/siteBrand";
 import { buildPageMetadata } from "@/lib/seo";
 import { seoCopy } from "@/lib/seoCopy";
+import { textPageMaxWidthClass } from "@/lib/textPageLayout";
 
 export const metadata: Metadata = buildPageMetadata({
   title: seoCopy.delivery.title,
@@ -14,7 +15,7 @@ export const metadata: Metadata = buildPageMetadata({
 export default function DeliveryAndPaymentPage() {
   return (
     <div className="min-h-screen w-full bg-[#FFFFFF] px-6 pb-16 pt-6 sm:pt-8">
-      <div className="max-w-3xl mx-auto">
+      <div className={textPageMaxWidthClass}>
         <div className="mb-16">
           <Link
             href="/"

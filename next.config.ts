@@ -146,6 +146,11 @@ const nextConfig: NextConfig = {
         destination: "/about-us",
         permanent: true,
       },
+      {
+        source: "/contacts",
+        destination: "/cooperation",
+        permanent: true,
+      },
     ];
   },
   // Headers for better caching and performance

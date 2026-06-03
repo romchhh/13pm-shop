@@ -77,10 +77,10 @@ export default function NotFoundPage() {
                     Каталог
                   </Link>
                   <Link
-                    href="/contacts"
+                    href="/cooperation"
                     className="px-5 py-3 border border-[#1C1C1C]/25 text-[#1C1C1C] font-['Montserrat'] font-medium text-sm uppercase tracking-wider hover:bg-[#1C1C1C]/5 transition-colors rounded-full inline-flex items-center justify-center"
                   >
-                    Контакти
+                    Співпраця
                   </Link>
                   <Link
                     href="/delivery-and-payment"

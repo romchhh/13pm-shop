@@ -7,7 +7,7 @@ export const mainNavLinks = [
   { label: "BESTSELLERS", href: "/catalog?hits=1" },
   { label: "Акції", href: CATALOG_PROMO_HREF },
   { label: "Про нас", href: "/#about" },
-  { label: "Контакти", href: "/contacts" },
+  { label: "Співпраця", href: "/cooperation" },
   { label: "Відгуки", href: "/#reviews" },
 ] as const;
 

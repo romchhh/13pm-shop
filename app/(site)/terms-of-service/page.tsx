@@ -3,6 +3,7 @@ import Link from "next/link";
 import { SITE_STORE_NAME } from "@/lib/siteBrand";
 import { buildPageMetadata, getSiteBaseUrl } from "@/lib/seo";
 import { seoCopy } from "@/lib/seoCopy";
+import { textPageMaxWidthClass } from "@/lib/textPageLayout";
 
 const baseUrl = getSiteBaseUrl();
 
@@ -15,7 +16,7 @@ export const metadata: Metadata = buildPageMetadata({
 export default function TermsOfServicePage() {
   return (
     <div className="min-h-screen py-20 px-6">
-      <div className="max-w-3xl mx-auto">
+      <div className={textPageMaxWidthClass}>
         {/* Header */}
         <div className="mb-16">
           <Link

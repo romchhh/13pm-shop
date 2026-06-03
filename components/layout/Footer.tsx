@@ -94,8 +94,8 @@ export default function Footer() {
       >
         Відгуки
       </Link>
-      <Link href="/contacts" className={footerLinkClass}>
-        Контакти
+      <Link href="/cooperation" className={footerLinkClass}>
+        Співпраця
       </Link>
       <Link href="/delivery-and-payment" className={`${footerLinkClass} hidden lg:inline`}>
         Умови доставки

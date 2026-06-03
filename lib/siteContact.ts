@@ -1,21 +1,20 @@
-/** Контактні дані сайту — одне джерело для футера, хедера та сторінки «Контакти». */
-const phones = [
-  { display: "+380 93 259 51 49", tel: "+380932595149" },
-  { display: "+380 93 864 20 33", tel: "+380938642033" },
-] as const;
+/** Контактні дані сайту — одне джерело для хедера, футера та сторінки «Співпраця». */
+const PHONE_TEL = "+380932679796" as const;
+const PHONE_DISPLAY = "+380 93 267 97 96" as const;
+
+const phones = [{ display: PHONE_DISPLAY, tel: PHONE_TEL }] as const;
 
 export const siteContact = {
   phones,
-  phoneDisplay: phones[0].display,
-  phoneTel: phones[0].tel,
+  phoneDisplay: PHONE_DISPLAY,
+  phoneTel: PHONE_TEL,
   messengerPhone: {
-    display: "+380 93 259 51 49",
-    tel: "+380932595149",
+    display: PHONE_DISPLAY,
+    tel: PHONE_TEL,
   },
   messengerLabel: "Viber, Telegram",
-  viberUrl: "viber://chat?number=380932595149",
-  telegramUrl: "https://t.me/+380932595149",
-  email: "plywood_@ukr.net",
+  viberUrl: "viber://chat?number=380932679796",
+  telegramUrl: "https://t.me/+380932679796",
   scheduleLines: [
     "Пн.-Пт.: 09.00 - 18.00",
     "Сб.-Нд.: за попередньою домовленістю",
