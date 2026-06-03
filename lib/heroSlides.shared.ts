@@ -15,7 +15,7 @@ export const DEFAULT_HERO_SLIDES: HeroSlideData[] = [
     id: 0,
     title: "МАГАЗИН\nТАКТИЧНОГО\nОДЯГУ",
     subtitle:
-      "Куртки, штани, футболки та худі власного виробництва. Лінійки ALPHA, BRAVO та DELTA — доставка по Україні 1–3 дні.",
+      "Куртки, штани, футболки та худі власного виробництва.",
     desktopImage: DEFAULT_HERO_IMAGE,
     mobileImage: DEFAULT_HERO_IMAGE,
   },

@@ -134,7 +134,7 @@ function HeroScrollHint({ className = "" }: { className?: string }) {
       href="#categories"
       className={`inline-flex flex-col items-center gap-1.5 font-['Montserrat'] text-[11px] font-semibold uppercase tracking-[0.22em] text-white/80 transition-colors hover:text-white sm:text-xs ${className}`}
     >
-      <span>Гортай вниз</span>
+      
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
         <path
           d="M12 5v14M6 13l6 6 6-6"
@@ -277,7 +277,7 @@ export default function Hero({ slides }: HeroProps) {
 
         {/* Контент: на моб. — по центру висоти; на десктопі — зліва + каталог справа */}
         <div className="absolute inset-x-0 top-[var(--site-nav-height)] bottom-[min(44vh,330px)] z-10 mx-auto flex w-full max-w-[1920px] flex-col justify-center px-6 sm:bottom-[min(42vh,310px)] lg:relative lg:inset-auto lg:flex lg:h-full lg:flex-1 lg:flex-row lg:items-center lg:justify-between lg:gap-10 lg:pb-[7.5rem] lg:px-14 lg:pt-[calc(var(--site-nav-height)+1.25rem)] xl:gap-16 xl:px-20">
-          <div className="max-w-2xl space-y-5 lg:max-w-[min(52rem,52%)] lg:space-y-7">
+          <div className="max-w-2xl space-y-5 mt-14 sm:mt-16 lg:mt-0 lg:max-w-[min(52rem,52%)] lg:space-y-7">
             <HeroTitle lines={titleLines} />
             <p
               className="max-w-lg text-left font-['Montserrat'] font-normal leading-[1.5] tracking-[-0.01em] text-white/90 text-[clamp(1.125rem,4.5vw,1.3125rem)] sm:text-lg lg:max-w-md lg:text-[clamp(1.0625rem,1.6vw,1.25rem)] lg:leading-[1.55]"

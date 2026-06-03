@@ -21,19 +21,12 @@ type BrandLogoProps = {
 /** Співвідношення сторін mark-SVG (viewBox 295×415) */
 const LOGO_ASPECT = 295 / 415;
 
-const LOGO_HEIGHTS = {
-  compact: 40,
-  default: 52,
-  footer: 46,
+/** Майже на всю висоту рядка навігації (--site-nav-height) */
+const LOGO_HEIGHT_CLASS = {
+  compact: "h-[calc(var(--site-nav-height)-1rem)]",
+  default: "h-[calc(var(--site-nav-height)-1.35rem)]",
+  footer: "h-11",
 } as const;
-
-function logoDimensions(sizeKey: keyof typeof LOGO_HEIGHTS) {
-  const height = LOGO_HEIGHTS[sizeKey];
-  return {
-    height,
-    width: Math.round(height * LOGO_ASPECT),
-  };
-}
 
 /** Логотип 13pm — img для стабільного показу SVG */
 export default function BrandLogo({
@@ -45,7 +38,7 @@ export default function BrandLogo({
   const isWhite = variant === "onHero" || variant === "footer";
   const src = isWhite ? SITE_LOGO_MARK_WHITE : SITE_LOGO_MARK_BLACK;
   const sizeKey = compact ? "compact" : variant === "footer" ? "footer" : "default";
-  const { width, height } = logoDimensions(sizeKey);
+  const heightClass = LOGO_HEIGHT_CLASS[sizeKey];
 
   return (
     <Link
@@ -58,15 +51,11 @@ export default function BrandLogo({
       <img
         src={src}
         alt={`${SITE_STORE_NAME} — логотип`}
-        width={width}
-        height={height}
+        width={Math.round(52 * LOGO_ASPECT)}
+        height={52}
         decoding="async"
-        className="block h-auto w-auto max-h-[calc(var(--site-nav-height)-1.5rem)] object-contain object-center"
-        style={{
-          width,
-          height,
-          aspectRatio: `${295} / ${415}`,
-        }}
+        className={`block w-auto max-w-none object-contain object-center ${heightClass}`}
+        style={{ aspectRatio: `${295} / ${415}` }}
       />
     </Link>
   );

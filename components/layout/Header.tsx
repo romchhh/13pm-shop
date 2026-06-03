@@ -13,7 +13,6 @@ import SidebarSearch from "./SidebarSearch";
 import SidebarMenu from "./SidebarMenu";
 import { siteContact } from "@/lib/siteContact";
 import { LABEL_FREE_DELIVERY_FROM_2000 } from "@/lib/siteBrand";
-import { getMainNavHashId, mainNavLinks } from "@/lib/siteNav";
 
 interface Subcategory {
   id: number;
@@ -24,6 +23,36 @@ const NAV_MENU_LEAVE_DELAY_MS = 200;
 const ICON_CART = "/images/icons/cart.svg";
 const ICON_LIKE = "/images/icons/like.svg";
 const ICON_SEARCH = "/images/icons/search.svg";
+
+function HeaderMenuToggle({
+  isOpen,
+  onClick,
+  className = "",
+}: {
+  isOpen: boolean;
+  onClick: () => void;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex h-11 w-11 shrink-0 items-center justify-center transition-colors ${className}`}
+      aria-label={isOpen ? "Закрити меню" : "Відкрити меню"}
+      aria-expanded={isOpen}
+    >
+      {isOpen ? (
+        <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.75}>
+          <path strokeLinecap="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      ) : (
+        <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.75}>
+          <path strokeLinecap="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+        </svg>
+      )}
+    </button>
+  );
+}
 
 function PhoneLink({
   phone,
@@ -134,13 +163,10 @@ export default function Header() {
   const catalogTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const catalogRef = useRef<HTMLDivElement | null>(null);
 
-  const handleHomeAnchorClick = (
-    e: React.MouseEvent<HTMLAnchorElement>,
-    anchorId: string
-  ) => {
-    if (pathname !== "/") return;
-    e.preventDefault();
-    document.getElementById(anchorId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const toggleSidebarMenu = () => {
+    setCatalogOpen(false);
+    setHoveredCategoryId(null);
+    setIsSidebarOpen((open) => !open);
   };
 
   const scheduleCatalogClose = () => {
@@ -234,15 +260,22 @@ export default function Header() {
       >
         {/* Десктоп */}
         <div className={`hidden lg:block overflow-visible border-b transition-all duration-300 ${shellClass}`}>
-          <div className="mx-auto flex max-w-[1920px] items-center gap-6 overflow-visible px-8 py-3.5 xl:gap-10 xl:px-12 min-h-[var(--site-nav-height)]">
-            <BrandLogo
-              variant={headerTransparent ? "onHero" : "default"}
-              className="shrink-0 self-center"
-            />
+          <div className="relative mx-auto grid max-w-[1920px] min-h-[var(--site-nav-height)] grid-cols-[1fr_auto_1fr] items-center gap-4 overflow-visible px-8 py-2 xl:gap-6 xl:px-12">
+            <div className="flex min-w-0 items-center justify-start gap-3 xl:gap-4">
+              <HeaderMenuToggle
+                isOpen={isSidebarOpen}
+                onClick={toggleSidebarMenu}
+                className={navToneClass}
+              />
+              <span
+                className={`hidden font-['Montserrat'] text-sm font-bold xl:inline ${navToneClass}`}
+              >
+                Меню
+              </span>
 
-            <nav
-              className={`flex items-center justify-center gap-6 xl:gap-8 flex-1 min-w-0 font-['Montserrat'] text-[15px] font-bold transition-colors ${navToneClass}`}
-            >
+              <nav
+                className={`relative flex min-w-0 items-center font-['Montserrat'] text-[15px] font-bold transition-colors ${navToneClass}`}
+              >
               <div
                 ref={catalogRef}
                 className="relative"
@@ -331,101 +364,84 @@ export default function Header() {
                   </div>
                 )}
               </div>
+              </nav>
+            </div>
 
-              {mainNavLinks.map((link) => (
+            <BrandLogo
+              variant={headerTransparent ? "onHero" : "default"}
+              className="relative z-10 justify-self-center translate-y-1"
+            />
+
+            <div className="flex min-w-0 items-center justify-end gap-2 xl:gap-3">
+              <button
+                type="button"
+                onClick={() => setIsSearchOpen(true)}
+                className={`flex h-10 max-w-[240px] shrink-0 items-center gap-2 rounded-full px-4 transition-colors min-w-[160px] xl:min-w-[200px] ${
+                  headerTransparent
+                    ? "bg-white/15 text-white/90 backdrop-blur-sm hover:bg-white/25"
+                    : "bg-[#EAEAE8] text-[#1C1C1C]/60 hover:bg-[#E0E0DE]"
+                }`}
+                aria-label="Пошук"
+              >
+                <Image
+                  src={ICON_SEARCH}
+                  alt=""
+                  width={18}
+                  height={18}
+                  className={`h-[18px] w-[18px] shrink-0 ${headerTransparent ? "brightness-0 invert opacity-90" : "opacity-60"}`}
+                />
+                <span className="font-['Montserrat'] text-sm font-bold">Пошук</span>
+              </button>
+
+              <div className="flex shrink-0 items-center gap-2">
                 <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={(e) => {
-                    const hashId = getMainNavHashId(link.href);
-                    if (hashId) handleHomeAnchorClick(e, hashId);
-                  }}
-                  className={`whitespace-nowrap font-bold transition-colors ${navHoverClass}`}
+                  href="/cart"
+                  className={`relative flex h-11 w-11 items-center justify-center rounded-full transition-colors ${iconHoverClass}`}
+                  aria-label="Кошик"
                 >
-                  {link.label}
+                  <Image src={ICON_CART} alt="" width={23} height={21} className={`h-5 w-auto ${iconFilterClass}`} />
+                  {totalItems > 0 && (
+                    <span className="absolute top-0.5 right-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[var(--site-accent)] px-1 text-[10px] font-bold text-white">
+                      {totalItems > 99 ? "99+" : totalItems}
+                    </span>
+                  )}
                 </Link>
-              ))}
-            </nav>
-
-            <button
-              type="button"
-              onClick={() => setIsSearchOpen(true)}
-              className={`flex items-center gap-2 h-10 px-4 rounded-full transition-colors min-w-[180px] xl:min-w-[220px] max-w-[280px] shrink-0 ${
-                headerTransparent
-                  ? "bg-white/15 text-white/90 backdrop-blur-sm hover:bg-white/25"
-                  : "bg-[#EAEAE8] text-[#1C1C1C]/60 hover:bg-[#E0E0DE]"
-              }`}
-              aria-label="Пошук"
-            >
-              <Image
-                src={ICON_SEARCH}
-                alt=""
-                width={18}
-                height={18}
-                className={`h-[18px] w-[18px] shrink-0 ${headerTransparent ? "brightness-0 invert opacity-90" : "opacity-60"}`}
-              />
-              <span className="font-['Montserrat'] text-sm font-bold">Пошук</span>
-            </button>
-
-            <div className="flex items-center gap-2 shrink-0">
-              <Link
-                href="/cart"
-                className={`relative flex h-11 w-11 items-center justify-center rounded-full transition-colors ${iconHoverClass}`}
-                aria-label="Кошик"
-              >
-                <Image src={ICON_CART} alt="" width={23} height={21} className={`h-5 w-auto ${iconFilterClass}`} />
-                {totalItems > 0 && (
-                  <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center text-[10px] font-bold text-white bg-[var(--site-accent)] rounded-full">
-                    {totalItems > 99 ? "99+" : totalItems}
-                  </span>
-                )}
-              </Link>
-              <Link
-                href="/favorites"
-                className={`relative flex h-11 w-11 items-center justify-center rounded-full transition-colors ${iconHoverClass}`}
-                aria-label="Вішлист"
-              >
-                <Image src={ICON_LIKE} alt="" width={20} height={19} className={`h-5 w-auto ${iconFilterClass}`} />
-                {favoritesCount > 0 && (
-                  <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center text-[10px] font-bold text-white bg-[var(--site-accent)] rounded-full">
-                    {favoritesCount > 99 ? "99+" : favoritesCount}
-                  </span>
-                )}
-              </Link>
+                <Link
+                  href="/favorites"
+                  className={`relative flex h-11 w-11 items-center justify-center rounded-full transition-colors ${iconHoverClass}`}
+                  aria-label="Вішлист"
+                >
+                  <Image src={ICON_LIKE} alt="" width={20} height={19} className={`h-5 w-auto ${iconFilterClass}`} />
+                  {favoritesCount > 0 && (
+                    <span className="absolute top-0.5 right-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[var(--site-accent)] px-1 text-[10px] font-bold text-white">
+                      {favoritesCount > 99 ? "99+" : favoritesCount}
+                    </span>
+                  )}
+                </Link>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Мобільний */}
         <div className={`lg:hidden overflow-visible border-b transition-all duration-300 ${shellClass}`}>
-          <div className="flex min-h-[var(--site-nav-height)] items-center gap-2 overflow-visible px-4 py-2.5">
-            <div className="flex min-w-0 flex-1 items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className={`flex h-10 w-10 shrink-0 items-center justify-center transition-colors ${navToneClass}`}
-                aria-label="Меню"
-              >
-                {isSidebarOpen ? (
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                    <path strokeLinecap="round" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                ) : (
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                    <path strokeLinecap="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-                  </svg>
-                )}
-              </button>
+          <div className="relative flex min-h-[var(--site-nav-height)] items-center overflow-visible px-3 py-1.5 sm:px-4">
+            <HeaderMenuToggle
+              isOpen={isSidebarOpen}
+              onClick={toggleSidebarMenu}
+              className={`relative z-10 ${navToneClass}`}
+            />
 
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-14 sm:px-16">
               <BrandLogo
                 compact
                 variant={headerTransparent ? "onHero" : "default"}
-                className="max-w-[calc(100vw-11rem)] self-center"
+                className="pointer-events-auto max-w-[min(52vw,12rem)] translate-y-1"
                 onNavigate={() => isSidebarOpen && setIsSidebarOpen(false)}
               />
             </div>
 
-            <div className="flex shrink-0 items-center gap-1">
+            <div className="relative z-10 ml-auto flex shrink-0 items-center gap-1">
               <button
                 type="button"
                 onClick={() => setIsSearchOpen(true)}
