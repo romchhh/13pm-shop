@@ -4,6 +4,8 @@
  */
 export const VIRTUAL_STOCK_WHEN_IN_STOCK = 999_999;
 
+export const OUT_OF_STOCK_LABEL = "Немає в наявності";
+
 /** Чи товар недоступний для покупки на вітрині / в кошику. */
 export function isProductOutOfStock(p: {
   in_stock?: boolean | null;

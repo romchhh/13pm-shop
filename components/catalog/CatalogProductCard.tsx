@@ -204,7 +204,7 @@ export default function CatalogProductCard({
             <AddToCartButton
               size="sm"
               variant="dark"
-              disabled={outOfStock}
+              outOfStock={outOfStock}
               className="w-full lg:w-auto"
               onClick={(e) => {
                 e.preventDefault();

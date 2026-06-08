@@ -33,7 +33,7 @@ import ProductMediaLightbox from "@/components/product/ProductMediaLightbox";
 import YouMightLike from "@/components/product/YouMightLike";
 import AddToCartButton from "@/components/shared/AddToCartButton";
 import CategoryDescriptionMarkdown from "@/components/shared/CategoryDescriptionMarkdown";
-import { isProductOutOfStock } from "@/lib/productAvailability";
+import { isProductOutOfStock, OUT_OF_STOCK_LABEL } from "@/lib/productAvailability";
 import { productToFavoriteSnapshot } from "@/lib/favoritesStorage";
 import FavoriteButton from "@/components/shared/FavoriteButton";
 import { scrollPageToTopReliable } from "@/lib/scrollPageToTop";
@@ -540,7 +540,7 @@ export default function ProductClient({ product }: ProductClientProps) {
               )}
             </div>
 
-            <p className="text-sm text-black/45">{outOfStock ? "Немає в наявності" : "В наявності"}</p>
+            <p className="text-sm text-black/45">{outOfStock ? OUT_OF_STOCK_LABEL : "В наявності"}</p>
 
             {shortText ? (
               <p className="text-base leading-relaxed text-black/85">{shortText}</p>
@@ -650,7 +650,7 @@ export default function ProductClient({ product }: ProductClientProps) {
                 variant="dark"
                 className="min-w-0 flex-1 rounded-2xl"
                 label={isAddingToCart ? "Додавання…" : "В кошик"}
-                disabled={outOfStock}
+                outOfStock={outOfStock}
                 loading={isAddingToCart}
                 onClick={() => {
                   if (!outOfStock && !isAddingToCart) void handleAddToCart();
@@ -805,7 +805,7 @@ export default function ProductClient({ product }: ProductClientProps) {
             variant="dark"
             className="min-w-0 flex-1 rounded-2xl"
             label={isAddingToCart ? "…" : "В кошик"}
-            disabled={outOfStock}
+            outOfStock={outOfStock}
             loading={isAddingToCart}
             onClick={() => {
               if (!outOfStock && !isAddingToCart) void handleAddToCart();
