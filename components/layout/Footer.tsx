@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import { siteContact } from "@/lib/siteContact";
+import { siteLegalLinks } from "@/lib/siteLegal";
 import { SITE_WORDMARK } from "@/lib/siteBrand";
 import { useCategories } from "@/lib/CategoriesProvider";
 import BrandLogo from "./BrandLogo";
@@ -205,7 +206,21 @@ export default function Footer() {
       </div>
 
       <div className="border-t border-white/15">
-        <div className="max-w-[1920px] mx-auto px-6 lg:px-12 py-5">
+        <div className="max-w-[1920px] mx-auto px-6 lg:px-12 py-5 space-y-4">
+          <nav
+            className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2"
+            aria-label="Юридичні документи"
+          >
+            {siteLegalLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="font-['Montserrat'] text-xs text-white/60 hover:text-white transition-colors"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
           <p className="text-center font-['Montserrat'] text-xs text-white/50">
             <Link
               href="https://new.telebots.site/"

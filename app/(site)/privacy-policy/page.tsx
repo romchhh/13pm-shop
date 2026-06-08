@@ -4,6 +4,7 @@ import { SITE_STORE_NAME } from "@/lib/siteBrand";
 import { buildPageMetadata } from "@/lib/seo";
 import { seoCopy } from "@/lib/seoCopy";
 import { textPageMaxWidthClass } from "@/lib/textPageLayout";
+import SiteRequisitesBlock from "@/components/legal/SiteRequisitesBlock";
 
 export const metadata: Metadata = buildPageMetadata({
   title: seoCopy.privacy.title,
@@ -241,34 +242,7 @@ export default function PrivacyPolicyPage() {
 
           <section className="space-y-4">
             <h2 className="text-2xl md:text-3xl font-semibold mb-6">7. РЕКВІЗИТИ</h2>
-            <div className="bg-black/5 dark:bg-white/5 p-8 rounded-2xl border border-black/10 dark:border-white/10 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <p className="text-sm font-semibold mb-2 opacity-60">Покупець</p>
-                  <p className="text-sm opacity-90">ФОП Макарук Тетяна Віталіївна</p>
-                </div>
-                <div>
-                  <p className="text-sm font-semibold mb-2 opacity-60">ІПН/ЄДРПОУ</p>
-                  <p className="text-sm opacity-90">3667609682</p>
-                </div>
-                <div className="md:col-span-2">
-                  <p className="text-sm font-semibold mb-2 opacity-60">IBAN</p>
-                  <p className="text-sm opacity-90">UA023220010000026008370057694</p>
-                </div>
-                <div>
-                  <p className="text-sm font-semibold mb-2 opacity-60">Банк</p>
-                  <p className="text-sm opacity-90">АТ «УНІВЕРСАЛ БАНК»</p>
-                </div>
-                <div>
-                  <p className="text-sm font-semibold mb-2 opacity-60">МФО</p>
-                  <p className="text-sm opacity-90">322001</p>
-                </div>
-                <div>
-                  <p className="text-sm font-semibold mb-2 opacity-60">ЄДРПОУ Банку</p>
-                  <p className="text-sm opacity-90">21133352</p>
-                </div>
-              </div>
-            </div>
+            <SiteRequisitesBlock />
           </section>
 
           <section className="mt-16 pt-8 border-t border-black/10 dark:border-white/10">
