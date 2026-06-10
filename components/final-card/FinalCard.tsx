@@ -19,8 +19,11 @@ import { ENABLE_ONLINE_CARD_PAYMENT } from "@/lib/paymentConfig";
 const CHECKOUT_CTA_PRIMARY =
   "bg-[#1C1C1C] text-white shadow-[0_4px_20px_rgba(0,0,0,0.2)] transition-[transform,box-shadow,background-color] hover:bg-black hover:shadow-[0_6px_24px_rgba(0,0,0,0.24)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none disabled:hover:bg-[#1C1C1C]";
 
+const paymentOptionTitleClass =
+  "block text-xl font-bold leading-tight tracking-tight sm:text-2xl";
+
 function checkoutChoiceButtonClass(selected: boolean): string {
-  return `rounded-2xl px-4 py-4 text-left font-['Montserrat'] transition-all sm:min-h-[58px] ${
+  return `rounded-2xl px-4 py-5 text-left font-['Montserrat'] transition-all sm:min-h-[72px] ${
     selected
       ? "border-2 border-[#1C1C1C] bg-[#1C1C1C] text-white shadow-[0_4px_16px_rgba(0,0,0,0.16)] ring-2 ring-[#1C1C1C]/15"
       : "border-2 border-black/10 bg-white text-black hover:border-[#1C1C1C]/30 hover:bg-black/[0.02]"
@@ -1164,7 +1167,7 @@ export default function FinalCard() {
                       onClick={() => handlePaymentTypeChange("prepay")}
                       className={checkoutChoiceButtonClass(paymentType === "prepay")}
                     >
-                      <span className="block text-sm font-bold sm:text-base">Післяоплата</span>
+                      <span className={paymentOptionTitleClass}>Післяоплата</span>
                       <span
                         className={`mt-1 block text-xs font-normal leading-snug ${
                           paymentType === "prepay" ? "text-white/75" : "text-black/50"
@@ -1182,7 +1185,7 @@ export default function FinalCard() {
                       >
                         <div className="flex items-start justify-between gap-4">
                           <div className="min-w-0 flex-1 text-left">
-                            <span className="block text-sm font-bold sm:text-base">Онлайн-оплата</span>
+                            <span className={paymentOptionTitleClass}>Онлайн-оплата</span>
                             <span
                               className={`mt-2 block text-xs font-normal leading-snug ${
                                 paymentType === "full" ? "text-white/75" : "text-black/50"

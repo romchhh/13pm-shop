@@ -158,6 +158,52 @@ export function normalizeNpPhone(phone: string): string {
   return d;
 }
 
+const NP_KYIV_TZ = "Europe/Kyiv";
+
+const NP_DESCRIPTION_FALLBACK =
+  process.env.NOVA_POSHTA_DESCRIPTION?.trim() || "Одяг";
+
+/**
+ * Дата/час відправки для InternetDocument.save — у часовому поясі Києва з часом.
+ * Лише дата (00:00) або UTC дають помилку «DateTime cannot be less then now».
+ */
+export function formatNovaPoshtaDateTime(now = new Date()): string {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: NP_KYIV_TZ,
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(now);
+
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? "00";
+
+  return `${get("day")}.${get("month")}.${get("year")} ${get("hour")}:${get("minute")}:${get("second")}`;
+}
+
+/**
+ * НП приймає короткий опис кирилицею; назви товарів з латиницею/символами відхиляються.
+ */
+export function sanitizeNovaPoshtaDescription(input?: string | null): string {
+  const raw = (input ?? "").trim();
+  if (!raw) return NP_DESCRIPTION_FALLBACK;
+
+  const cleaned = raw
+    .replace(/[^\u0400-\u04FF\u0456\u0457\u0490\u04B0\u04AE\u04E8\u04BA0-9\s,.()-]/gi, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 100);
+
+  const cyrillicLetters = cleaned.replace(/[^А-Яа-яІіЇїЄєҐґ]/g, "").length;
+  if (cyrillicLetters < 3) return NP_DESCRIPTION_FALLBACK;
+
+  return cleaned;
+}
+
 async function npRequest<T>(
   modelName: string,
   calledMethod: string,
@@ -390,22 +436,17 @@ export async function createNovaPoshtaTtn(
     PayerType: process.env.NOVA_POSHTA_PAYER_TYPE?.trim() || "Recipient",
     Cost: String(Math.max(1, Math.round(params.cost))),
     SeatsAmount: "1",
-    Description: params.description.slice(0, 100),
-    CargoType: process.env.NOVA_POSHTA_CARGO_TYPE?.trim() || "Parcel",
+    Description: sanitizeNovaPoshtaDescription(params.description),
+    CargoType: process.env.NOVA_POSHTA_CARGO_TYPE?.trim() || "Cargo",
     Weight: params.weight ?? "1",
     VolumeGeneral: params.volumeGeneral ?? "0.0004",
+    DateTime: formatNovaPoshtaDateTime(),
   };
 
   methodProperties.Recipient = ensured.recipientRef;
   methodProperties.ContactRecipient = ensured.contactRef;
   methodProperties.CityRecipient = cityRef;
   methodProperties.RecipientAddress = warehouseRef;
-
-  const now = new Date();
-  const dd = String(now.getDate()).padStart(2, "0");
-  const mm = String(now.getMonth() + 1).padStart(2, "0");
-  const yyyy = now.getFullYear();
-  methodProperties.DateTime = `${dd}.${mm}.${yyyy}`;
 
   const resp = await npRequest<SaveInternetDocumentRow[]>(
     "InternetDocument",

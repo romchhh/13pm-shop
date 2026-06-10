@@ -92,11 +92,6 @@ export async function createOrderTtn(params: {
       serviceType = "WarehouseWarehouse"; // Поштомат = відділення
     }
 
-    const description = orderItems
-      .slice(0, 3)
-      .map((i) => i.productName ?? "Товар")
-      .join(", ");
-
     const ttnParams: CreateTtnParams = {
       recipientName: customerName,
       recipientPhone: phoneNumber,
@@ -105,7 +100,7 @@ export async function createOrderTtn(params: {
       cityRef: cityRef ?? undefined,
       warehouseRef: warehouseRef ?? undefined,
       cost: orderTotal,
-      description: description || "Тактичний одяг 13pm tactic",
+      description: process.env.NOVA_POSHTA_DESCRIPTION?.trim() || "Одяг",
       serviceType,
       weight: dimensions.weight,
       volumeGeneral: dimensions.volumeGeneral,
