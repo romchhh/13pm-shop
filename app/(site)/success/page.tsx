@@ -75,13 +75,19 @@ function PaymentSuccessContent() {
   const [order, setOrder] = useState<OrderData | null>(null);
   const [state, setState] = useState<PageState>("loading");
   const [refreshing, setRefreshing] = useState(false);
-  const [offlinePaymentHint] = useState(() =>
-    typeof window !== "undefined" && isNoOnlinePaymentType(readPendingPaymentType())
-  );
+  const [loadingMessage, setLoadingMessage] = useState("Завантаження...");
   const hasTrackedPurchaseRef = useRef(false);
   const hasTrackedConvAdsRef = useRef(false);
 
   const orderRef = searchParams.get("orderReference");
+
+  useEffect(() => {
+    setLoadingMessage(
+      isNoOnlinePaymentType(readPendingPaymentType())
+        ? "Завантаження замовлення..."
+        : "Перевіряємо статус оплати..."
+    );
+  }, []);
 
   // Після повернення з Mono (redirectUrl без query) — беремо orderId з localStorage і редіректимо
   useEffect(() => {
@@ -222,10 +228,6 @@ function PaymentSuccessContent() {
     setRefreshing(true);
     loadOrder().finally(() => setRefreshing(false));
   }
-
-  const loadingMessage = offlinePaymentHint
-    ? "Завантаження замовлення..."
-    : "Перевіряємо статус оплати...";
 
   if (state === "loading") {
     return (

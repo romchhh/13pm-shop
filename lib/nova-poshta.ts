@@ -6,6 +6,17 @@
 
 const NP_JSON = "https://api.novaposhta.ua/v2.0/json/";
 
+export type NpCity = {
+  ref: string;
+  name: string;
+};
+
+export type NpWarehouse = {
+  ref: string;
+  description: string;
+  number: string;
+};
+
 export type NpApiResponse<T> = {
   success: boolean;
   data?: T;
@@ -14,11 +25,128 @@ export type NpApiResponse<T> = {
   info?: unknown[];
 };
 
-function getApiKey(): string | undefined {
+function getApiKey(): string {
   return (
     process.env.NOVA_POSHTA_API_KEY?.trim() ||
-    process.env.NEXT_PUBLIC_NOVA_POSHTA_API_KEY?.trim()
+    process.env.NEXT_PUBLIC_NOVA_POSHTA_API_KEY?.trim() ||
+    ""
   );
+}
+
+function getRequiredApiKey(): string | undefined {
+  const key = getApiKey();
+  return key || undefined;
+}
+
+async function npDirectoryRequest<T>(
+  modelName: string,
+  calledMethod: string,
+  methodProperties: Record<string, unknown>
+): Promise<{ success: boolean; data: T[]; error?: string }> {
+  try {
+    const res = await fetch(NP_JSON, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        apiKey: getApiKey(),
+        modelName,
+        calledMethod,
+        methodProperties,
+      }),
+      cache: "no-store",
+    });
+
+    const json = (await res.json()) as {
+      success: boolean;
+      data?: T[];
+      errors?: { message?: string }[] | string[];
+    };
+
+    if (!json.success) {
+      const first = json.errors?.[0];
+      const msg =
+        typeof first === "string"
+          ? first
+          : (first as { message?: string } | undefined)?.message ??
+            "Помилка API Нової Пошти";
+      return { success: false, data: [], error: msg };
+    }
+
+    return { success: true, data: json.data ?? [] };
+  } catch {
+    return { success: false, data: [], error: "Не вдалося з'єднатися з API Нової Пошти" };
+  }
+}
+
+/** Пошук міст для автодоповнення (ключ опційний). */
+export async function searchNovaPoshtaCities(
+  findByString: string,
+  limit = 20
+): Promise<{ cities: NpCity[]; error?: string }> {
+  const query = findByString.trim();
+  if (query.length < 2) return { cities: [] };
+
+  const result = await npDirectoryRequest<{ Description: string; Ref: string }>(
+    "Address",
+    "getCities",
+    { FindByString: query, Limit: limit }
+  );
+
+  if (!result.success) {
+    return { cities: [], error: result.error ?? "Не вдалося завантажити міста" };
+  }
+
+  return {
+    cities: result.data.map((c) => ({
+      ref: c.Ref,
+      name: c.Description,
+    })),
+  };
+}
+
+/** Відділення та поштомати в обраному місті (ключ опційний). */
+export async function searchNovaPoshtaWarehouses(options: {
+  cityRef?: string;
+  cityName?: string;
+  findByString?: string;
+  limit?: number;
+}): Promise<{ warehouses: NpWarehouse[]; error?: string }> {
+  const cityRef = options.cityRef?.trim();
+  const cityName = options.cityName?.trim();
+  if (!cityRef && !cityName) {
+    return { warehouses: [], error: "Оберіть місто" };
+  }
+
+  const methodProperties: Record<string, unknown> = {
+    Limit: options.limit ?? 50,
+  };
+
+  if (cityRef) methodProperties.CityRef = cityRef;
+  else methodProperties.CityName = cityName;
+
+  const find = options.findByString?.trim();
+  if (find) methodProperties.FindByString = find;
+
+  const result = await npDirectoryRequest<{
+    Description: string;
+    Ref: string;
+    Number?: string;
+  }>("Address", "getWarehouses", methodProperties);
+
+  if (!result.success) {
+    return {
+      warehouses: [],
+      error: result.error ?? "Не вдалося завантажити відділення",
+    };
+  }
+
+  return {
+    warehouses: result.data.map((w) => ({
+      ref: w.Ref,
+      description: w.Description,
+      number: w.Number ?? "",
+    })),
+  };
 }
 
 /** Телефон для НП: лише цифри, бажано 380… */
@@ -35,7 +163,7 @@ async function npRequest<T>(
   calledMethod: string,
   methodProperties: Record<string, unknown>
 ): Promise<NpApiResponse<T>> {
-  const apiKey = getApiKey();
+  const apiKey = getRequiredApiKey();
   if (!apiKey) {
     return { success: false, errors: ["NOVA_POSHTA_API_KEY is not set"] };
   }
@@ -162,7 +290,7 @@ async function ensureRecipientCounterparty(params: {
 }
 
 export function isNovaPoshtaConfiguredForTtn(): boolean {
-  const k = getApiKey();
+  const k = getRequiredApiKey();
   if (!k) return false;
   const sender = process.env.NOVA_POSHTA_SENDER_REF?.trim();
   const citySender = process.env.NOVA_POSHTA_CITY_SENDER_REF?.trim();

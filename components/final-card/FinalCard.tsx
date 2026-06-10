@@ -72,6 +72,7 @@ export default function FinalCard() {
   const [city, setCity] = useState("");
   const [postOffice, setPostOffice] = useState("");
   const [cityRef, setCityRef] = useState("");
+  const [warehouseRef, setWarehouseRef] = useState("");
   const DELIVERY_COST_BRANCH = 0; // доставка оплачується на відділенні, не додаємо до суми
   // Auto-fill showroom address when selected
   useEffect(() => {
@@ -79,11 +80,13 @@ export default function FinalCard() {
       setCity("Київ");
       setPostOffice("Самовивіз: вул. Костянтинівська, 21 (13:00–19:00)");
       setCityRef("");
+      setWarehouseRef("");
     } else {
       // Для способів Нової пошти не фіксуємо місто за замовчуванням
       setCity("");
       setPostOffice("");
       setCityRef("");
+      setWarehouseRef("");
     }
   }, [deliveryMethod]);
 
@@ -425,6 +428,8 @@ export default function FinalCard() {
         delivery_method: deliveryMethod,
         city,
         post_office: postOffice,
+        nova_poshta_city_ref: cityRef || undefined,
+        nova_poshta_warehouse_ref: warehouseRef || undefined,
         comment: orderComment,
         payment_type: paymentType,
         total_amount: fullAmount.toFixed(2),
@@ -753,6 +758,7 @@ export default function FinalCard() {
   const handleCityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     handleCityChangeWithValidation(e.target.value);
     setCityRef("");
+    setWarehouseRef("");
     setPostOffice("");
     setPostOffices([]);
     setCityListVisible(true);
@@ -760,12 +766,14 @@ export default function FinalCard() {
 
   const handlePostOfficeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     handlePostOfficeChangeWithValidation(e.target.value);
+    setWarehouseRef("");
     setPostOfficeListVisible(true);
   };
 
   const handleCitySelect = (option: NpCityOption) => {
     handleCityChangeWithValidation(option.name);
     setCityRef(option.ref);
+    setWarehouseRef("");
     setPostOffice("");
     setPostOffices([]);
     setCityListVisible(false);
@@ -774,6 +782,7 @@ export default function FinalCard() {
 
   const handlePostOfficeSelect = (warehouse: NpWarehouseOption) => {
     handlePostOfficeChangeWithValidation(warehouse.description);
+    setWarehouseRef(warehouse.ref);
     setPostOfficeListVisible(false);
   };
 

@@ -10,6 +10,48 @@ import { ENABLE_ONLINE_CARD_PAYMENT } from "@/lib/paymentConfig";
 
 const log = createLogger("POST /api/orders");
 
+async function persistNovaPoshtaRefs(
+  orderId: number,
+  cityRef?: string | null,
+  warehouseRef?: string | null
+): Promise<void> {
+  try {
+    const { saveNovaPoshtaRefsToOrder } = await import("@/lib/createOrderTtn");
+    await saveNovaPoshtaRefsToOrder(orderId, cityRef, warehouseRef);
+  } catch (e) {
+    log.warn(`Failed to save Nova Poshta refs for order ${orderId}:`, e);
+  }
+}
+
+async function tryCreateOrderTtn(params: {
+  orderId: number;
+  customerName: string;
+  phoneNumber: string;
+  city: string;
+  postOffice: string;
+  cityRef?: string | null;
+  warehouseRef?: string | null;
+  deliveryMethod: string;
+  orderTotal: number;
+  orderItems: { productId: number; productName: string }[];
+}): Promise<string | null> {
+  try {
+    const { createOrderTtn, saveTtnToOrder } = await import("@/lib/createOrderTtn");
+    const ttnResult = await createOrderTtn(params);
+
+    if ("ttn" in ttnResult) {
+      await saveTtnToOrder(params.orderId, ttnResult.ttn);
+      log.debug(`TTN ${ttnResult.ttn} created for order ${params.orderId}`);
+      return ttnResult.ttn;
+    }
+
+    log.warn(`Failed to create TTN for order ${params.orderId}:`, ttnResult.error);
+  } catch (e) {
+    log.warn(`TTN creation failed for order ${params.orderId}:`, e);
+  }
+  return null;
+}
+
 type IncomingOrderItem = {
   product_id?: number | string;
   productId?: number | string;
@@ -74,7 +116,14 @@ export async function POST(req: NextRequest) {
       items,
       promo_code: promoCodeFromBody,
       delivery_cost: deliveryCostFromBody,
+      nova_poshta_city_ref: novaPoshtaCityRef,
+      nova_poshta_warehouse_ref: novaPoshtaWarehouseRef,
     } = body;
+
+    const npCityRef =
+      typeof novaPoshtaCityRef === "string" ? novaPoshtaCityRef.trim() : "";
+    const npWarehouseRef =
+      typeof novaPoshtaWarehouseRef === "string" ? novaPoshtaWarehouseRef.trim() : "";
 
     if (one_click) {
       delivery_method = "one_click";
@@ -311,34 +360,22 @@ export async function POST(req: NextRequest) {
         payment_status: "paid",
       });
 
-      // Створюємо TTN для Нової пошти
-      let ttnNumber: string | null = null;
-      try {
-        const { createOrderTtn, saveTtnToOrder } = await import("@/lib/createOrderTtn");
-        const ttnResult = await createOrderTtn({
-          orderId: dbOrderId,
-          customerName: customer_name,
-          phoneNumber: phone_number,
-          city,
-          postOffice: post_office,
-          deliveryMethod: delivery_method,
-          orderTotal: Math.round(orderTotal),
-          orderItems: normalizedItems.map((i) => ({
-            productId: i.product_id,
-            productName: i.product_name,
-          })),
-        });
-
-        if ("ttn" in ttnResult) {
-          ttnNumber = ttnResult.ttn;
-          await saveTtnToOrder(dbOrderId, ttnNumber);
-          log.debug(`TTN ${ttnNumber} created for order ${dbOrderId}`);
-        } else {
-          log.warn(`Failed to create TTN for order ${dbOrderId}:`, ttnResult.error);
-        }
-      } catch (e) {
-        log.warn("TTN creation failed (test_payment):", e);
-      }
+      await persistNovaPoshtaRefs(dbOrderId, npCityRef, npWarehouseRef);
+      const ttnNumber = await tryCreateOrderTtn({
+        orderId: dbOrderId,
+        customerName: customer_name,
+        phoneNumber: phone_number,
+        city,
+        postOffice: post_office,
+        cityRef: npCityRef || null,
+        warehouseRef: npWarehouseRef || null,
+        deliveryMethod: delivery_method,
+        orderTotal: Math.round(orderTotal),
+        orderItems: normalizedItems.map((i) => ({
+          productId: i.product_id,
+          productName: i.product_name,
+        })),
+      });
 
       // Лист підтвердження на email клієнта (як при реальній оплаті)
       if (email && String(email).trim()) {
@@ -404,34 +441,22 @@ export async function POST(req: NextRequest) {
         decrement_stock: true,
       });
 
-      // Створюємо TTN для Нової пошти
-      let ttnNumber: string | null = null;
-      try {
-        const { createOrderTtn, saveTtnToOrder } = await import("@/lib/createOrderTtn");
-        const ttnResult = await createOrderTtn({
-          orderId: dbOrderId,
-          customerName: customer_name,
-          phoneNumber: phone_number,
-          city,
-          postOffice: post_office,
-          deliveryMethod: delivery_method,
-          orderTotal: Math.round(orderTotal),
-          orderItems: normalizedItems.map((i) => ({
-            productId: i.product_id,
-            productName: i.product_name,
-          })),
-        });
-
-        if ("ttn" in ttnResult) {
-          ttnNumber = ttnResult.ttn;
-          await saveTtnToOrder(dbOrderId, ttnNumber);
-          log.debug(`TTN ${ttnNumber} created for order ${dbOrderId}`);
-        } else {
-          log.warn(`Failed to create TTN for order ${dbOrderId}:`, ttnResult.error);
-        }
-      } catch (e) {
-        log.warn("TTN creation failed (prepay):", e);
-      }
+      await persistNovaPoshtaRefs(dbOrderId, npCityRef, npWarehouseRef);
+      const ttnNumber = await tryCreateOrderTtn({
+        orderId: dbOrderId,
+        customerName: customer_name,
+        phoneNumber: phone_number,
+        city,
+        postOffice: post_office,
+        cityRef: npCityRef || null,
+        warehouseRef: npWarehouseRef || null,
+        deliveryMethod: delivery_method,
+        orderTotal: Math.round(orderTotal),
+        orderItems: normalizedItems.map((i) => ({
+          productId: i.product_id,
+          productName: i.product_name,
+        })),
+      });
 
       try {
         await sendOrderNotification(
@@ -611,12 +636,13 @@ export async function POST(req: NextRequest) {
     }
 
     log.debug(" Saving order with Mono invoice_id...");
-    await sqlPostOrder({
+    const { orderId: monoDbOrderId } = await sqlPostOrder({
       ...orderPayload,
       invoice_id: monoInvoiceId,
       merchant_reference: orderId,
       payment_status: "pending",
     });
+    await persistNovaPoshtaRefs(monoDbOrderId, npCityRef, npWarehouseRef);
 
     return NextResponse.json({
       success: true,

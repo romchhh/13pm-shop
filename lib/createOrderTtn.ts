@@ -55,6 +55,8 @@ export async function createOrderTtn(params: {
   phoneNumber: string;
   city: string;
   postOffice: string;
+  cityRef?: string | null;
+  warehouseRef?: string | null;
   deliveryMethod: string;
   orderTotal: number;
   orderItems: { productId: number | null; productName: string | null }[];
@@ -65,6 +67,8 @@ export async function createOrderTtn(params: {
     phoneNumber,
     city,
     postOffice,
+    cityRef,
+    warehouseRef,
     deliveryMethod,
     orderTotal,
     orderItems,
@@ -98,6 +102,8 @@ export async function createOrderTtn(params: {
       recipientPhone: phoneNumber,
       cityName: city,
       warehouseDescription: postOffice,
+      cityRef: cityRef ?? undefined,
+      warehouseRef: warehouseRef ?? undefined,
       cost: orderTotal,
       description: description || "Тактичний одяг 13pm tactic",
       serviceType,
@@ -133,4 +139,23 @@ export async function saveTtnToOrder(orderId: number, ttn: string): Promise<void
     data: { novaPoshtaTtn: ttn },
   });
   log.debug(`TTN ${ttn} saved to order ${orderId}`);
+}
+
+export async function saveNovaPoshtaRefsToOrder(
+  orderId: number,
+  cityRef?: string | null,
+  warehouseRef?: string | null
+): Promise<void> {
+  const city = cityRef?.trim() || null;
+  const warehouse = warehouseRef?.trim() || null;
+  if (!city && !warehouse) return;
+
+  await prisma.order.update({
+    where: { id: orderId },
+    data: {
+      novaPoshtaCityRef: city,
+      novaPoshtaWarehouseRef: warehouse,
+    },
+  });
+  log.debug(`Nova Poshta refs saved to order ${orderId}`);
 }

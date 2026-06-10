@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { searchNovaPoshtaWarehouses } from "@/lib/novaPoshta";
+import { searchNovaPoshtaWarehouses } from "@/lib/nova-poshta";
 
 export async function GET(req: NextRequest) {
   const cityRef = req.nextUrl.searchParams.get("cityRef")?.trim() ?? "";

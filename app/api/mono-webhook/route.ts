@@ -84,6 +84,8 @@ export async function POST(req: NextRequest) {
         phoneNumber: order.phoneNumber,
         city: order.city,
         postOffice: order.postOffice,
+        cityRef: order.novaPoshtaCityRef,
+        warehouseRef: order.novaPoshtaWarehouseRef,
         deliveryMethod: order.deliveryMethod,
         orderTotal: Math.round(orderTotal),
         orderItems: order.items.map((i) => ({
