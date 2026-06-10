@@ -9,7 +9,7 @@
 Лінійки: ALPHA, BRAVO, DELTA
 Категорії: куртки, штани, флісові кофти, поло, комплекти, аксесуари
 Переваги: власне виробництво, доставка Нова Пошта 1–3 дні по Україні, −10% для силових структур, доставка по світу
-Соцмережі: Instagram @13pm.tactic, TikTok @13pm.tactic
+Соцмережі: Facebook 13PM tactic, Instagram @13pm.tactic, TikTok @13pm.tactic
 
 ## Опис (коротко)
 13pm tactic — інтернет-магазин тактичного одягу в Україні. Купівля онлайн з доставкою Новою Поштою, оплата карткою (Apple Pay, Google Pay) або накладений платіж.
@@ -47,6 +47,7 @@ Canonical домен: змінна PUBLIC_URL / NEXT_PUBLIC_PUBLIC_URL
 
 ## Контакти (сторінка співпраці)
 Телефон: +380 93 267 97 96 (+380932679796)
+Facebook: https://www.facebook.com/share/1E3r8Gt91M/?mibextid=wwXIfr
 Instagram: https://www.instagram.com/13pm.tactic
 TikTok: https://www.tiktok.com/@13pm.tactic
 Telegram: https://t.me/+380932679796

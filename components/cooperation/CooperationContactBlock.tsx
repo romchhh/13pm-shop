@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { siteContact } from "@/lib/siteContact";
+import { siteContact, siteSocialLinks } from "@/lib/siteContact";
 
 export default function CooperationContactBlock() {
   const [agreed, setAgreed] = useState(false);
@@ -246,14 +246,17 @@ export default function CooperationContactBlock() {
               >
                 Viber
               </a>
-              <a
-                href={siteContact.telegramUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#1C1C1C] underline hover:opacity-70 text-sm font-['Montserrat']"
-              >
-                Telegram
-              </a>
+              {siteSocialLinks.map(({ label, href }) => (
+                <a
+                  key={href}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#1C1C1C] underline hover:opacity-70 text-sm font-['Montserrat']"
+                >
+                  {label}
+                </a>
+              ))}
             </div>
           </div>
 

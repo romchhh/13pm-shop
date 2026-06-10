@@ -18,7 +18,6 @@ const heroTextShadow = "0 2px 28px rgba(0,0,0,0.5)";
 const heroSubtitleShadow = "0 1px 14px rgba(0,0,0,0.45)";
 
 const HERO_FEATURES = [
-  { label: "3 ЛІНІЙКИ ОДЯГУ" },
   { label: "-10% ДЛЯ ЗСУ" },
   { label: "1–3 ДНІ ДОСТАВКА" },
 ] as const;
@@ -64,7 +63,7 @@ function HeroTitle({ lines }: { lines: string[] }) {
 function HeroFeaturesBar({ className = "" }: { className?: string }) {
   return (
     <div
-      className={`grid grid-cols-3 divide-x divide-white/25 border-t border-white/20 ${className}`}
+      className={`grid grid-cols-2 divide-x divide-white/25 border-t border-white/20 ${className}`}
     >
       {HERO_FEATURES.map((item) => (
         <p

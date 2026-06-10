@@ -185,6 +185,7 @@ export function buildOrderConfirmationHtml(
             <td style="padding:28px 32px;background:${BG};border-top:1px solid #eee;">
               <p style="margin:0 0 12px;font-size:13px;font-weight:600;color:${TEXT};">Ми в соцмережах</p>
               <p style="margin:0 0 18px;">
+                <a href="${escapeHtml(siteContact.facebookUrl)}" target="_blank" rel="noopener" style="display:inline-block;margin-right:14px;color:${ACCENT};font-size:14px;font-weight:500;text-decoration:none;">Facebook</a>
                 <a href="${escapeHtml(siteContact.instagramUrl)}" target="_blank" rel="noopener" style="display:inline-block;margin-right:14px;color:${ACCENT};font-size:14px;font-weight:500;text-decoration:none;">Instagram</a>
                 <a href="${escapeHtml(siteContact.tiktokUrl)}" target="_blank" rel="noopener" style="display:inline-block;margin-right:14px;color:${ACCENT};font-size:14px;font-weight:500;text-decoration:none;">TikTok</a>
                 <a href="${escapeHtml(siteContact.telegramUrl)}" target="_blank" rel="noopener" style="display:inline-block;color:${ACCENT};font-size:14px;font-weight:500;text-decoration:none;">Telegram</a>

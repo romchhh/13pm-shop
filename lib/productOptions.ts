@@ -23,6 +23,30 @@ export type ProductSizeVariant = {
 
 const VALID_HEX = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/;
 
+/** Швидке додавання розмірів у адмінці (створення / редагування товару). */
+export const APPAREL_ADMIN_PRESET_SIZES = [
+  "XS",
+  "S",
+  "M",
+  "L",
+  "XL",
+  "XXL",
+  "2XL",
+  "3XL",
+  "4XL",
+] as const;
+
+/** Повний ряд розмірів на сторінці товару (S–4XL). */
+export const APPAREL_PDP_SIZE_RANGE = ["S", "M", "L", "XL", "XXL", "3XL", "4XL"] as const;
+
+/** Нормалізація підпису розміру для порівняння (2XL ≈ XXL). */
+export function normalizeApparelSizeLabel(label: string): string {
+  const upper = label.trim().toUpperCase().replace(/\s+/g, "");
+  if (upper === "2XL" || upper === "XXL") return "XXL";
+  if (upper === "3XL" || upper === "XXXL") return "3XL";
+  return upper;
+}
+
 const APPAREL_SIZE_ORDER = [
   "XXS",
   "XS",
@@ -148,6 +172,29 @@ export function sortSizeStockRows(rows: ProductSizeStock[]): ProductSizeStock[] 
     if (diff !== 0) return diff;
     return a.label.localeCompare(b.label, "uk", { numeric: true, sensitivity: "base" });
   });
+}
+
+/**
+ * Доповнює розміри товару до повного ряду S–4XL.
+ * Відсутні або з нульовим залишком — stock: 0 (видимі, але не в наявності).
+ */
+export function expandSizeStockForDisplay(rows: ProductSizeStock[]): ProductSizeStock[] {
+  const parsed = sortSizeStockRows(rows.filter((row) => row.label.trim()));
+  if (parsed.length === 0) return [];
+  if (parsed.length === 1 && isOneSizeLabel(parsed[0].label)) return parsed;
+
+  const stockByKey = new Map<string, number>();
+  for (const row of parsed) {
+    const key = normalizeApparelSizeLabel(row.label);
+    const stock = Math.max(0, row.stock);
+    const prev = stockByKey.get(key);
+    stockByKey.set(key, prev === undefined ? stock : Math.max(prev, stock));
+  }
+
+  return APPAREL_PDP_SIZE_RANGE.map((label) => ({
+    label,
+    stock: stockByKey.get(normalizeApparelSizeLabel(label)) ?? 0,
+  }));
 }
 
 export function totalStockFromSizeRows(rows: ProductSizeStock[]): number {

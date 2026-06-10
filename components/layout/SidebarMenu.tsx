@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useCategories } from "@/lib/CategoriesProvider";
-import { siteContact } from "@/lib/siteContact";
+import { siteSocialLinks } from "@/lib/siteContact";
 import { CATALOG_PROMO_HREF, getMainNavHashId, mainNavLinks } from "@/lib/siteNav";
 import { categoryCanonicalPath } from "@/lib/seo";
 import { useBodyScrollLock } from "@/lib/useBodyScrollLock";
@@ -188,11 +188,7 @@ function PagesNav({
 }
 
 function SocialBar({ onClose }: { onClose: () => void }) {
-  const links = [
-    { href: siteContact.instagramUrl, label: "Instagram" },
-    { href: siteContact.tiktokUrl, label: "TikTok" },
-    { href: siteContact.telegramUrl, label: "Telegram" },
-  ];
+  const links = siteSocialLinks.map(({ href, label }) => ({ href, label }));
 
   return (
     <div className="flex flex-wrap gap-2">

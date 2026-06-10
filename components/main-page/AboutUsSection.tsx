@@ -31,21 +31,18 @@ export default function AboutUsSection({ showBackLink = false }: AboutUsSectionP
           </Link>
         )}
 
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:items-start lg:gap-12 xl:gap-16">
-          <div>
-  
-            <h2
-              id="about-heading"
-              className="mt-1 font-['Montserrat'] text-2xl font-semibold tracking-tight text-black lg:text-3xl"
-            >
-              Про нас
-            </h2>
-            <p className="mt-4 max-w-xl font-['Montserrat'] text-base leading-relaxed text-black/75 lg:text-lg lg:leading-relaxed">
-              {siteFooterLead}
-            </p>
-          </div>
+        <div>
+          <h2
+            id="about-heading"
+            className="mt-1 font-['Montserrat'] text-2xl font-semibold tracking-tight text-black lg:text-3xl"
+          >
+            Про нас
+          </h2>
+          <p className="mt-4 max-w-xl font-['Montserrat'] text-base leading-relaxed text-black/75 lg:max-w-none lg:columns-2 lg:gap-x-12 lg:text-lg lg:leading-relaxed">
+            {siteFooterLead}
+          </p>
 
-          <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:gap-4">
+          <ul className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:mt-10 lg:grid-cols-4 lg:gap-4">
             {ABOUT_BULLETS.map((item) => (
               <li
                 key={item}

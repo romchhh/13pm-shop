@@ -18,6 +18,7 @@ import {
 import { LABEL_FREE_DELIVERY_FROM_2000 } from "@/lib/siteBrand";
 import { productGalleryImageAlt } from "@/lib/seoCopy";
 import {
+  expandSizeStockForDisplay,
   parseSizeStock,
   parseSizeVariants,
   productHasSizeStockAvailable,
@@ -117,7 +118,7 @@ export default function ProductClient({ product }: ProductClientProps) {
 
   const colors = product.color_options ?? [];
   const sizeStock = useMemo(
-    () => parseSizeStock(product.size_variants),
+    () => expandSizeStockForDisplay(parseSizeStock(product.size_variants)),
     [product.size_variants]
   );
   const legacySizeVariants = useMemo(

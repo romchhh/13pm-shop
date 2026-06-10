@@ -148,6 +148,7 @@ export function OrganizationStructuredData({
     },
     description: siteFooterLead,
     sameAs: [
+      siteContact.facebookUrl,
       siteContact.instagramUrl,
       siteContact.tiktokUrl,
       siteContact.telegramUrl,

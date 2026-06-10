@@ -25,7 +25,7 @@ const LOGO_ASPECT = 295 / 415;
 const LOGO_HEIGHT_CLASS = {
   compact: "h-[calc(var(--site-nav-height)-1rem)]",
   default: "h-[calc(var(--site-nav-height)-1.35rem)]",
-  footer: "h-11",
+  footer: "h-14 sm:h-[3.75rem] lg:h-[4.5rem]",
 } as const;
 
 /** Логотип 13pm — img для стабільного показу SVG */

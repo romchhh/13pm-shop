@@ -3,9 +3,8 @@
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
-import { siteContact } from "@/lib/siteContact";
+import { siteContact, siteSocialLinks } from "@/lib/siteContact";
 import { siteLegalLinks } from "@/lib/siteLegal";
-import { SITE_WORDMARK } from "@/lib/siteBrand";
 import { useCategories } from "@/lib/CategoriesProvider";
 import BrandLogo from "./BrandLogo";
 
@@ -17,13 +16,16 @@ const PAYMENT_LOGOS = [
 ] as const;
 
 const footerLinkClass =
-  "font-['Montserrat'] text-sm text-white/85 hover:text-white transition-opacity";
+  "font-['Montserrat'] text-sm font-medium text-[#c5d4b8] underline decoration-[#c5d4b8]/50 underline-offset-[3px] transition-colors hover:text-white hover:decoration-white/90";
 
 const footerHeadingClass =
-  "font-['Montserrat'] text-xs font-bold uppercase tracking-[0.14em] text-white text-center lg:text-left";
+  "font-['Montserrat'] text-xs font-bold uppercase tracking-[0.14em] text-white/75 text-center lg:text-left";
+
+const footerLegalLinkClass =
+  "font-['Montserrat'] text-xs font-medium text-[#c5d4b8] underline decoration-[#c5d4b8]/50 underline-offset-[3px] transition-colors hover:text-white hover:decoration-white/90";
 
 const socialLinkClass =
-  "inline-flex items-center gap-3 font-['Montserrat'] text-sm font-medium text-white/90 hover:text-white transition-opacity";
+  "inline-flex items-center gap-2.5 font-['Montserrat'] text-sm font-medium text-[#c5d4b8] underline decoration-[#c5d4b8]/50 underline-offset-[3px] transition-colors hover:text-white hover:decoration-white/90";
 
 function InstagramIcon() {
   return (
@@ -40,6 +42,29 @@ function TikTokIcon() {
     </svg>
   );
 }
+
+function FacebookIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden className="shrink-0">
+      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+    </svg>
+  );
+}
+
+function TelegramIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden className="shrink-0">
+      <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.559z" />
+    </svg>
+  );
+}
+
+const SOCIAL_ICONS = {
+  Facebook: FacebookIcon,
+  Instagram: InstagramIcon,
+  TikTok: TikTokIcon,
+  Telegram: TelegramIcon,
+} as const;
 
 export default function Footer() {
   const router = useRouter();
@@ -113,25 +138,18 @@ export default function Footer() {
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-4 lg:gap-10 xl:gap-16">
           <div className="flex flex-col items-center gap-4 text-center lg:items-start lg:gap-5 lg:text-left max-w-md lg:max-w-none mx-auto lg:mx-0">
             <BrandLogo variant="footer" />
-            <p className="font-['Montserrat'] text-sm leading-relaxed text-white/80 max-w-sm">
-              {SITE_WORDMARK} — tactical clothing UA. Твій тактичний одяг.
-            </p>
-            <p className="font-['Montserrat'] text-sm leading-relaxed text-white/80 max-w-sm">
-              Розроблено для дії, створено для тебе. Власне виробництво. Доставка по всьому світу.
-              -10% для силових структур.
-            </p>
           </div>
 
           <div className="flex flex-col items-center gap-4 lg:items-start lg:gap-5">
             <h3 className={footerHeadingClass}>Навігація</h3>
-            <nav className="flex flex-wrap justify-center gap-x-3 gap-y-2 max-w-md lg:max-w-none lg:flex-col lg:items-start lg:gap-3 lg:justify-start">
+            <nav className="flex flex-wrap justify-center gap-x-4 gap-y-2 max-w-md lg:max-w-none lg:flex-col lg:items-start lg:gap-2.5 lg:justify-start">
               {navLinks}
             </nav>
           </div>
 
           <div className="flex flex-col items-center gap-4 lg:items-start lg:gap-5">
             <h3 className={footerHeadingClass}>Категорії</h3>
-            <nav className="flex flex-wrap justify-center gap-x-3 gap-y-2 max-w-md lg:max-w-none lg:flex-col lg:items-start lg:gap-3 lg:justify-start">
+            <nav className="flex flex-wrap justify-center gap-x-4 gap-y-2 max-w-md lg:max-w-none lg:flex-col lg:items-start lg:gap-2.5 lg:justify-start">
               {categoriesLoading && categories.length === 0 ? (
                 <span className="text-white/50 text-sm font-['Montserrat']">Завантаження…</span>
               ) : (
@@ -155,34 +173,27 @@ export default function Footer() {
                 className="flex flex-col items-center gap-3 lg:items-start"
                 aria-label="Соціальні мережі"
               >
-                <Link
-                  href={siteContact.instagramUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={socialLinkClass}
-                  aria-label={`Instagram ${siteContact.instagramHandle}`}
-                >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-white">
-                    <InstagramIcon />
-                  </span>
-                  <span>
-                    Instagram <span className="text-white/70">{siteContact.instagramHandle}</span>
-                  </span>
-                </Link>
-                <Link
-                  href={siteContact.tiktokUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={socialLinkClass}
-                  aria-label={`TikTok ${siteContact.tiktokHandle}`}
-                >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-white">
-                    <TikTokIcon />
-                  </span>
-                  <span>
-                    TikTok <span className="text-white/70">{siteContact.tiktokHandle}</span>
-                  </span>
-                </Link>
+                {siteSocialLinks.map(({ label, href, handle }) => {
+                  const Icon = SOCIAL_ICONS[label as keyof typeof SOCIAL_ICONS];
+                  return (
+                    <Link
+                      key={href}
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={socialLinkClass}
+                      aria-label={handle ? `${label} ${handle}` : label}
+                    >
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center text-[#c5d4b8]">
+                        <Icon />
+                      </span>
+                      <span>
+                        {label}
+                        {handle ? <span className="text-[#c5d4b8]/80"> {handle}</span> : null}
+                      </span>
+                    </Link>
+                  );
+                })}
               </nav>
             </div>
             <ul
@@ -212,11 +223,7 @@ export default function Footer() {
             aria-label="Юридичні документи"
           >
             {siteLegalLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="font-['Montserrat'] text-xs text-white/60 hover:text-white transition-colors"
-              >
+              <Link key={link.href} href={link.href} className={footerLegalLinkClass}>
                 {link.label}
               </Link>
             ))}
@@ -226,7 +233,7 @@ export default function Footer() {
               href="https://new.telebots.site/"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-white transition-colors"
+              className="text-[#c5d4b8]/70 underline decoration-[#c5d4b8]/40 underline-offset-2 transition-colors hover:text-white hover:decoration-white/70"
             >
               created by telebots
             </Link>

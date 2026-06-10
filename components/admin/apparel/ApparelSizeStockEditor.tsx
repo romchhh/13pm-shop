@@ -3,9 +3,12 @@
 import { useEffect, useState } from "react";
 import Label from "@/components/admin/form/Label";
 import Input from "@/components/admin/form/input/InputField";
-import { ONE_SIZE_LABEL, isOneSizeLabel, type ProductSizeStock } from "@/lib/productOptions";
-
-const PRESET_SIZES = ["XS", "S", "M", "L", "XL", "XXL", "2XL", "3XL"] as const;
+import {
+  APPAREL_ADMIN_PRESET_SIZES,
+  ONE_SIZE_LABEL,
+  isOneSizeLabel,
+  type ProductSizeStock,
+} from "@/lib/productOptions";
 
 type Props = {
   rows: ProductSizeStock[];
@@ -91,7 +94,7 @@ export default function ApparelSizeStockEditor({ rows, onChange }: Props) {
       ) : (
         <>
           <div className="flex flex-wrap gap-2">
-            {PRESET_SIZES.map((size) => (
+            {APPAREL_ADMIN_PRESET_SIZES.map((size) => (
               <button
                 key={size}
                 type="button"
