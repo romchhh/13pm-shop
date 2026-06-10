@@ -2,7 +2,11 @@
  * Створення накладної Нової пошти для замовлення
  */
 
-import { createNovaPoshtaTtn, type CreateTtnParams } from "@/lib/nova-poshta";
+import {
+  createNovaPoshtaTtn,
+  isNovaPoshtaConfiguredForTtn,
+  type CreateTtnParams,
+} from "@/lib/nova-poshta";
 import { prisma } from "@/lib/prisma";
 import { createLogger } from "@/lib/logger";
 
@@ -81,6 +85,11 @@ export async function createOrderTtn(params: {
     return { error: "Доставка не через Нову пошту" };
   }
 
+  if (!isNovaPoshtaConfiguredForTtn()) {
+    log.error(`Order ${orderId}: Nova Poshta TTN env is incomplete on this server`);
+    return { error: "Nova Poshta не налаштована на сервері (перевірте .env)" };
+  }
+
   try {
     const dimensions = await calculateParcelDimensions(orderItems);
     
@@ -106,12 +115,21 @@ export async function createOrderTtn(params: {
       volumeGeneral: dimensions.volumeGeneral,
     };
 
-    log.debug(`Creating TTN for order ${orderId}:`, ttnParams);
+    log.info(`Creating TTN for order ${orderId}`, {
+      cityRef: cityRef ?? null,
+      warehouseRef: warehouseRef ?? null,
+      city,
+      postOffice,
+      deliveryMethod,
+    });
 
     const result = await createNovaPoshtaTtn(ttnParams);
 
     if ("error" in result) {
-      log.error(`Failed to create TTN for order ${orderId}:`, result.error);
+      log.error(`Failed to create TTN for order ${orderId}:`, result.error, {
+        hasCityRef: Boolean(cityRef?.trim()),
+        hasWarehouseRef: Boolean(warehouseRef?.trim()),
+      });
       return { error: result.error };
     }
 
@@ -145,12 +163,19 @@ export async function saveNovaPoshtaRefsToOrder(
   const warehouse = warehouseRef?.trim() || null;
   if (!city && !warehouse) return;
 
-  await prisma.order.update({
-    where: { id: orderId },
-    data: {
-      novaPoshtaCityRef: city,
-      novaPoshtaWarehouseRef: warehouse,
-    },
-  });
-  log.debug(`Nova Poshta refs saved to order ${orderId}`);
+  try {
+    await prisma.order.update({
+      where: { id: orderId },
+      data: {
+        novaPoshtaCityRef: city,
+        novaPoshtaWarehouseRef: warehouse,
+      },
+    });
+    log.debug(`Nova Poshta refs saved to order ${orderId}`);
+  } catch (error) {
+    log.warn(
+      `Nova Poshta refs not saved for order ${orderId} (run npm run migrate on server?):`,
+      error instanceof Error ? error.message : error
+    );
+  }
 }

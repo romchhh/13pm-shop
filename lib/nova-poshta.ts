@@ -158,31 +158,26 @@ export function normalizeNpPhone(phone: string): string {
   return d;
 }
 
-const NP_KYIV_TZ = "Europe/Kyiv";
+/** Україна: постійний UTC+2 (без літнього часу з 2024). */
+const KYIV_UTC_OFFSET_MS = 2 * 60 * 60 * 1000;
 
-const NP_DESCRIPTION_FALLBACK =
-  process.env.NOVA_POSHTA_DESCRIPTION?.trim() || "Одяг";
+function pad2(value: number): string {
+  return String(value).padStart(2, "0");
+}
+
+function getNovaPoshtaDescriptionFallback(): string {
+  return process.env.NOVA_POSHTA_DESCRIPTION?.trim() || "Одяг";
+}
 
 /**
- * Дата/час відправки для InternetDocument.save — у часовому поясі Києва з часом.
- * Лише дата (00:00) або UTC дають помилку «DateTime cannot be less then now».
+ * Дата відправки для InternetDocument.save — лише dd.mm.yyyy у київському календарі.
+ * НП не приймає ISO і часто відхиляє формат з часом; UTC-дата на VPS дає «DateTime cannot be less then now».
  */
-export function formatNovaPoshtaDateTime(now = new Date()): string {
-  const parts = new Intl.DateTimeFormat("en-GB", {
-    timeZone: NP_KYIV_TZ,
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  }).formatToParts(now);
+export function formatNovaPoshtaDateTime(now = new Date(), addDays = 0): string {
+  const kyivMs = now.getTime() + KYIV_UTC_OFFSET_MS + addDays * 86_400_000;
+  const kyiv = new Date(kyivMs);
 
-  const get = (type: Intl.DateTimeFormatPartTypes) =>
-    parts.find((part) => part.type === type)?.value ?? "00";
-
-  return `${get("day")}.${get("month")}.${get("year")} ${get("hour")}:${get("minute")}:${get("second")}`;
+  return `${pad2(kyiv.getUTCDate())}.${pad2(kyiv.getUTCMonth() + 1)}.${kyiv.getUTCFullYear()}`;
 }
 
 /**
@@ -190,7 +185,7 @@ export function formatNovaPoshtaDateTime(now = new Date()): string {
  */
 export function sanitizeNovaPoshtaDescription(input?: string | null): string {
   const raw = (input ?? "").trim();
-  if (!raw) return NP_DESCRIPTION_FALLBACK;
+  if (!raw) return getNovaPoshtaDescriptionFallback();
 
   const cleaned = raw
     .replace(/[^\u0400-\u04FF\u0456\u0457\u0490\u04B0\u04AE\u04E8\u04BA0-9\s,.()-]/gi, "")
@@ -199,9 +194,31 @@ export function sanitizeNovaPoshtaDescription(input?: string | null): string {
     .slice(0, 100);
 
   const cyrillicLetters = cleaned.replace(/[^А-Яа-яІіЇїЄєҐґ]/g, "").length;
-  if (cyrillicLetters < 3) return NP_DESCRIPTION_FALLBACK;
+  if (cyrillicLetters < 3) return getNovaPoshtaDescriptionFallback();
 
   return cleaned;
+}
+
+function formatNpApiErrors(
+  resp: NpApiResponse<unknown>
+): string {
+  const parts: string[] = [];
+
+  for (const entry of resp.errors ?? []) {
+    if (typeof entry === "string") parts.push(entry);
+    else if (entry && typeof entry === "object" && "message" in entry) {
+      parts.push(String((entry as { message?: string }).message));
+    } else if (entry != null) {
+      parts.push(JSON.stringify(entry));
+    }
+  }
+
+  for (const entry of resp.warnings ?? []) {
+    if (typeof entry === "string") parts.push(entry);
+    else if (entry != null) parts.push(JSON.stringify(entry));
+  }
+
+  return parts.filter(Boolean).join("; ") || "Nova Poshta save failed";
 }
 
 async function npRequest<T>(
@@ -217,6 +234,7 @@ async function npRequest<T>(
   const res = await fetch(NP_JSON, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    cache: "no-store",
     body: JSON.stringify({
       apiKey,
       modelName,
@@ -241,7 +259,7 @@ type NpWarehouseRow = { Ref: string; Description: string; CityRef?: string };
 async function resolveCityRefByName(cityName: string): Promise<string | null> {
   const name = cityName.trim();
   if (!name) return null;
-  const resp = await npRequest<NpCityRow[]>("AddressGeneral", "getCities", {
+  const resp = await npRequest<NpCityRow[]>("Address", "getCities", {
     FindByString: name,
     Limit: 20,
   });
@@ -258,7 +276,7 @@ async function resolveWarehouseRefByText(
 ): Promise<string | null> {
   const q = warehouseText.trim();
   if (!q) return null;
-  const resp = await npRequest<NpWarehouseRow[]>("AddressGeneral", "getWarehouses", {
+  const resp = await npRequest<NpWarehouseRow[]>("Address", "getWarehouses", {
     CityRef: cityRef,
     FindByString: q,
     Limit: 20,
@@ -423,7 +441,14 @@ export async function createNovaPoshtaTtn(
   });
   if ("error" in ensured) return { error: ensured.error };
 
-  const methodProperties: Record<string, unknown> = {
+  const descriptionCandidates = [
+    sanitizeNovaPoshtaDescription(params.description),
+    getNovaPoshtaDescriptionFallback(),
+    "Товари",
+    "Вантаж",
+  ].filter((value, index, list) => list.indexOf(value) === index);
+
+  const baseProperties: Record<string, unknown> = {
     Sender: process.env.NOVA_POSHTA_SENDER_REF,
     CitySender: process.env.NOVA_POSHTA_CITY_SENDER_REF,
     SenderAddress: process.env.NOVA_POSHTA_SENDER_WAREHOUSE_REF,
@@ -436,37 +461,53 @@ export async function createNovaPoshtaTtn(
     PayerType: process.env.NOVA_POSHTA_PAYER_TYPE?.trim() || "Recipient",
     Cost: String(Math.max(1, Math.round(params.cost))),
     SeatsAmount: "1",
-    Description: sanitizeNovaPoshtaDescription(params.description),
-    CargoType: process.env.NOVA_POSHTA_CARGO_TYPE?.trim() || "Cargo",
+    CargoType: process.env.NOVA_POSHTA_CARGO_TYPE?.trim() || "Parcel",
     Weight: params.weight ?? "1",
     VolumeGeneral: params.volumeGeneral ?? "0.0004",
-    DateTime: formatNovaPoshtaDateTime(),
+    Recipient: ensured.recipientRef,
+    ContactRecipient: ensured.contactRef,
+    CityRecipient: cityRef,
+    RecipientAddress: warehouseRef,
   };
 
-  methodProperties.Recipient = ensured.recipientRef;
-  methodProperties.ContactRecipient = ensured.contactRef;
-  methodProperties.CityRecipient = cityRef;
-  methodProperties.RecipientAddress = warehouseRef;
+  let lastError = "Nova Poshta save failed";
 
-  const resp = await npRequest<SaveInternetDocumentRow[]>(
-    "InternetDocument",
-    "save",
-    methodProperties
-  );
+  for (let dayOffset = 0; dayOffset <= 1; dayOffset += 1) {
+    for (const description of descriptionCandidates) {
+      const methodProperties: Record<string, unknown> = {
+        ...baseProperties,
+        Description: description,
+        DateTime: formatNovaPoshtaDateTime(new Date(), dayOffset),
+      };
 
-  if (!resp.success || !resp.data?.[0]) {
-    const msg = [...(resp.errors ?? []), ...(resp.warnings ?? [])].join(
-      "; "
-    ) || "Nova Poshta save failed";
-    return { error: msg };
+      const resp = await npRequest<SaveInternetDocumentRow[]>(
+        "InternetDocument",
+        "save",
+        methodProperties
+      );
+
+      if (resp.success && resp.data?.[0]) {
+        const row = resp.data[0];
+        const ttn = row.IntDocNumber?.replace(/\D/g, "") ?? "";
+        if (!ttn) {
+          lastError = "NP відповідь без номера ТТН";
+          continue;
+        }
+        return { ttn, documentRef: row.Ref };
+      }
+
+      lastError = formatNpApiErrors(resp);
+      const lower = lastError.toLowerCase();
+      const retryDescription = lower.includes("description");
+      const retryDateTime = lower.includes("datetime");
+
+      if (!retryDescription && !retryDateTime) {
+        return { error: lastError };
+      }
+    }
   }
 
-  const row = resp.data[0];
-  const ttn = row.IntDocNumber?.replace(/\D/g, "") ?? "";
-  if (!ttn) {
-    return { error: "NP відповідь без номера ТТН" };
-  }
-  return { ttn, documentRef: row.Ref };
+  return { error: lastError };
 }
 
 export type TrackingRow = {
