@@ -1164,13 +1164,13 @@ export default function FinalCard() {
                       onClick={() => handlePaymentTypeChange("prepay")}
                       className={checkoutChoiceButtonClass(paymentType === "prepay")}
                     >
-                      <span className="block text-sm font-bold sm:text-base">Накладений платіж</span>
+                      <span className="block text-sm font-bold sm:text-base">Післяоплата</span>
                       <span
                         className={`mt-1 block text-xs font-normal leading-snug ${
                           paymentType === "prepay" ? "text-white/75" : "text-black/50"
                         }`}
                       >
-                        Оплата при отриманні у відділенні
+                        При отриманні у відділенні
                       </span>
                     </button>
                     {ENABLE_ONLINE_CARD_PAYMENT && (

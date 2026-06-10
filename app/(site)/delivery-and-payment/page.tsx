@@ -50,7 +50,7 @@ export default function DeliveryAndPaymentPage() {
                 узгодження замовлення.
               </li>
               <li>
-                <strong>Післяплатою у відділенні «Нової пошти»</strong> — без передоплати.
+                <strong>Післяоплатою у відділенні «Нової пошти»</strong> — без передоплати.
               </li>
             </ul>
           </section>

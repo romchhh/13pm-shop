@@ -193,8 +193,8 @@ export default function OneClickOrderModal({
 
         <div className="px-5 py-5 sm:px-6 sm:py-6">
           <p className="mb-5 rounded-xl border border-black/[0.06] bg-[#F2F2F0] px-4 py-3 text-sm leading-relaxed text-black/70">
-            Залиште контакти — менеджер уточнить доставку та відділення. Оплата накладеним
-            платежем при отриманні.
+            Залиште контакти — менеджер уточнить доставку та відділення. Оплата післяоплатою
+            при отриманні.
           </p>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">

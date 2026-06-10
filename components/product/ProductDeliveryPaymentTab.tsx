@@ -22,7 +22,7 @@ export default function ProductDeliveryPaymentTab() {
             за реквізитами після узгодження замовлення.
           </li>
           <li>
-            <strong className="font-semibold text-[#1C1C1C]">Післяплатою у відділенні «Нової
+            <strong className="font-semibold text-[#1C1C1C]">Післяоплатою у відділенні «Нової
             пошти»</strong> — без онлайн-передоплати. Комісія НП за грошовий переказ:{" "}
             <span className="whitespace-nowrap">2% + 20 грн</span> (деталі на{" "}
             <a

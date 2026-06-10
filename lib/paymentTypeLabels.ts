@@ -1,9 +1,9 @@
 /** Підписи способів оплати (значення в БД: payment_type). */
 
 export const PAYMENT_TYPE_LABELS_LONG: Record<string, string> = {
-  prepay: "Накладений платіж (оплата при отриманні)",
+  prepay: "Післяоплата при отриманні",
   full: "Онлайн-оплата",
-  pay_after: "Оплата при отриманні",
+  pay_after: "Післяоплата при отриманні",
   test_payment: "Тест оплата",
   installment: "Розстрочка",
   crypto: "Криптовалюта",
@@ -11,9 +11,9 @@ export const PAYMENT_TYPE_LABELS_LONG: Record<string, string> = {
 
 /** Короткі підписи для таблиць адмінки */
 export const PAYMENT_TYPE_LABELS_SHORT: Record<string, string> = {
-  prepay: "Накладений платіж",
+  prepay: "Післяоплата",
   full: "Онлайн-оплата",
-  pay_after: "Оплата при отриманні",
+  pay_after: "Післяоплата",
   test_payment: "Тест",
   installment: "Розстрочка",
   crypto: "Крипто",
