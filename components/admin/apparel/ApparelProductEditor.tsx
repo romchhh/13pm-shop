@@ -162,7 +162,10 @@ export default function ApparelProductEditor({
       await onSubmit(body);
 
       if (mode === "edit" && productId != null) {
-        const res = await fetch(`/api/products/${productId}`, { cache: "no-store" });
+        const res = await fetch(`/api/products/${productId}`, {
+          cache: "no-store",
+          headers: { "Cache-Control": "no-cache" },
+        });
         if (res.ok) {
           const data = await res.json();
           patch({ colorLinkedIds: apparelFormFromProduct(data).colorLinkedIds });

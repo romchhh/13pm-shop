@@ -806,8 +806,8 @@ export async function sqlPostProduct(product: {
 }
 
 /**
- * Синхронізує pair_together_ids: двосторонні зв’язки + повний клік у групі.
- * Якщо A пов’язаний з B і C, у всіх трьох з’являться однакові посилання.
+ * Синхронізує pair_together_ids: двосторонні зв’язки + повний клік у вибраній групі.
+ * Бере лише явний список з форми (без підтягування старих зв’язків інших товарів з БД).
  */
 async function syncColorLinkClique(
   productId: number,
@@ -815,28 +815,6 @@ async function syncColorLinkClique(
 ): Promise<void> {
   const desired = normalizePairTogetherIds(desiredLinkedIds, productId);
   const clique = new Set<number>([productId, ...desired]);
-
-  // Розширюємо групу транзитивно:
-  // якщо A пов'язали з B, а B вже в групі з C/D, то A автоматично стає в цю ж групу.
-  const queue = [...desired];
-  const visited = new Set<number>();
-  while (queue.length > 0) {
-    const currentId = queue.shift()!;
-    if (visited.has(currentId)) continue;
-    visited.add(currentId);
-
-    const current = await prisma.product.findUnique({
-      where: { id: currentId },
-      select: { pairTogetherIds: true },
-    });
-    const peers = normalizePairTogetherIds(current?.pairTogetherIds ?? [], currentId);
-    for (const peerId of peers) {
-      if (!clique.has(peerId)) {
-        clique.add(peerId);
-        queue.push(peerId);
-      }
-    }
-  }
 
   const targetLinks = new Map<number, number[]>();
   for (const memberId of clique) {
@@ -846,6 +824,7 @@ async function syncColorLinkClique(
     );
   }
 
+  // Товари, що ще посилаються на productId, але більше не в новій групі
   const formerPeers = await prisma.product.findMany({
     where: {
       pairTogetherIds: { has: productId },
