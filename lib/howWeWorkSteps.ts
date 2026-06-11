@@ -36,3 +36,8 @@ export const HOW_WE_WORK_STEPS_BOTTOM: HowWeWorkStep[] = [
     text: "Залишаємось на звʼязку в Instagram та TikTok @13pm.tactic. Якщо виникнуть питання щодо розміру, догляду чи обміну — звертайся до нас.",
   },
 ];
+
+export const HOW_WE_WORK_STEPS: HowWeWorkStep[] = [
+  ...HOW_WE_WORK_STEPS_TOP,
+  ...HOW_WE_WORK_STEPS_BOTTOM,
+];
