@@ -17,6 +17,7 @@ type ProductLike = {
   gift_product_id?: number | null;
   in_stock?: boolean;
   stock?: number;
+  size_variants?: unknown;
   description?: string | null;
 };
 
@@ -48,5 +49,6 @@ export function mapToCatalogProductCardItem(
       product.gift_product_id ?? fallback?.gift_product_id ?? null,
     in_stock: product.in_stock ?? fallback?.in_stock,
     stock: product.stock ?? fallback?.stock,
+    size_variants: product.size_variants ?? fallback?.size_variants,
   };
 }

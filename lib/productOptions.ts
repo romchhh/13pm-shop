@@ -201,16 +201,40 @@ export function totalStockFromSizeRows(rows: ProductSizeStock[]): number {
   return rows.reduce((sum, row) => sum + Math.max(0, row.stock), 0);
 }
 
+export function findSizeStockRow(
+  rows: ProductSizeStock[],
+  label?: string | null
+): ProductSizeStock | undefined {
+  const normalized = normalizeApparelSizeLabel(label ?? "");
+  if (!normalized) return undefined;
+  return rows.find((r) => normalizeApparelSizeLabel(r.label) === normalized);
+}
+
 export function productHasSizeStockAvailable(
   rows: ProductSizeStock[],
-  selectedLabel?: string | null
+  selectedLabel?: string | null,
+  productInStock?: boolean | null
 ): boolean {
   if (rows.length === 0) return true;
+  if (productInStock === true) {
+    if (!selectedLabel) return true;
+    return Boolean(findSizeStockRow(rows, selectedLabel));
+  }
   if (selectedLabel) {
-    const row = rows.find((r) => r.label === selectedLabel);
+    const row = findSizeStockRow(rows, selectedLabel);
     return row ? row.stock > 0 : false;
   }
   return rows.some((r) => r.stock > 0);
+}
+
+/** Для PDP: якщо товар «в наявності», але кількості по розмірах не задані — показуємо розміри доступними. */
+export function effectiveSizeStockForDisplay(
+  rows: ProductSizeStock[],
+  productInStock?: boolean | null
+): ProductSizeStock[] {
+  if (productInStock !== true || rows.length === 0) return rows;
+  if (rows.some((r) => r.stock > 0)) return rows;
+  return rows.map((r) => ({ ...r, stock: 1 }));
 }
 
 export type SizeVariantProductInfo = {

@@ -1,3 +1,4 @@
+import { VIRTUAL_STOCK_WHEN_IN_STOCK } from "@/lib/productAvailability";
 import {
   parseColorOptions,
   parseSizeStock,
@@ -94,8 +95,12 @@ export function buildApparelProductApiBody(
       ? Number(values.discountPercentage)
       : null,
     priority: 0,
-    stock: values.inStock ? Math.max(totalStock, 1) : 0,
-    in_stock: values.inStock && (sizeRows.length === 0 || totalStock > 0),
+    stock: values.inStock
+      ? totalStock > 0
+        ? totalStock
+        : VIRTUAL_STOCK_WHEN_IN_STOCK
+      : 0,
+    in_stock: values.inStock,
     is_hit: values.isHit,
     is_new: values.isNew,
     top_sale: false,

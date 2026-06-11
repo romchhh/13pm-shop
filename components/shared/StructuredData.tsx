@@ -90,9 +90,7 @@ export function ProductStructuredData({ product, baseUrl = defaultBaseUrl, slug 
 
   const offer = {
     "@type": "Offer",
-    price: product.discount_percentage
-      ? (product.price * (1 - product.discount_percentage / 100)).toFixed(2)
-      : product.price.toFixed(2),
+    price: Number(product.price).toFixed(2),
     priceCurrency: "UAH",
     availability: isInStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
     url: productUrl,

@@ -9,6 +9,11 @@ import { isProductOutOfStock } from "@/lib/productAvailability";
 import { productToFavoriteSnapshot } from "@/lib/favoritesStorage";
 import FavoriteButton from "@/components/shared/FavoriteButton";
 import {
+  getProductDiscountBadgePercent,
+  getProductDisplayPrice,
+  getProductStrikePrice,
+} from "@/lib/pricing";
+import {
   PRODUCT_CARD_ACCENT,
   productCardBodyClass,
   productCardBottomBadgesRowClass,
@@ -48,6 +53,7 @@ export type CatalogProductCardItem = {
   gift_product_id?: number | null;
   in_stock?: boolean;
   stock?: number;
+  size_variants?: unknown;
 };
 
 type CatalogProductCardProps = {
@@ -70,26 +76,13 @@ export default function CatalogProductCard({
 }: CatalogProductCardProps) {
   const outOfStock = isProductOutOfStock(product);
 
-  const hasPct =
-    product.discount_percentage != null && Number(product.discount_percentage) > 0;
-  const hasOld =
-    product.old_price != null && Number(product.old_price) > Number(product.price);
-  const displayPrice = hasPct
-    ? Math.round(product.price * (1 - Number(product.discount_percentage) / 100))
-    : product.price;
-  const strikePrice = hasPct
-    ? product.price
-    : hasOld
-      ? Number(product.old_price)
-      : null;
-  const discountBadgePct = hasPct
-    ? Number(product.discount_percentage)
-    : hasOld
-      ? Math.max(
-          1,
-          Math.round((1 - Number(product.price) / Number(product.old_price)) * 100)
-        )
-      : null;
+  const displayPrice = getProductDisplayPrice(product.price);
+  const strikePrice = getProductStrikePrice(product.price, product.old_price);
+  const discountBadgePct = getProductDiscountBadgePercent(
+    product.price,
+    product.old_price,
+    product.discount_percentage
+  );
 
   const cardSubtitle = showSubtitle
     ? product.subtitle?.trim() ||

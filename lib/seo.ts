@@ -192,10 +192,7 @@ export function buildProductMetadata(product: ProductSeoInput): Metadata {
   const path = productCanonicalPath(product.slug, product.id);
   const categoryName = product.category_name?.trim() || "тактичний одяг";
   const subcategory = product.subcategory_name?.trim();
-  const price =
-    product.discount_percentage && product.discount_percentage > 0
-      ? Math.round(product.price * (1 - product.discount_percentage / 100))
-      : Math.round(product.price);
+  const price = Math.round(Number(product.price));
 
   const rawDescription =
     product.description?.replace(/[#*_`[\]]/g, " ").trim() ||

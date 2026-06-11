@@ -1,31 +1,67 @@
 /**
- * Shared pricing helpers to avoid duplicated discount/subtotal logic.
+ * Ціноутворення на вітрині та в кошику.
+ *
+ * Поле `price` в адмінці — кінцева ціна для покупця.
+ * `old_price` — закреслена «стара» ціна.
+ * `discount_percentage` — лише для бейджа «-N%», не зменшує price повторно.
  */
 
+/** Кінцева ціна для покупця (поле «Ціна» в адмінці). */
+export function getProductDisplayPrice(price: number): number {
+  const n = Number(price);
+  return Number.isFinite(n) ? Math.round(n) : 0;
+}
+
+/** Закреслена ціна, якщо old_price більша за поточну. */
+export function getProductStrikePrice(
+  price: number,
+  oldPrice?: number | null
+): number | null {
+  const current = getProductDisplayPrice(price);
+  if (oldPrice == null) return null;
+  const old = Math.round(Number(oldPrice));
+  return Number.isFinite(old) && old > current ? old : null;
+}
+
+/** Відсоток для бейджа знижки. */
+export function getProductDiscountBadgePercent(
+  price: number,
+  oldPrice?: number | null,
+  discountPercentage?: number | null
+): number | null {
+  if (discountPercentage != null && Number(discountPercentage) > 0) {
+    return Math.round(Number(discountPercentage));
+  }
+  const strike = getProductStrikePrice(price, oldPrice);
+  if (strike != null) {
+    const current = getProductDisplayPrice(price);
+    return Math.max(1, Math.round((1 - current / strike) * 100));
+  }
+  return null;
+}
+
 /**
- * Returns price after applying discount percentage.
- * @param price - Original price
- * @param discountPercentage - Optional discount (0–100). If undefined/0, returns price.
+ * Кінцева ціна одиниці (alias для сумісності з існуючим кодом).
+ * discountPercentage ігнорується — price вже фінальний.
  */
 export function getDiscountedPrice(
   price: number,
-  discountPercentage?: number | null
+  _discountPercentage?: number | null
 ): number {
-  if (!discountPercentage || discountPercentage <= 0) return price;
-  return price * (1 - discountPercentage / 100);
+  return getProductDisplayPrice(price);
 }
 
-/** Ціна одиниці зі знижкою (застаріла доплата за колір у кошику більше не застосовується). */
+/** Ціна одиниці в кошику. */
 export function getBasketUnitPrice(
   price: number,
-  discountPercentage?: number | null,
+  _discountPercentage?: number | null,
   colorSurchargeUah?: number | null
 ): number {
   void colorSurchargeUah;
-  return Math.round(getDiscountedPrice(price, discountPercentage));
+  return getProductDisplayPrice(price);
 }
 
-/** Підсумок позиції: ціна зі знижкою × кількість. */
+/** Підсумок позиції: ціна × кількість. */
 export function getItemSubtotal(
   price: number,
   quantity: number,

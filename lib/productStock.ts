@@ -1,4 +1,5 @@
-import { parseSizeStock } from "@/lib/productOptions";
+import { findSizeStockRow, parseSizeStock } from "@/lib/productOptions";
+import { VIRTUAL_STOCK_WHEN_IN_STOCK } from "@/lib/productAvailability";
 
 /** Доступна кількість для розміру (або загальний stock, якщо розмірів немає). */
 export function availableStockForSize(
@@ -11,10 +12,21 @@ export function availableStockForSize(
   if (rows.length > 0) {
     const label = (size ?? "").trim();
     if (!label || label === "—") {
-      return rows.reduce((sum, row) => sum + Math.max(0, row.stock), 0);
+      const total = rows.reduce((sum, row) => sum + Math.max(0, row.stock), 0);
+      if (total > 0) return total;
+      if (product.inStock === true) return VIRTUAL_STOCK_WHEN_IN_STOCK;
+      return 0;
     }
-    const row = rows.find((r) => r.label === label);
-    return row ? Math.max(0, row.stock) : 0;
+    const row = findSizeStockRow(rows, label);
+    if (row && row.stock > 0) return row.stock;
+    if (product.inStock === true) return VIRTUAL_STOCK_WHEN_IN_STOCK;
+    return row ? 0 : 0;
+  }
+
+  if (product.inStock === true) {
+    return typeof product.stock === "number" && product.stock > 0
+      ? product.stock
+      : VIRTUAL_STOCK_WHEN_IN_STOCK;
   }
 
   return typeof product.stock === "number" ? Math.max(0, product.stock) : 0;

@@ -8,7 +8,7 @@ import Link from "next/link";
 import Alert from "@/components/shared/Alert";
 import CartAlert from "@/components/shared/CartAlert";
 import { getFirstProductImage } from "@/lib/getFirstProductImage";
-import { getDiscountedPrice } from "@/lib/pricing";
+import { getProductDisplayPrice, getProductStrikePrice } from "@/lib/pricing";
 import {
   GA4_BRAND,
   GA4_CURRENCY,
@@ -18,6 +18,7 @@ import {
 import { LABEL_FREE_DELIVERY_FROM_2000 } from "@/lib/siteBrand";
 import { productGalleryImageAlt } from "@/lib/seoCopy";
 import {
+  effectiveSizeStockForDisplay,
   expandSizeStockForDisplay,
   parseSizeStock,
   parseSizeVariants,
@@ -117,10 +118,10 @@ export default function ProductClient({ product }: ProductClientProps) {
   const mobileGalleryScrollRef = useRef<HTMLDivElement>(null);
 
   const colors = product.color_options ?? [];
-  const sizeStock = useMemo(
-    () => expandSizeStockForDisplay(parseSizeStock(product.size_variants)),
-    [product.size_variants]
-  );
+  const sizeStock = useMemo(() => {
+    const expanded = expandSizeStockForDisplay(parseSizeStock(product.size_variants));
+    return effectiveSizeStockForDisplay(expanded, product.in_stock);
+  }, [product.in_stock, product.size_variants]);
   const legacySizeVariants = useMemo(
     () => parseSizeVariants(product.size_variants),
     [product.size_variants]
@@ -128,7 +129,14 @@ export default function ProductClient({ product }: ProductClientProps) {
 
   const colorLinked = product.color_linked_products ?? [];
 
-  const [selectedSizeIndex, setSelectedSizeIndex] = useState(0);
+  const [selectedSizeIndex, setSelectedSizeIndex] = useState(() => {
+    const rows = effectiveSizeStockForDisplay(
+      expandSizeStockForDisplay(parseSizeStock(product.size_variants)),
+      product.in_stock
+    );
+    const firstAvailable = rows.findIndex((row) => row.stock > 0);
+    return firstAvailable >= 0 ? firstAvailable : 0;
+  });
 
   useEffect(() => {
     setActiveImageIndex(0);
@@ -161,9 +169,8 @@ export default function ProductClient({ product }: ProductClientProps) {
       : undefined;
 
   const analyticsCategory = product.subcategory_name ?? product.category_name ?? null;
-  const displayPrice = Math.round(
-    getDiscountedPrice(product.price, product.discount_percentage)
-  );
+  const displayPrice = getProductDisplayPrice(product.price);
+  const strikePrice = getProductStrikePrice(product.price, product.old_price);
 
   const handleAddToCart = async () => {
     if (isAddingToCartRef.current) return;
@@ -210,13 +217,20 @@ export default function ProductClient({ product }: ProductClientProps) {
   };
 
   const media = product.media || [];
-  const outOfStock =
-    isProductOutOfStock({
-      in_stock: product.in_stock,
-      stock: product.stock,
-    }) ||
-    (sizeStock.length > 0 &&
-      !productHasSizeStockAvailable(sizeStock, selectedSizeRow?.label ?? null));
+  const productOutOfStock = isProductOutOfStock({
+    in_stock: product.in_stock,
+    stock: product.stock,
+    size_variants: product.size_variants,
+  });
+  const selectedSizeUnavailable =
+    sizeStock.length > 0 &&
+    !productHasSizeStockAvailable(
+      sizeStock,
+      selectedSizeRow?.label ?? null,
+      product.in_stock
+    );
+  const outOfStock = productOutOfStock;
+  const cannotAddToCart = productOutOfStock || selectedSizeUnavailable;
   const categorySlug =
     product.category_slug ?? (product.category_name ? encodeURIComponent(product.category_name) : null);
   const categoryUrl = categorySlug ? `/catalog/${categorySlug}` : "/catalog";
@@ -534,9 +548,9 @@ export default function ProductClient({ product }: ProductClientProps) {
               <span className="text-2xl font-bold text-black sm:text-3xl lg:text-4xl">
                 {displayPrice.toLocaleString("uk-UA")} грн
               </span>
-              {product.old_price != null && Number(product.old_price) > displayPrice && (
+              {strikePrice != null && (
                 <span className="text-lg text-black/40 line-through sm:text-xl">
-                  {Math.round(Number(product.old_price)).toLocaleString("uk-UA")} грн
+                  {strikePrice.toLocaleString("uk-UA")} грн
                 </span>
               )}
             </div>
@@ -651,10 +665,10 @@ export default function ProductClient({ product }: ProductClientProps) {
                 variant="dark"
                 className="min-w-0 flex-1 rounded-2xl"
                 label={isAddingToCart ? "Додавання…" : "В кошик"}
-                outOfStock={outOfStock}
+                outOfStock={cannotAddToCart}
                 loading={isAddingToCart}
                 onClick={() => {
-                  if (!outOfStock && !isAddingToCart) void handleAddToCart();
+                  if (!cannotAddToCart && !isAddingToCart) void handleAddToCart();
                 }}
               />
             </div>
@@ -664,8 +678,8 @@ export default function ProductClient({ product }: ProductClientProps) {
 
             <button
               type="button"
-              onClick={() => !outOfStock && setOneClickOpen(true)}
-              disabled={outOfStock}
+              onClick={() => !cannotAddToCart && setOneClickOpen(true)}
+              disabled={cannotAddToCart}
               className="w-full text-center font-['Montserrat'] text-sm font-semibold text-black/55 underline decoration-black/25 underline-offset-[3px] transition-colors hover:text-black hover:decoration-black/50 disabled:opacity-45"
             >
               Купити в 1 клік
@@ -806,10 +820,10 @@ export default function ProductClient({ product }: ProductClientProps) {
             variant="dark"
             className="min-w-0 flex-1 rounded-2xl"
             label={isAddingToCart ? "…" : "В кошик"}
-            outOfStock={outOfStock}
+            outOfStock={cannotAddToCart}
             loading={isAddingToCart}
             onClick={() => {
-              if (!outOfStock && !isAddingToCart) void handleAddToCart();
+              if (!cannotAddToCart && !isAddingToCart) void handleAddToCart();
             }}
           />
         </div>
