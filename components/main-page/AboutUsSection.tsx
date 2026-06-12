@@ -7,7 +7,8 @@ const ABOUT_BULLETS = [
   "розроблено для дії, створено для тебе",
   "власне виробництво",
   "доставка по всьому світу",
-  "-10% для силових структур",
+  "-10% для ЗСУ, ДСНС, Поліції",
+  "-15% знижка, якщо замовлення на суму від 5000 грн",
 ] as const;
 
 type AboutUsSectionProps = {
@@ -42,7 +43,7 @@ export default function AboutUsSection({ showBackLink = false }: AboutUsSectionP
             {siteFooterLead}
           </p>
 
-          <ul className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:mt-10 lg:grid-cols-4 lg:gap-4">
+          <ul className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:mt-10 lg:grid-cols-5 lg:gap-4">
             {ABOUT_BULLETS.map((item) => (
               <li
                 key={item}

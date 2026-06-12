@@ -18,8 +18,9 @@ const heroTextShadow = "0 2px 28px rgba(0,0,0,0.5)";
 const heroSubtitleShadow = "0 1px 14px rgba(0,0,0,0.45)";
 
 const HERO_FEATURES = [
-  { label: "-10% ДЛЯ ЗСУ" },
-  { label: "1–3 ДНІ ДОСТАВКА" },
+  { label: "-10% для ЗСУ, ДСНС, Поліції" },
+  { label: "-15% знижка, якщо замовлення на суму від 5000 грн" },
+  { label: "1–3 дні доставка" },
 ] as const;
 
 function CatalogArrowIcon({ className = "" }: { className?: string }) {
@@ -63,12 +64,12 @@ function HeroTitle({ lines }: { lines: string[] }) {
 function HeroFeaturesBar({ className = "" }: { className?: string }) {
   return (
     <div
-      className={`grid grid-cols-2 divide-x divide-white/25 border-t border-white/20 ${className}`}
+      className={`grid grid-cols-1 divide-y divide-white/25 border-t border-white/20 sm:grid-cols-3 sm:divide-x sm:divide-y-0 ${className}`}
     >
       {HERO_FEATURES.map((item) => (
         <p
           key={item.label}
-          className="flex items-center justify-center px-2 py-4 text-center font-['Montserrat'] text-xs font-bold uppercase leading-snug tracking-[0.1em] text-white/95 sm:py-4 sm:text-sm lg:py-5 lg:text-sm lg:tracking-[0.12em]"
+          className="flex items-center justify-center px-2 py-3.5 text-center font-['Montserrat'] text-[11px] font-bold uppercase leading-snug tracking-[0.08em] text-white/95 sm:px-3 sm:py-4 sm:text-xs sm:tracking-[0.1em] lg:py-5 lg:text-sm lg:tracking-[0.12em]"
         >
           {item.label}
         </p>
