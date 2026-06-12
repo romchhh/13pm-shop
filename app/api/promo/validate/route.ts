@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getBulkOrderDiscountAmount } from "@/lib/orderDiscounts";
 
 /**
  * POST /api/promo/validate
@@ -12,7 +13,8 @@ export async function POST(req: NextRequest) {
     const code = typeof body.code === "string" ? body.code.trim().toUpperCase() : "";
     const subtotal = Number(body.subtotal) || 0;
     const deliveryCost = Number(body.deliveryCost) || 0;
-    const orderTotal = subtotal + deliveryCost;
+    const bulkDiscountAmount = getBulkOrderDiscountAmount(subtotal);
+    const orderTotal = Math.max(0, subtotal - bulkDiscountAmount + deliveryCost);
 
     if (!code) {
       return NextResponse.json({

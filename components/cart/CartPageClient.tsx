@@ -6,6 +6,10 @@ import { useBasket } from "@/lib/BasketProvider";
 import { getItemSubtotal } from "@/lib/pricing";
 import CartLineItems from "@/components/cart/CartLineItems";
 import CartRecommendations from "@/components/cart/CartRecommendations";
+import {
+  BULK_ORDER_DISCOUNT_LABEL,
+  computeOrderTotals,
+} from "@/lib/orderDiscounts";
 
 const ACCENT = "var(--site-accent)";
 
@@ -40,7 +44,7 @@ export default function CartPageClient() {
 
   const subtotal = getSubtotal(items);
   const deliveryLabel = "За тарифами перевізника";
-  const total = subtotal;
+  const { bulkDiscountAmount, orderTotal: total } = computeOrderTotals({ subtotal });
 
   if (!mounted) {
     return (
@@ -101,6 +105,14 @@ export default function CartPageClient() {
                       {Math.round(subtotal).toLocaleString("uk-UA")} грн
                     </dd>
                   </div>
+                  {bulkDiscountAmount > 0 && (
+                    <div className="flex justify-between gap-4 text-red-600">
+                      <dt>Знижка ({BULK_ORDER_DISCOUNT_LABEL})</dt>
+                      <dd className="font-medium">
+                        −{Math.round(bulkDiscountAmount).toLocaleString("uk-UA")} грн
+                      </dd>
+                    </div>
+                  )}
                   <div className="flex justify-between gap-4">
                     <dt>Вартість доставки</dt>
                     <dd className="text-right font-medium text-black/70">{deliveryLabel}</dd>

@@ -7,6 +7,7 @@ import { createLogger } from "@/lib/logger";
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import { ENABLE_ONLINE_CARD_PAYMENT } from "@/lib/paymentConfig";
+import { computeOrderTotals, getBulkOrderDiscountAmount } from "@/lib/orderDiscounts";
 
 const log = createLogger("POST /api/orders");
 
@@ -269,7 +270,6 @@ export async function POST(req: NextRequest) {
       0
     );
     const deliveryCost = one_click ? 0 : Number(deliveryCostFromBody) || 0;
-    const fullAmount = subtotal + deliveryCost;
 
     let promoCodeId: number | null = null;
     let promoDiscountAmount = 0;
@@ -283,10 +283,15 @@ export async function POST(req: NextRequest) {
         const underLimit = promo.maxUses == null || promo.usedCount < promo.maxUses;
         if (validByDate && underLimit) {
           const value = Number(promo.value);
+          const bulkDiscountBeforePromo = getBulkOrderDiscountAmount(subtotal);
+          const amountBeforePromo = Math.max(
+            0,
+            subtotal - bulkDiscountBeforePromo + deliveryCost
+          );
           if (promo.type === "percent") {
-            promoDiscountAmount = Math.round((fullAmount * value) / 100);
+            promoDiscountAmount = Math.round((amountBeforePromo * value) / 100);
           } else {
-            promoDiscountAmount = Math.min(value, fullAmount);
+            promoDiscountAmount = Math.min(value, amountBeforePromo);
           }
           if (promoDiscountAmount > 0) {
             promoCodeId = promo.id;
@@ -295,11 +300,25 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const orderTotal = Math.max(0, fullAmount - promoDiscountAmount);
+    const {
+      bulkDiscountAmount,
+      promoDiscountAmount: normalizedPromoDiscount,
+      totalDiscountAmount,
+      orderTotal,
+    } = computeOrderTotals({
+      subtotal,
+      deliveryCost,
+      promoDiscountAmount,
+    });
+    promoDiscountAmount = normalizedPromoDiscount;
     const amountToPay = orderTotal;
+    const fullAmount = subtotal + deliveryCost;
 
     log.debug(" Amount calculation:", {
       fullAmount,
+      bulkDiscountAmount,
+      promoDiscountAmount,
+      totalDiscountAmount,
       orderTotal,
       amountToPay,
       payment_type,
@@ -336,7 +355,7 @@ export async function POST(req: NextRequest) {
       comment,
       payment_type,
       bonus_points_spent: 0,
-      loyalty_discount_amount: 0,
+      loyalty_discount_amount: bulkDiscountAmount > 0 ? bulkDiscountAmount : undefined,
       promo_code_id: promoCodeId ?? undefined,
       promo_discount_amount: promoDiscountAmount > 0 ? promoDiscountAmount : undefined,
       items: normalizedItems.map(
@@ -589,6 +608,7 @@ export async function POST(req: NextRequest) {
         : []),
     ];
 
+    const totalDiscountMinorUnits = Math.round(totalDiscountAmount * 100);
     const invoicePayload = {
       amount: amountInMinorUnits,
       ccy: 980,
@@ -597,6 +617,17 @@ export async function POST(req: NextRequest) {
         destination: "Оплата замовлення",
         comment: comment || "Оплата замовлення",
         basketOrder,
+        ...(totalDiscountMinorUnits > 0
+          ? {
+              discounts: [
+                {
+                  type: "DISCOUNT",
+                  mode: "VALUE",
+                  value: totalDiscountMinorUnits,
+                },
+              ],
+            }
+          : {}),
       },
       redirectUrl: `${PUBLIC_URL_FULL}/success?orderReference=${orderId}&monoRef=${orderId}`,
       webHookUrl: `${PUBLIC_URL_FULL}/api/mono-webhook`,

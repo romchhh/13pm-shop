@@ -14,6 +14,10 @@ import {
 } from "@/lib/ga4Ecommerce";
 import PaymentWalletLogos from "@/components/shared/PaymentWalletLogos";
 import { ENABLE_ONLINE_CARD_PAYMENT } from "@/lib/paymentConfig";
+import {
+  BULK_ORDER_DISCOUNT_LABEL,
+  computeOrderTotals,
+} from "@/lib/orderDiscounts";
 
 /** Calculate order subtotal from basket items */
 const CHECKOUT_CTA_PRIMARY =
@@ -418,8 +422,11 @@ export default function FinalCard() {
 
     const subtotal = getSubtotal(items);
     const deliveryCost = deliveryMethod === "nova_poshta_branch" ? DELIVERY_COST_BRANCH : 0;
-    const promoDiscount = appliedPromo?.discountAmount ?? 0;
-    const fullAmount = Math.max(0, subtotal + deliveryCost - promoDiscount);
+    const { orderTotal: fullAmount } = computeOrderTotals({
+      subtotal,
+      deliveryCost,
+      promoDiscountAmount: appliedPromo?.discountAmount ?? 0,
+    });
 
     const orderComment = comment.trim();
 
@@ -840,8 +847,15 @@ export default function FinalCard() {
   const checkoutSectionHint = "mb-4 font-['Montserrat'] text-sm text-black/50";
   const deliveryCostDisplay = deliveryMethod === "nova_poshta_branch" ? DELIVERY_COST_BRANCH : 0;
   const summarySubtotal = getSubtotal(items);
-  const summaryPromo = appliedPromo?.discountAmount ?? 0;
-  const summaryTotal = Math.max(0, summarySubtotal + deliveryCostDisplay - summaryPromo);
+  const {
+    bulkDiscountAmount: summaryBulk,
+    promoDiscountAmount: summaryPromo,
+    orderTotal: summaryTotal,
+  } = computeOrderTotals({
+    subtotal: summarySubtotal,
+    deliveryCost: deliveryCostDisplay,
+    promoDiscountAmount: appliedPromo?.discountAmount ?? 0,
+  });
 
   return (
     <section className="min-h-screen bg-[#faf9f7] pb-16 pt-6 lg:pb-20">
@@ -1219,6 +1233,12 @@ export default function FinalCard() {
                     <span className="text-black/60">Проміжний підсумок</span>
                     <span className="font-medium">{Math.round(summarySubtotal).toLocaleString("uk-UA")} грн</span>
                   </div>
+                  {summaryBulk > 0 && (
+                    <div className="flex justify-between gap-3 text-red-600">
+                      <span>Знижка ({BULK_ORDER_DISCOUNT_LABEL})</span>
+                      <span className="font-medium">−{Math.round(summaryBulk).toLocaleString("uk-UA")} грн</span>
+                    </div>
+                  )}
                   {summaryPromo > 0 && (
                     <div className="flex justify-between gap-3 text-red-600">
                       <span>Знижка (промокод)</span>
