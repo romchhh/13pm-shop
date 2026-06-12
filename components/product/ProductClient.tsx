@@ -265,7 +265,7 @@ export default function ProductClient({ product }: ProductClientProps) {
   if (!isMounted) return null;
 
   const shortText =
-    product.short_description || product.description || product.main_info || product.subtitle || "";
+    product.short_description || product.main_info || product.subtitle || "";
 
   const onSizeClick = (v: ProductSizeVariant) => {
     if (v.productId === product.id) return;
@@ -764,8 +764,8 @@ export default function ProductClient({ product }: ProductClientProps) {
           </div>
           <div className="min-h-[100px] pt-4">
             {activeTab === "details" ? (
-              product.short_description ? (
-                <ProductDetailDescription content={product.short_description} />
+              product.description ? (
+                <ProductDetailDescription content={product.description} />
               ) : (
                 <p className="font-['Montserrat'] text-sm text-black/45">Детальний опис відсутній.</p>
               )
