@@ -150,22 +150,25 @@ function PaymentSuccessContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- load when order ref changes
   }, [orderRef]);
 
-  // GA4 eCommerce purchase + Google Ads enhanced conversions (1x per transaction)
+  // GA4 eCommerce purchase + Google Ads enhanced conversions + Meta Pixel Purchase (1x per transaction)
   useEffect(() => {
     if (state !== "paid") return;
     const txId = order?.invoice_id ?? orderId;
     if (!txId) return;
     const purchaseStorageKey = `tracked_purchase:${txId}`;
     const convStorageKey = `tracked_conv_google_ads:${txId}`;
+    const metaStorageKey = `tracked_meta_purchase:${txId}`;
 
     let purchaseAlreadyTracked = hasTrackedPurchaseRef.current;
     let convAlreadyTracked = hasTrackedConvAdsRef.current;
+    let metaAlreadyTracked = false;
     try {
       if (typeof window !== "undefined") {
         purchaseAlreadyTracked =
           purchaseAlreadyTracked || localStorage.getItem(purchaseStorageKey) === "1";
         convAlreadyTracked =
           convAlreadyTracked || localStorage.getItem(convStorageKey) === "1";
+        metaAlreadyTracked = localStorage.getItem(metaStorageKey) === "1";
       }
     } catch {
       // ignore storage read errors
@@ -220,6 +223,24 @@ function PaymentSuccessContent() {
         }
       } catch {
         // ignore storage write errors
+      }
+    }
+
+    // Meta Pixel Purchase — один раз за транзакцію
+    if (!metaAlreadyTracked && typeof window !== "undefined" && window.fbq) {
+      window.fbq("track", "Purchase", {
+        content_ids: (order?.items ?? []).map((it) =>
+          String(it.product_id ?? `${it.product_name}-${it.size}`)
+        ),
+        content_type: "product",
+        value,
+        currency: "UAH",
+        num_items: (order?.items ?? []).reduce((s, it) => s + it.quantity, 0),
+      });
+      try {
+        localStorage.setItem(metaStorageKey, "1");
+      } catch {
+        // ignore
       }
     }
   }, [order, orderId, state]);

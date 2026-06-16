@@ -260,6 +260,17 @@ export default function ProductClient({ product }: ProductClientProps) {
         },
       ],
     });
+
+    // Meta Pixel ViewContent
+    if (window.fbq) {
+      window.fbq("track", "ViewContent", {
+        content_ids: [String(product.id)],
+        content_name: product.name,
+        content_type: "product",
+        value: displayPrice,
+        currency: "UAH",
+      });
+    }
   }, [analyticsCategory, displayPrice, isMounted, product.id, product.name]);
 
   if (!isMounted) return null;
