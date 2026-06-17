@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import ComponentCard from "@/components/admin/ComponentCard";
-import PageBreadcrumb from "@/components/admin/PageBreadCrumb";
+import { CATALOG_PRIORITY_HINT } from "@/lib/catalogPriority";
 import Label from "@/components/admin/form/Label";
 import Input from "@/components/admin/form/input/InputField";
 import DropzoneComponent from "@/components/admin/form/form-elements/DropZone";
@@ -369,9 +369,12 @@ export default function EditCategoryPage() {
                 <Label className="mt-4">Пріоритет</Label>
                 <Input
                   type="number"
+                  min={0}
+                  step={1}
                   value={formData.priority}
                   onChange={(e) => handleChange("priority", e.target.value)}
                 />
+                <p className="mt-1 text-xs text-gray-500">{CATALOG_PRIORITY_HINT}</p>
 
                 <Label className="mt-4">
                   Опис категорії (каталог і сторінка товару) — Markdown

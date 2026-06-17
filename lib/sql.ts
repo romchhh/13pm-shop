@@ -14,6 +14,7 @@ import {
 import { textToSlug, ensureUniqueSlug } from "./slug";
 import { pickFirstProductMedia } from "./getFirstProductImage";
 import { normalizePairTogetherIds } from "./colorLinkGroups";
+import { compareByCatalogPriority } from "./catalogPriority";
 
 // Keep sql template literal for backward compatibility (used in migrate route)
 // This will be deprecated but kept for now
@@ -50,10 +51,12 @@ export const sql = Object.assign(
 // 👕 PRODUCTS
 // =====================
 
+const PRODUCT_CATALOG_ORDER = [{ id: "desc" as const }];
+
 // Get all products - optimized for catalog list (only first photo)
 async function _sqlGetAllProducts() {
   const products = (await prisma.product.findMany({
-    orderBy: { id: "desc" },
+    orderBy: PRODUCT_CATALOG_ORDER,
     include: {
       category: {
         select: { name: true },
@@ -87,6 +90,7 @@ async function _sqlGetAllProducts() {
     description: p.description,
     old_price: p.oldPrice ? Number(p.oldPrice) : null,
     discount_percentage: p.discountPercentage,
+    priority: p.priority ?? 0,
     is_hit: p.isHit ?? false,
     top_sale: p.topSale ?? false,
     limited_edition: p.limitedEdition ?? false,
@@ -125,7 +129,7 @@ async function _sqlGetAllProducts() {
     color_options: parseColorOptions((p as any).colorOptions ?? []),
     white_color_surcharge_enabled: (p as any).whiteColorSurchargeEnabled ?? true,
     pair_together_ids: (p as any).pairTogetherIds ?? [],
-  }));
+  })).sort(compareByCatalogPriority);
 }
 
 // Cached version with 20 minute revalidation
@@ -391,7 +395,7 @@ export async function sqlGetProductsByCategory(categoryName: string) {
             },
           ],
         } as any,
-        orderBy: { id: "desc" },
+        orderBy: PRODUCT_CATALOG_ORDER,
         include: {
           category: {
             select: { name: true },
@@ -421,6 +425,7 @@ export async function sqlGetProductsByCategory(categoryName: string) {
         price: Number(p.price),
         old_price: p.oldPrice ? Number(p.oldPrice) : null,
         discount_percentage: p.discountPercentage,
+        priority: p.priority ?? 0,
         top_sale: p.topSale,
         limited_edition: p.limitedEdition,
         is_hit: p.isHit ?? false,
@@ -450,7 +455,7 @@ export async function sqlGetProductsByCategory(categoryName: string) {
         color_options: parseColorOptions((p as any).colorOptions ?? []),
         white_color_surcharge_enabled: (p as any).whiteColorSurchargeEnabled ?? true,
       }));
-      return dedupeCatalogBySizeGroup(mapped);
+      return dedupeCatalogBySizeGroup(mapped).sort(compareByCatalogPriority);
     },
     [`products-by-category-${categoryName}`],
     {
@@ -489,7 +494,7 @@ export async function sqlGetProductsBySubcategoryName(name: string) {
             },
           ],
         } as any,
-        orderBy: { id: "desc" },
+        orderBy: PRODUCT_CATALOG_ORDER,
         include: {
           category: {
             select: { name: true },
@@ -522,6 +527,7 @@ export async function sqlGetProductsBySubcategoryName(name: string) {
         price: Number(p.price),
         old_price: p.oldPrice ? Number(p.oldPrice) : null,
         discount_percentage: p.discountPercentage,
+        priority: p.priority ?? 0,
         top_sale: p.topSale,
         limited_edition: p.limitedEdition,
         is_hit: p.isHit ?? false,
@@ -559,7 +565,7 @@ export async function sqlGetProductsBySubcategoryName(name: string) {
         color_options: parseColorOptions((p as any).colorOptions ?? []),
         white_color_surcharge_enabled: (p as any).whiteColorSurchargeEnabled ?? true,
       }));
-      return dedupeCatalogBySizeGroup(mapped);
+      return dedupeCatalogBySizeGroup(mapped).sort(compareByCatalogPriority);
     },
     [`products-by-subcategory-${name}`],
     {
@@ -587,6 +593,7 @@ function mapHomeCarouselProduct(p: {
   price: unknown;
   oldPrice: unknown;
   discountPercentage: number | null;
+  priority?: number | null;
   topSale: boolean;
   limitedEdition: boolean;
   isHit: boolean;
@@ -607,6 +614,7 @@ function mapHomeCarouselProduct(p: {
     price: Number(p.price),
     old_price: p.oldPrice ? Number(p.oldPrice) : null,
     discount_percentage: p.discountPercentage,
+    priority: (p as { priority?: number }).priority ?? 0,
     top_sale: p.topSale,
     limited_edition: p.limitedEdition,
     is_hit: p.isHit ?? false,
@@ -626,11 +634,13 @@ function mapHomeCarouselProduct(p: {
 async function _sqlGetTopSaleProducts() {
   const products = await prisma.product.findMany({
     where: { isHit: true },
-    orderBy: { id: "desc" },
+    orderBy: PRODUCT_CATALOG_ORDER,
     include: homeCarouselProductInclude,
   });
 
-  return dedupeCatalogBySizeGroup(products.map((p) => mapHomeCarouselProduct(p)));
+  return dedupeCatalogBySizeGroup(products.map((p) => mapHomeCarouselProduct(p))).sort(
+    compareByCatalogPriority
+  );
 }
 
 // Cached version with 20 minute revalidation
@@ -647,11 +657,13 @@ export const sqlGetTopSaleProducts = unstable_cache(
 async function _sqlGetLimitedEditionProducts() {
   const products = await prisma.product.findMany({
     where: { isNew: true },
-    orderBy: { id: "desc" },
+    orderBy: PRODUCT_CATALOG_ORDER,
     include: homeCarouselProductInclude,
   });
 
-  return dedupeCatalogBySizeGroup(products.map((p) => mapHomeCarouselProduct(p)));
+  return dedupeCatalogBySizeGroup(products.map((p) => mapHomeCarouselProduct(p))).sort(
+    compareByCatalogPriority
+  );
 }
 
 // Cached version with 20 minute revalidation
@@ -1623,10 +1635,34 @@ export async function sqlGetOrderByInvoiceId(invoiceId: string) {
 // 📦 CATEGORIES
 // =====================
 
+export async function sqlPatchProductPriority(id: number, priority: number) {
+  try {
+    await prisma.product.update({
+      where: { id },
+      data: { priority },
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function sqlPatchCategoryPriority(id: number, priority: number) {
+  try {
+    await prisma.category.update({
+      where: { id },
+      data: { priority },
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // Get all categories
 async function _sqlGetAllCategories() {
   const categories = await prisma.category.findMany({
-    orderBy: { priority: "desc" },
+    orderBy: { id: "asc" },
   });
 
   const result: { id: number; name: string; slug: string | null; priority: number; mediaType: string | null; mediaUrl: string | null; description: string | null }[] = [];
@@ -1652,6 +1688,7 @@ async function _sqlGetAllCategories() {
       description: (c as any).description ?? null,
     });
   }
+  result.sort(compareByCatalogPriority);
   return applyCategoryMediaFallback(result);
 }
 

@@ -15,6 +15,8 @@ import Pagination from "./Pagination";
 import { getProductImageSrc } from "@/lib/getFirstProductImage";
 import { buildColorLinkGroupLabels } from "@/lib/colorLinkGroups";
 import { buildSizeGroupLabels } from "@/lib/sizeGroupLabels";
+import { compareByCatalogPriority, CATALOG_PRIORITY_HINT } from "@/lib/catalogPriority";
+import AdminPriorityCell from "@/components/admin/AdminPriorityCell";
 
 const SIZE_MAP: Record<string, string> = {
   "1": "XL",
@@ -33,6 +35,7 @@ interface Product {
   name: string;
   description: string;
   price: number;
+  priority?: number;
   created_at: Date;
   sizes: { size: string }[];
   top_sale?: boolean;
@@ -136,9 +139,11 @@ export default function ProductsTable() {
 
   const filteredProducts = useMemo(
     () =>
-      products.filter((p) =>
-        productMatchesCategory(p, filterCategoryId, categoriesById)
-      ),
+      products
+        .filter((p) =>
+          productMatchesCategory(p, filterCategoryId, categoriesById)
+        )
+        .sort(compareByCatalogPriority),
     [products, filterCategoryId, categoriesById]
   );
 
@@ -216,6 +221,20 @@ export default function ProductsTable() {
       console.error("Error deleting product:", error);
       alert("Помилка при видаленні товару. Спробуйте ще раз.");
     }
+  }
+
+  function handlePrioritySaved(productId: number, priority: number) {
+    setProducts((prev) => {
+      const updated = prev.map((p) =>
+        p.id === productId ? { ...p, priority } : p
+      );
+      localStorage.setItem(CACHE_KEY, JSON.stringify(updated));
+      localStorage.setItem(
+        CACHE_EXPIRY_KEY,
+        (Date.now() + CACHE_DURATION).toString()
+      );
+      return updated;
+    });
   }
 
   useEffect(() => {
@@ -302,6 +321,9 @@ export default function ProductsTable() {
               </Link>
             </div>
           </div>
+          <p className="border-b border-gray-200 bg-gray-50 px-5 pb-3 text-xs text-gray-500">
+            {CATALOG_PRIORITY_HINT}
+          </p>
 
           <Table>
             <TableHeader>
@@ -317,6 +339,12 @@ export default function ProductsTable() {
                   className="px-5 py-3 text-left text-sm font-semibold text-gray-900"
                 >
                   Назва
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="px-5 py-3 text-left text-sm font-semibold text-gray-900"
+                >
+                  Пріоритет
                 </TableCell>
                 <TableCell
                   isHeader
@@ -385,7 +413,7 @@ export default function ProductsTable() {
               {loading ? (
                 <TableRow>
                   <TableCell
-                    colSpan={12}
+                    colSpan={13}
                     className="text-center py-6 text-gray-600"
                   >
                     Завантаження...
@@ -394,7 +422,7 @@ export default function ProductsTable() {
               ) : filteredProducts.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={12}
+                    colSpan={13}
                     className="text-center py-6 text-gray-600"
                   >
                     {filterCategoryId != null
@@ -425,6 +453,14 @@ export default function ProductsTable() {
                     </TableCell>
                     <TableCell className="px-5 py-4 text-sm text-gray-900 font-medium">
                       {product.name}
+                    </TableCell>
+                    <TableCell className="px-5 py-4">
+                      <AdminPriorityCell
+                        value={product.priority ?? 0}
+                        entityType="product"
+                        entityId={product.id}
+                        onSaved={(priority) => handlePrioritySaved(product.id, priority)}
+                      />
                     </TableCell>
                     <TableCell className="px-5 py-4 text-sm text-gray-700 max-w-[360px]">
                       {(product.description || "").length > 20

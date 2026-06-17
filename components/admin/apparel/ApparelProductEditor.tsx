@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { CATALOG_PRIORITY_HINT } from "@/lib/catalogPriority";
 import ComponentCard from "@/components/admin/ComponentCard";
 import Label from "@/components/admin/form/Label";
 import DropzoneComponent from "@/components/admin/form/form-elements/DropZone";
@@ -60,6 +61,7 @@ export default function ApparelProductEditor({
       price: "",
       oldPrice: "",
       discountPercentage: "",
+      priority: "0",
       color: defaultApparelColor(),
       colorLinkedIds: [],
       boughtTogetherIds: [],
@@ -255,7 +257,7 @@ export default function ApparelProductEditor({
                   rows={6}
                 />
               </div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
                 <div>
                   <Label>Ціна *</Label>
                   <Input
@@ -280,6 +282,17 @@ export default function ApparelProductEditor({
                     value={values.discountPercentage}
                     onChange={(e) => patch({ discountPercentage: e.target.value })}
                   />
+                </div>
+                <div>
+                  <Label>Пріоритет</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={values.priority}
+                    onChange={(e) => patch({ priority: e.target.value })}
+                  />
+                  <p className="mt-1 text-xs text-gray-500">{CATALOG_PRIORITY_HINT}</p>
                 </div>
               </div>
             </div>

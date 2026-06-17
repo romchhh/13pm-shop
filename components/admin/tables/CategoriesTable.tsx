@@ -11,11 +11,14 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import { assertApiOk } from "@/lib/apiError";
+import { compareByCatalogPriority, CATALOG_PRIORITY_HINT } from "@/lib/catalogPriority";
+import AdminPriorityCell from "@/components/admin/AdminPriorityCell";
 
 interface Category {
   id: number;
   name: string;
   slug?: string | null;
+  priority?: number;
 }
 
 type MediaFile = {
@@ -28,6 +31,7 @@ export default function CategoriesTable() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryPriority, setNewCategoryPriority] = useState("0");
   const [editingSlug, setEditingSlug] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
   const [isAddingNew, setIsAddingNew] = useState(false);
@@ -43,7 +47,9 @@ export default function CategoriesTable() {
       const res = await fetch("/api/categories?revalidate=1");
       if (!res.ok) throw new Error("Failed to fetch categories");
       const data = await res.json();
-      setCategories(data);
+      setCategories(
+        [...(data as Category[])].sort(compareByCatalogPriority)
+      );
     } catch (error) {
       console.error("Error fetching categories:", error);
     } finally {
@@ -115,6 +121,7 @@ export default function CategoriesTable() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           name: newCategoryName.trim(),
+          priority: Number(newCategoryPriority) || 0,
           mediaType: finalMediaType,
           mediaUrl: finalMediaUrl,
         }),
@@ -123,8 +130,11 @@ export default function CategoriesTable() {
       await assertApiOk(res, "Не вдалося створити категорію");
       
       const newCategory = await res.json();
-      setCategories([...categories, newCategory]);
+      setCategories(
+        [...categories, newCategory].sort(compareByCatalogPriority)
+      );
       setNewCategoryName("");
+      setNewCategoryPriority("0");
       setMediaFiles([]);
       setIsAddingNew(false);
     } catch (error) {
@@ -185,6 +195,14 @@ export default function CategoriesTable() {
     }
   }
 
+  function handlePrioritySaved(categoryId: number, priority: number) {
+    setCategories((prev) =>
+      [...prev.map((cat) => (cat.id === categoryId ? { ...cat, priority } : cat))].sort(
+        compareByCatalogPriority
+      )
+    );
+  }
+
   function cancelEditing() {
     setEditingSlug(null);
     setEditingName("");
@@ -205,6 +223,9 @@ export default function CategoriesTable() {
               + Додати категорію
             </button>
           </div>
+          <p className="border-b border-gray-200 bg-gray-50 px-5 pb-3 text-xs text-gray-500">
+            {CATALOG_PRIORITY_HINT}
+          </p>
 
           <Table>
             <TableHeader>
@@ -220,6 +241,12 @@ export default function CategoriesTable() {
                   className="px-5 py-3 text-left text-sm font-semibold text-gray-900"
                 >
                   Назва
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="px-5 py-3 text-left text-sm font-semibold text-gray-900"
+                >
+                  Пріоритет
                 </TableCell>
                 <TableCell
                   isHeader
@@ -248,12 +275,23 @@ export default function CategoriesTable() {
                           if (e.key === "Escape") {
                             setIsAddingNew(false);
                             setNewCategoryName("");
+                            setNewCategoryPriority("0");
                             setMediaFiles([]);
                           }
                         }}
                         placeholder="Введіть назву категорії"
                         className="w-full px-3 py-2 border border-gray-400 rounded-md bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                         autoFocus
+                      />
+                    </TableCell>
+                    <TableCell className="px-5 py-4">
+                      <input
+                        type="number"
+                        min={0}
+                        step={1}
+                        value={newCategoryPriority}
+                        onChange={(e) => setNewCategoryPriority(e.target.value)}
+                        className="w-20 rounded-md border border-gray-400 bg-white px-2 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500"
                       />
                     </TableCell>
                     <TableCell className="px-5 py-4 space-x-2">
@@ -267,6 +305,7 @@ export default function CategoriesTable() {
                         onClick={() => {
                           setIsAddingNew(false);
                           setNewCategoryName("");
+                          setNewCategoryPriority("0");
                           setMediaFiles([]);
                         }}
                         className="inline-block rounded-md bg-gray-500 px-3 py-1.5 text-white text-sm font-medium hover:bg-gray-600 transition shadow-sm"
@@ -276,7 +315,7 @@ export default function CategoriesTable() {
                     </TableCell>
                   </TableRow>
                   <TableRow className="bg-green-50">
-                    <TableCell colSpan={3} className="px-5 py-4">
+                    <TableCell colSpan={4} className="px-5 py-4">
                       <div className="space-y-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -340,7 +379,7 @@ export default function CategoriesTable() {
               {loading ? (
                 <TableRow>
                   <TableCell
-                    colSpan={3}
+                    colSpan={4}
                     className="text-center py-6 text-gray-600"
                   >
                     Завантаження...
@@ -349,7 +388,7 @@ export default function CategoriesTable() {
               ) : categories.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={3}
+                    colSpan={4}
                     className="text-center py-6 text-gray-600"
                   >
                     Категорій не знайдено.
@@ -385,6 +424,16 @@ export default function CategoriesTable() {
                             {category.name}
                           </span>
                         )}
+                      </TableCell>
+                      <TableCell className="px-5 py-4">
+                        <AdminPriorityCell
+                          value={category.priority ?? 0}
+                          entityType="category"
+                          entityId={category.id}
+                          onSaved={(priority) =>
+                            handlePrioritySaved(category.id, priority)
+                          }
+                        />
                       </TableCell>
                       <TableCell className="px-5 py-4 space-x-2">
                         {editingSlug === slug ? (

@@ -17,6 +17,7 @@ export type ApparelProductFormValues = {
   price: string;
   oldPrice: string;
   discountPercentage: string;
+  priority: string;
   color: ProductColorOption;
   colorLinkedIds: number[];
   boughtTogetherIds: number[];
@@ -94,7 +95,7 @@ export function buildApparelProductApiBody(
     discount_percentage: values.discountPercentage
       ? Number(values.discountPercentage)
       : null,
-    priority: 0,
+    priority: values.priority.trim() ? Number(values.priority) : 0,
     stock: values.inStock
       ? totalStock > 0
         ? totalStock
@@ -132,6 +133,7 @@ export function apparelFormFromProduct(product: {
   price?: number;
   old_price?: number | null;
   discount_percentage?: number | null;
+  priority?: number | null;
   color_options?: unknown;
   pair_together_ids?: number[];
   bought_together_ids?: number[];
@@ -170,6 +172,7 @@ export function apparelFormFromProduct(product: {
     oldPrice: product.old_price != null ? String(product.old_price) : "",
     discountPercentage:
       product.discount_percentage != null ? String(product.discount_percentage) : "",
+    priority: product.priority != null ? String(product.priority) : "0",
     color,
     colorLinkedIds: Array.isArray(product.pair_together_ids)
       ? product.pair_together_ids.filter((n) => Number.isInteger(n) && n > 0)
