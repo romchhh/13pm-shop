@@ -183,6 +183,7 @@ export default function ApparelProductEditor({
           price: "",
           oldPrice: "",
           discountPercentage: "",
+          priority: "0",
           color: defaultApparelColor(),
           colorLinkedIds: [],
           boughtTogetherIds: [],
@@ -287,7 +288,7 @@ export default function ApparelProductEditor({
                   <Label>Пріоритет</Label>
                   <Input
                     type="number"
-                    min={0}
+                    min="0"
                     step={1}
                     value={values.priority}
                     onChange={(e) => patch({ priority: e.target.value })}

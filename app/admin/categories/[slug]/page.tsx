@@ -370,7 +370,7 @@ export default function EditCategoryPage() {
                 <Label className="mt-4">Пріоритет</Label>
                 <Input
                   type="number"
-                  min={0}
+                  min="0"
                   step={1}
                   value={formData.priority}
                   onChange={(e) => handleChange("priority", e.target.value)}
