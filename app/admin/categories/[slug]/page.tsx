@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import ComponentCard from "@/components/admin/ComponentCard";
+import PageBreadcrumb from "@/components/admin/PageBreadCrumb";
 import { CATALOG_PRIORITY_HINT } from "@/lib/catalogPriority";
 import Label from "@/components/admin/form/Label";
 import Input from "@/components/admin/form/input/InputField";
