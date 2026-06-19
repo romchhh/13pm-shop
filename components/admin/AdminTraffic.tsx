@@ -242,7 +242,7 @@ export default function AdminTraffic() {
       <section className="rounded-2xl border border-blue-100 bg-blue-50 p-5 text-sm text-blue-900">
         <p className="font-medium">Детальніша аналітика</p>
         <p className="mt-1">
-          У Google Analytics / GTM (GTM-N98NJ7ST) є повні звіти по сторінках,
+          У Google Analytics (G-M432701GP3) та GTM є повні звіти по сторінках,
           конверсіях та рекламі. Цей розділ показує базову статистику прямо в
           адмінці без входу в GA.
         </p>

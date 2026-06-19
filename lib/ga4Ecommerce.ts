@@ -20,8 +20,13 @@ function getDataLayer(): unknown[] {
 
 export function pushGA4EcommerceEvent(eventName: string, ecommerce: GA4EcommercePayload) {
   if (typeof window === "undefined") return;
+
+  const w = window as Window & { gtag?: (...args: unknown[]) => void };
+  if (typeof w.gtag === "function") {
+    w.gtag("event", eventName, ecommerce);
+  }
+
   const dataLayer = getDataLayer();
-  // Ensure previous ecommerce payload is not reused by accident
   dataLayer.push({ ecommerce: null });
   dataLayer.push({ event: eventName, ecommerce });
 }
