@@ -303,3 +303,24 @@ model HeroSlide {
 
   @@map("hero_slides")
 }
+
+model SiteTrafficSession {
+  id           String   @id
+  visitorId    String   @map("visitor_id")
+  firstSeenAt  DateTime @default(now()) @map("first_seen_at")
+  lastSeenAt   DateTime @default(now()) @map("last_seen_at")
+  lastPath     String?  @map("last_path") @db.Text
+  landingPath  String?  @map("landing_path") @db.Text
+  referrer     String?  @db.Text
+  referrerHost String?  @map("referrer_host")
+  sourceType   String   @map("source_type")
+  utmSource    String?  @map("utm_source")
+  utmMedium    String?  @map("utm_medium")
+  utmCampaign  String?  @map("utm_campaign")
+
+  @@index([lastSeenAt])
+  @@index([firstSeenAt])
+  @@index([sourceType])
+  @@index([referrerHost])
+  @@map("site_traffic_sessions")
+}

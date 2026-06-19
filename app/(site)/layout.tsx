@@ -8,6 +8,7 @@ import "./mobile-optimizations.css";
 import SiteChrome from "@/components/layout/SiteChrome";
 import { registerServiceWorker } from "@/lib/registerSW";
 import { WebVitals } from "@/components/shared/WebVitals";
+import { SiteTrafficTracker } from "@/components/shared/SiteTrafficTracker";
 import { OrganizationStructuredData, WebSiteStructuredData } from "@/components/shared/StructuredData";
 import { buildRootSiteMetadata } from "@/lib/seo";
 import { SITE_ICON_PATH, siteMetadataIcons } from "@/lib/siteBrand";
@@ -153,6 +154,9 @@ export default function RootLayout({
         />
         
         <WebVitals />
+        <Suspense fallback={null}>
+          <SiteTrafficTracker />
+        </Suspense>
       </body>
     </html>
   );

@@ -36,8 +36,17 @@ export const APPAREL_ADMIN_PRESET_SIZES = [
   "4XL",
 ] as const;
 
-/** Повний ряд розмірів на сторінці товару (S–4XL). */
-export const APPAREL_PDP_SIZE_RANGE = ["S", "M", "L", "XL", "XXL", "3XL", "4XL"] as const;
+/** Базовий ряд розмірів на сторінці товару (відображаються всі; без залишку — закреслені). */
+export const APPAREL_PDP_SIZE_RANGE = [
+  "XS",
+  "S",
+  "M",
+  "L",
+  "XL",
+  "XXL",
+  "3XL",
+  "4XL",
+] as const;
 
 /** Нормалізація підпису розміру для порівняння (2XL ≈ XXL). */
 export function normalizeApparelSizeLabel(label: string): string {
@@ -175,7 +184,8 @@ export function sortSizeStockRows(rows: ProductSizeStock[]): ProductSizeStock[] 
 }
 
 /**
- * Доповнює розміри товару до повного ряду S–4XL.
+ * Доповнює розміри товару до базового ряду XS–4XL.
+ * Розміри з адмінки, яких немає в базовому ряді, теж додаються.
  * Відсутні або з нульовим залишком — stock: 0 (видимі, але не в наявності).
  */
 export function expandSizeStockForDisplay(rows: ProductSizeStock[]): ProductSizeStock[] {
@@ -184,17 +194,40 @@ export function expandSizeStockForDisplay(rows: ProductSizeStock[]): ProductSize
   if (parsed.length === 1 && isOneSizeLabel(parsed[0].label)) return parsed;
 
   const stockByKey = new Map<string, number>();
+  const labelByKey = new Map<string, string>();
   for (const row of parsed) {
     const key = normalizeApparelSizeLabel(row.label);
     const stock = Math.max(0, row.stock);
     const prev = stockByKey.get(key);
     stockByKey.set(key, prev === undefined ? stock : Math.max(prev, stock));
+    if (!labelByKey.has(key)) {
+      labelByKey.set(key, row.label.trim());
+    }
   }
 
-  return APPAREL_PDP_SIZE_RANGE.map((label) => ({
-    label,
-    stock: stockByKey.get(normalizeApparelSizeLabel(label)) ?? 0,
-  }));
+  const displayKeySet = new Set<string>();
+  const displayLabels: string[] = [];
+
+  for (const label of APPAREL_PDP_SIZE_RANGE) {
+    const key = normalizeApparelSizeLabel(label);
+    if (displayKeySet.has(key)) continue;
+    displayKeySet.add(key);
+    displayLabels.push(label);
+  }
+
+  for (const row of parsed) {
+    const key = normalizeApparelSizeLabel(row.label);
+    if (displayKeySet.has(key)) continue;
+    displayKeySet.add(key);
+    displayLabels.push(labelByKey.get(key) ?? row.label.trim());
+  }
+
+  return sortSizeStockRows(
+    displayLabels.map((label) => ({
+      label,
+      stock: stockByKey.get(normalizeApparelSizeLabel(label)) ?? 0,
+    }))
+  );
 }
 
 export function totalStockFromSizeRows(rows: ProductSizeStock[]): number {

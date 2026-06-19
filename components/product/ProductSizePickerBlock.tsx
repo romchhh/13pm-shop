@@ -86,7 +86,7 @@ export default function ProductSizePickerBlock({
 
         {hasStockPicker && (
           <div
-            className="grid grid-cols-4 gap-2 sm:grid-cols-7"
+            className="grid grid-cols-4 gap-2 sm:grid-cols-8"
             role="listbox"
             aria-label="Оберіть розмір"
           >

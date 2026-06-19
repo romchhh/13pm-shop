@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useAppContext } from "@/lib/GeneralProvider";
 import { useBasket } from "@/lib/BasketProvider";
 import SidebarMenu from "../layout/SidebarMenu";
 import ProductSkeleton from "./ProductSkeleton";
-import { useSearchParams, type ReadonlyURLSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams, type ReadonlyURLSearchParams } from "next/navigation";
 import { getDiscountedPrice } from "@/lib/pricing";
 import {
   GA4_BRAND,
@@ -108,6 +108,8 @@ export default function CatalogClient({
 
   useBodyScrollLock(mobileFiltersOpen);
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
 
   const [sortOrder, setSortOrder] = useState<"recommended" | "newest" | "asc" | "desc" | "sale">("recommended");
   const [promoOnly, setPromoOnly] = useState(() => readCatalogListFlag(searchParams, "promo"));
@@ -203,12 +205,14 @@ export default function CatalogClient({
     const promo = readCatalogListFlag(searchParams, "promo");
     const hits = readCatalogListFlag(searchParams, "hits");
     const isNew = readCatalogListFlag(searchParams, "new");
+    const hasCategoryInUrl = Boolean(searchParams.get("categoryId"));
+    const hasSubcategoryInUrl = Boolean(searchParams.get("subcategory"));
 
     setPromoOnly(promo);
     setHitsOnly(hits);
     setNewOnly(isNew);
 
-    if (promo || hits || isNew) {
+    if ((promo || hits || isNew) && !hasCategoryInUrl && !hasSubcategoryInUrl) {
       setSelectedCategories([]);
       setSelectedSubcategories([]);
       setMinPrice(null);
@@ -217,6 +221,25 @@ export default function CatalogClient({
       setMaxPriceInput("");
     }
   }, [searchParams]);
+
+  const clearListModeFilters = useCallback(() => {
+    setPromoOnly(false);
+    setHitsOnly(false);
+    setNewOnly(false);
+
+    const params = new URLSearchParams(searchParams.toString());
+    let changed = false;
+    for (const key of ["promo", "hits", "new"] as const) {
+      if (params.has(key)) {
+        params.delete(key);
+        changed = true;
+      }
+    }
+    if (changed) {
+      const q = params.toString();
+      router.replace(q ? `${pathname}?${q}` : pathname, { scroll: false });
+    }
+  }, [pathname, router, searchParams]);
 
   const priceRange = useMemo(() => {
     if (initialProducts.length === 0) return { min: 0, max: 10000 };
@@ -534,6 +557,12 @@ export default function CatalogClient({
   };
 
   const toggleCategory = (id: number) => {
+    const isRemoving = selectedCategories.includes(id);
+
+    if (!isRemoving && (promoOnly || hitsOnly || newOnly)) {
+      clearListModeFilters();
+    }
+
     setSelectedCategories((prev) => {
       // Якщо категорія вже вибрана — знімаємо її і чистимо її підкатегорії
       if (prev.includes(id)) {
@@ -551,6 +580,12 @@ export default function CatalogClient({
   };
 
   const toggleSubcategory = (id: number) => {
+    const isRemoving = selectedSubcategories.includes(id);
+
+    if (!isRemoving && (promoOnly || hitsOnly || newOnly)) {
+      clearListModeFilters();
+    }
+
     setSelectedSubcategories((prev) =>
       prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
     );
