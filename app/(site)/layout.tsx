@@ -11,6 +11,7 @@ import { GoogleAnalytics } from "@/components/shared/GoogleAnalytics";
 import { WebVitals } from "@/components/shared/WebVitals";
 import { SiteTrafficTracker } from "@/components/shared/SiteTrafficTracker";
 import { GTM_CONTAINER_ID } from "@/lib/googleAnalytics";
+import { DEFAULT_HERO_IMAGE } from "@/lib/heroSlides.shared";
 import { OrganizationStructuredData, WebSiteStructuredData } from "@/components/shared/StructuredData";
 import { buildRootSiteMetadata } from "@/lib/seo";
 import { SITE_ICON_PATH, siteMetadataIcons } from "@/lib/siteBrand";
@@ -81,7 +82,7 @@ export default function RootLayout({
         
         {/* Preload critical resources */}
         {/* Hero image preload */}
-        <link rel="preload" href="/hero-main.png" as="image" />
+        <link rel="preload" href={DEFAULT_HERO_IMAGE} as="image" />
         <link rel="preload" href="/api/products/top-sale" as="fetch" crossOrigin="anonymous" />
         
         {/* Mobile-specific prefetch */}

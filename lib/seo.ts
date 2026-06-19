@@ -9,8 +9,10 @@ import {
   siteSeoKeywords,
 } from "@/lib/siteBrand";
 
+import { DEFAULT_HERO_IMAGE } from "@/lib/heroSlides.shared";
+
 /** Шлях до OG-зображення за замовчуванням (1200×630 рекомендовано). */
-export const DEFAULT_OG_IMAGE_PATH = "/hero-main.png";
+export const DEFAULT_OG_IMAGE_PATH = DEFAULT_HERO_IMAGE;
 
 const META_DESCRIPTION_MAX = 160;
 

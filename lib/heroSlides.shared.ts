@@ -8,7 +8,7 @@ export type HeroSlideData = {
   mobileImage: string;
 };
 
-export const DEFAULT_HERO_IMAGE = "/hero-main.png";
+export const DEFAULT_HERO_IMAGE = "/IMG_5273.PNG";
 
 export const DEFAULT_HERO_SLIDES: HeroSlideData[] = [
   {
