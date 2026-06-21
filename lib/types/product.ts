@@ -8,6 +8,7 @@ export interface ProductMedia {
 export interface Product {
   id: number;
   name: string;
+  article?: string | null;
   slug?: string | null;
   subtitle?: string | null;
   release_form?: string | null;

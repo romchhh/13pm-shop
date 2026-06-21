@@ -9,11 +9,13 @@ import {
 } from "@/lib/siteBrand";
 import { siteContact } from "@/lib/siteContact";
 import { DEFAULT_OG_IMAGE_PATH, productCanonicalPath } from "@/lib/seo";
+import { resolveProductArticle } from "@/lib/productArticle";
 
 interface ProductStructuredDataProps {
   product: {
     id: number;
     name: string;
+    article?: string | null;
     description?: string | null;
     price: number;
     discount_percentage?: number | null;
@@ -115,7 +117,7 @@ export function ProductStructuredData({ product, baseUrl = defaultBaseUrl, slug 
     },
     category: product.category_name || "Тактичний одяг",
     offers: offer,
-    sku: `13pm-tactic-${product.id}`,
+    sku: resolveProductArticle(product.article, product.name),
   };
 
   return (

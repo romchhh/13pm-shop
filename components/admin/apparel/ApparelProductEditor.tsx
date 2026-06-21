@@ -30,6 +30,7 @@ import {
   defaultApparelSizeRows,
   type ApparelProductFormValues,
 } from "@/lib/apparelProduct";
+import { generateProductArticleFromName } from "@/lib/productArticle";
 
 interface Category {
   id: number;
@@ -56,6 +57,7 @@ export default function ApparelProductEditor({
   const [values, setValues] = useState<ApparelProductFormValues>(
     initialValues ?? {
       name: "",
+      article: "",
       shortDescription: "",
       description: "",
       price: "",
@@ -178,6 +180,7 @@ export default function ApparelProductEditor({
         setSuccess("Товар успішно створено!");
         setValues({
           name: "",
+          article: "",
           shortDescription: "",
           description: "",
           price: "",
@@ -241,6 +244,19 @@ export default function ApparelProductEditor({
                   onChange={(e) => patch({ name: e.target.value })}
                   required
                 />
+              </div>
+              <div>
+                <Label>Артикул</Label>
+                <Input
+                  value={values.article}
+                  onChange={(e) => patch({ article: e.target.value })}
+                  placeholder="Залиште порожнім для автогенерації"
+                />
+                {!values.article.trim() && values.name.trim() ? (
+                  <p className="mt-1 text-xs text-gray-500">
+                    Буде згенеровано: {generateProductArticleFromName(values.name)}
+                  </p>
+                ) : null}
               </div>
               <div>
                 <Label>Короткий опис</Label>

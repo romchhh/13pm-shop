@@ -38,6 +38,7 @@ import CategoryDescriptionMarkdown from "@/components/shared/CategoryDescription
 import { isProductOutOfStock, OUT_OF_STOCK_LABEL } from "@/lib/productAvailability";
 import { productToFavoriteSnapshot } from "@/lib/favoritesStorage";
 import FavoriteButton from "@/components/shared/FavoriteButton";
+import { resolveProductArticle } from "@/lib/productArticle";
 import { scrollPageToTopReliable } from "@/lib/scrollPageToTop";
 
 const ACCENT = "var(--site-accent)";
@@ -48,6 +49,7 @@ interface ProductClientProps {
   product: {
     id: number;
     name: string;
+    article?: string | null;
     price: number;
     slug?: string | null;
     stock?: number;
@@ -171,6 +173,7 @@ export default function ProductClient({ product }: ProductClientProps) {
   const analyticsCategory = product.subcategory_name ?? product.category_name ?? null;
   const displayPrice = getProductDisplayPrice(product.price);
   const strikePrice = getProductStrikePrice(product.price, product.old_price);
+  const articleCode = resolveProductArticle(product.article, product.name);
 
   const handleAddToCart = async () => {
     if (isAddingToCartRef.current) return;
@@ -565,6 +568,11 @@ export default function ProductClient({ product }: ProductClientProps) {
                 </span>
               )}
             </div>
+
+            <p className="text-sm text-black/50">
+              Артикул:{" "}
+              <span className="font-medium text-black/70">{articleCode}</span>
+            </p>
 
             <p className="text-sm text-black/45">{outOfStock ? OUT_OF_STOCK_LABEL : "В наявності"}</p>
 

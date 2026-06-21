@@ -31,6 +31,7 @@ export default async function ProductServer({ product }: ProductServerProps) {
   const productForStructuredData = {
     id: product.id,
     name: product.name,
+    article: product.article,
     description: product.description,
     price: product.price,
     discount_percentage: product.discount_percentage,

@@ -6,6 +6,7 @@ export type ProductMediaInput = { type: "photo" | "video"; url: string };
 
 export type AdminProductPayload = {
   name: string;
+  article?: string | null;
   subtitle?: string | null;
   release_form?: string | null;
   course?: string | null;
@@ -113,6 +114,12 @@ export function parseAdminProductPayload(body: Record<string, unknown>): AdminPr
 
   return {
     name,
+    article:
+      typeof body.article === "string"
+        ? body.article.trim() || null
+        : body.article === null
+          ? null
+          : undefined,
     subtitle: (body.subtitle as string) ?? null,
     release_form: (body.release_form as string) ?? null,
     course: (body.course as string) ?? null,
@@ -241,6 +248,7 @@ export function adminProductPayloadToSql(
 ) {
   return {
     name: payload.name,
+    article: payload.article ?? null,
     subtitle: payload.subtitle ?? null,
     release_form: payload.release_form ?? null,
     course: payload.course ?? null,

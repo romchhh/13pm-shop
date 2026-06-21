@@ -12,6 +12,7 @@ import {
   serializeSizeVariants,
 } from "./productOptions";
 import { textToSlug, ensureUniqueSlug } from "./slug";
+import { resolveArticleForDatabase } from "./productArticle";
 import { pickFirstProductMedia } from "./getFirstProductImage";
 import { normalizePairTogetherIds } from "./colorLinkGroups";
 import { compareByCatalogPriority } from "./catalogPriority";
@@ -189,6 +190,7 @@ export async function sqlGetProduct(id: number) {
         id: product.id,
         name: product.name,
         slug: product.slug ?? null,
+        article: (product as any).article ?? null,
         subtitle: product.subtitle ?? null,
         release_form: product.releaseForm ?? null,
         course: product.course ?? null,
@@ -298,6 +300,7 @@ export async function sqlGetProductBySlug(slug: string) {
     id: product.id,
     name: product.name,
     slug: product.slug ?? null,
+    article: product.article ?? null,
     subtitle: product.subtitle ?? null,
     release_form: product.releaseForm ?? null,
     course: product.course ?? null,
@@ -679,6 +682,7 @@ export const sqlGetLimitedEditionProducts = unstable_cache(
 // Create new product
 export async function sqlPostProduct(product: {
   name: string;
+  article?: string | null;
   subtitle?: string | null;
   release_form?: string | null;
   course?: string | null;
@@ -727,10 +731,17 @@ export async function sqlPostProduct(product: {
     prisma.product.findFirst({ where: { slug: s } }).then(Boolean)
   );
 
+  const article = await resolveArticleForDatabase(
+    product.article,
+    product.name,
+    (a) => prisma.product.findFirst({ where: { article: a } }).then(Boolean)
+  );
+
   const created = await prisma.product.create({
     data: {
       name: product.name,
       slug,
+      article,
       subtitle: product.subtitle ?? null,
       releaseForm: product.release_form ?? null,
       course: product.course ?? null,
@@ -867,6 +878,7 @@ export async function sqlPutProduct(
   id: number,
   update: {
     name: string;
+    article?: string | null;
     subtitle?: string | null;
     release_form?: string | null;
     course?: string | null;
@@ -931,11 +943,21 @@ export async function sqlPutProduct(
       );
     }
 
+    const article =
+      update.article !== undefined
+        ? await resolveArticleForDatabase(update.article, update.name, (a) =>
+            tx.product
+              .findFirst({ where: { article: a, id: { not: id } } })
+              .then(Boolean)
+          )
+        : undefined;
+
     await tx.product.update({
       where: { id },
       data: {
         name: update.name,
         ...slugData,
+        ...(article !== undefined ? { article } : {}),
         subtitle: update.subtitle ?? undefined,
         releaseForm: update.release_form ?? undefined,
         course: update.course ?? undefined,

@@ -117,6 +117,7 @@ model Product {
   id                   Int            @id @default(autoincrement())
   name                 String
   slug                 String?        @unique
+  article              String?        @unique
   subtitle             String?        @map("subtitle")
   releaseForm          String?        @map("release_form")  // Форма випуску, напр. "30 саше по 2 г"
   course               String?        // Курс, напр. "30 днів"

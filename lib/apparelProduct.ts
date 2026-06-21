@@ -12,6 +12,7 @@ import {
 
 export type ApparelProductFormValues = {
   name: string;
+  article: string;
   shortDescription: string;
   description: string;
   price: string;
@@ -31,6 +32,7 @@ export type ApparelProductFormValues = {
 
 export type ApparelProductApiBody = {
   name: string;
+  article: string | null;
   short_description: string | null;
   description: string | null;
   price: number;
@@ -88,6 +90,7 @@ export function buildApparelProductApiBody(
 
   return {
     name: values.name.trim(),
+    article: values.article.trim() || null,
     short_description: values.shortDescription.trim() || null,
     description: values.description.trim() || null,
     price: Number(values.price),
@@ -128,6 +131,7 @@ export function buildApparelProductApiBody(
 
 export function apparelFormFromProduct(product: {
   name?: string;
+  article?: string | null;
   short_description?: string | null;
   description?: string | null;
   price?: number;
@@ -166,6 +170,7 @@ export function apparelFormFromProduct(product: {
 
   return {
     name: product.name ?? "",
+    article: product.article ?? "",
     shortDescription: product.short_description ?? "",
     description: product.description ?? "",
     price: product.price != null ? String(product.price) : "",

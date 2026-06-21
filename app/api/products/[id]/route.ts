@@ -159,6 +159,7 @@ export async function PUT(
 
     await sqlPutProduct(id, {
       name: body.name,
+      article: typeof body.article === "string" ? body.article : body.article ?? null,
       subtitle: body.subtitle ?? undefined,
       release_form: body.release_form ?? undefined,
       course: body.course ?? undefined,
