@@ -5,6 +5,7 @@
 
 import { sendEmail } from "@/lib/email";
 import { PAYMENT_TYPE_LABELS_LONG } from "@/lib/paymentTypeLabels";
+import { summarizeOrderAmounts } from "@/lib/orderAmounts";
 import { SITE_STORE_NAME } from "@/lib/siteBrand";
 import { siteContact } from "@/lib/siteContact";
 import { SITE_ACCENT } from "@/lib/siteColors";
@@ -43,6 +44,10 @@ export type OrderForEmail = {
   comment?: string | null;
   invoice_id: string;
   nova_poshta_ttn?: string | null;
+  loyalty_discount_amount?: number | null;
+  promo_code?: string | null;
+  promo_discount_amount?: number | null;
+  order_total?: number | null;
   created_at: Date;
   items: OrderItemForEmail[];
 };
@@ -64,10 +69,12 @@ export function buildOrderConfirmationHtml(
   productImageUrls: Map<number, string>
 ): string {
   const logoUrl = baseUrl + "/13pm-mark-black.svg";
-  const total = order.items.reduce(
-    (sum, item) => sum + Number(item.price) * item.quantity,
-    0
-  );
+  const amounts = summarizeOrderAmounts({
+    items: order.items,
+    loyaltyDiscountAmount: order.loyalty_discount_amount,
+    promoDiscountAmount: order.promo_discount_amount,
+  });
+  const total = order.order_total ?? amounts.orderTotal;
   const paymentLabel =
     PAYMENT_TYPE_LABELS_LONG[order.payment_type] || order.payment_type;
   const deliveryLabel = DELIVERY_LABELS[order.delivery_method] || order.delivery_method;
@@ -166,7 +173,20 @@ export function buildOrderConfirmationHtml(
                   ${rows}
                 </tbody>
               </table>
-              <p style="margin:16px 0 0;font-size:18px;font-weight:700;color:${TEXT};text-align:right;">Разом: ${total.toFixed(0)} ₴</p>
+              <div style="margin:16px 0 0;text-align:right;font-family:'Montserrat',Arial,sans-serif;">
+                <p style="margin:0 0 6px;font-size:14px;color:${MUTED};">Сума товарів: ${amounts.subtotal.toFixed(0)} ₴</p>
+                ${
+                  amounts.bulkDiscountAmount > 0
+                    ? `<p style="margin:0 0 6px;font-size:14px;color:${MUTED};">Знижка на замовлення: −${amounts.bulkDiscountAmount.toFixed(0)} ₴</p>`
+                    : ""
+                }
+                ${
+                  order.promo_code && amounts.promoDiscountAmount > 0
+                    ? `<p style="margin:0 0 6px;font-size:14px;color:${MUTED};">Промокод ${escapeHtml(order.promo_code)}: −${amounts.promoDiscountAmount.toFixed(0)} ₴</p>`
+                    : ""
+                }
+                <p style="margin:0;font-size:18px;font-weight:700;color:${TEXT};">До сплати: ${total.toFixed(0)} ₴</p>
+              </div>
             </td>
           </tr>
           ${
@@ -219,11 +239,20 @@ export async function sendOrderConfirmationEmail(
     process.env.NEXT_PUBLIC_PUBLIC_URL ||
     "http://localhost:3000";
   const html = buildOrderConfirmationHtml(order, baseUrl, productImageUrls);
-  const total = order.items.reduce((s, i) => s + Number(i.price) * i.quantity, 0);
+  const amounts = summarizeOrderAmounts({
+    items: order.items,
+    loyaltyDiscountAmount: order.loyalty_discount_amount,
+    promoDiscountAmount: order.promo_discount_amount,
+  });
+  const total = order.order_total ?? amounts.orderTotal;
+  const promoLine =
+    order.promo_code && amounts.promoDiscountAmount > 0
+      ? ` Промокод ${order.promo_code}: −${amounts.promoDiscountAmount.toFixed(0)} ₴.`
+      : "";
   return sendEmail({
     to: order.email.trim(),
     subject: `Дякуємо за замовлення #${order.invoice_id} — ${SITE_STORE_NAME}`,
     html,
-    text: `Дякуємо за замовлення в ${SITE_STORE_NAME}! Номер: ${order.invoice_id}. Разом: ${total.toFixed(0)} ₴. Ми зв'яжемося з вами щодо доставки.`,
+    text: `Дякуємо за замовлення в ${SITE_STORE_NAME}! Номер: ${order.invoice_id}. До сплати: ${total.toFixed(0)} ₴.${promoLine} Ми зв'яжемося з вами щодо доставки.`,
   });
 }

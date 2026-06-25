@@ -113,6 +113,39 @@ async function sendOrderTelegramNotification(params: OrderTelegramContext) {
   }
 }
 
+function buildOrderEmailPayload(params: OrderTelegramContext & {
+  email: string;
+  payment_type: string;
+}) {
+  return {
+    customer_name: params.customer_name,
+    email: params.email,
+    phone_number: params.phone_number,
+    delivery_method: params.delivery_method,
+    city: params.city,
+    post_office: params.post_office,
+    payment_type: params.payment_type,
+    comment: params.comment ?? null,
+    invoice_id: params.invoiceId,
+    nova_poshta_ttn: params.nova_poshta_ttn ?? null,
+    created_at: new Date(),
+    loyalty_discount_amount:
+      params.bulkDiscountAmount > 0 ? params.bulkDiscountAmount : undefined,
+    promo_code: params.promoCode,
+    promo_discount_amount:
+      params.promoDiscountAmount > 0 ? params.promoDiscountAmount : undefined,
+    order_total: params.orderTotal,
+    items: params.items.map((item) => ({
+      product_id: item.product_id,
+      product_name: item.product_name,
+      size: item.size,
+      quantity: item.quantity,
+      price: item.price,
+      color: item.color,
+    })),
+  };
+}
+
 type IncomingOrderItem = {
   product_id?: number | string;
   productId?: number | string;
@@ -476,27 +509,25 @@ export async function POST(req: NextRequest) {
             productImageUrls.set(m.productId, fullUrl);
           }
           await sendOrderConfirmationEmail(
-            {
+            buildOrderEmailPayload({
+              dbOrderId,
+              invoiceId: orderId,
               customer_name,
+              phone_number,
               email: String(email).trim(),
-              phone_number: phone_number,
               delivery_method,
               city,
               post_office,
-              payment_type,
               comment: comment ?? null,
-              invoice_id: orderId,
+              payment_type,
               nova_poshta_ttn: ttnNumber,
-              created_at: new Date(),
-              items: normalizedItems.map((item) => ({
-                product_id: item.product_id,
-                product_name: item.product_name,
-                size: item.size,
-                quantity: item.quantity,
-                price: item.price,
-                color: item.color,
-              })),
-            },
+              items: normalizedItems,
+              deliveryCost,
+              bulkDiscountAmount,
+              promoCode: promoCodeId ? promoCode : null,
+              promoDiscountAmount,
+              orderTotal,
+            }),
             productImageUrls
           );
         } catch (e) {
@@ -598,27 +629,25 @@ export async function POST(req: NextRequest) {
             productImageUrls.set(m.productId, fullUrl);
           }
           await sendOrderConfirmationEmail(
-            {
+            buildOrderEmailPayload({
+              dbOrderId,
+              invoiceId: orderId,
               customer_name,
+              phone_number,
               email: String(email).trim(),
-              phone_number: phone_number,
               delivery_method,
               city,
               post_office,
-              payment_type,
               comment: comment ?? null,
-              invoice_id: orderId,
+              payment_type: "prepay",
               nova_poshta_ttn: ttnNumber,
-              created_at: new Date(),
-              items: normalizedItems.map((item) => ({
-                product_id: item.product_id,
-                product_name: item.product_name,
-                size: item.size,
-                quantity: item.quantity,
-                price: item.price,
-                color: item.color,
-              })),
-            },
+              items: normalizedItems,
+              deliveryCost,
+              bulkDiscountAmount,
+              promoCode: promoCodeId ? promoCode : null,
+              promoDiscountAmount,
+              orderTotal,
+            }),
             productImageUrls
           );
         } catch (e) {

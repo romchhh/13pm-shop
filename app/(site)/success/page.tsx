@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useBasket } from "@/lib/BasketProvider";
 import { GA4_BRAND, GA4_CURRENCY, GA4_VERTICAL, pushGA4EcommerceEvent } from "@/lib/ga4Ecommerce";
+import { summarizeOrderAmounts } from "@/lib/orderAmounts";
 
 interface OrderItem {
   id?: number;
@@ -25,6 +26,9 @@ interface OrderData {
   email?: string | null;
   phone_number?: string | null;
   nova_poshta_ttn?: string | null;
+  loyalty_discount_amount?: number;
+  promo_code?: string | null;
+  promo_discount_amount?: number;
   items: OrderItem[];
   payment_type: string;
   payment_status: string;
@@ -185,10 +189,13 @@ function PaymentSuccessContent() {
       google_business_vertical: GA4_VERTICAL,
     }));
 
-    const value = (order?.items ?? []).reduce(
-      (sum, it) => sum + it.price * it.quantity,
-      0
-    );
+    const value = order
+      ? summarizeOrderAmounts({
+          items: order.items,
+          loyaltyDiscountAmount: order.loyalty_discount_amount,
+          promoDiscountAmount: order.promo_discount_amount,
+        }).orderTotal
+      : 0;
 
     if (!purchaseAlreadyTracked) {
       pushGA4EcommerceEvent("purchase", {
@@ -337,7 +344,14 @@ function PaymentSuccessContent() {
   }
 
   // state === "paid" — сторінка оформленого замовлення з переліком товарів
-  const total = order?.items?.reduce((sum, item) => sum + item.price * item.quantity, 0) ?? 0;
+  const orderAmounts = order?.items
+    ? summarizeOrderAmounts({
+        items: order.items,
+        loyaltyDiscountAmount: order.loyalty_discount_amount,
+        promoDiscountAmount: order.promo_discount_amount,
+      })
+    : null;
+  const total = orderAmounts?.orderTotal ?? 0;
   const imageSrc = (url: string | null | undefined) =>
     !url ? undefined : url.startsWith("http") ? url : `/api/images/${url}`;
 
@@ -439,9 +453,29 @@ function PaymentSuccessContent() {
                   );
                 })}
               </ul>
-              <p className="mt-4 text-right font-['Montserrat'] text-lg font-semibold text-black">
-                Разом: {Math.round(total).toLocaleString("uk-UA")} грн
-              </p>
+              <div className="mt-4 space-y-1 text-right font-['Montserrat']">
+                {orderAmounts &&
+                  (order?.promo_code || orderAmounts.bulkDiscountAmount > 0) && (
+                  <p className="text-sm text-black/55">
+                    Сума товарів: {Math.round(orderAmounts.subtotal).toLocaleString("uk-UA")} грн
+                  </p>
+                )}
+                {orderAmounts && orderAmounts.bulkDiscountAmount > 0 && (
+                  <p className="text-sm text-emerald-700">
+                    Знижка на замовлення: −
+                    {Math.round(orderAmounts.bulkDiscountAmount).toLocaleString("uk-UA")} грн
+                  </p>
+                )}
+                {order?.promo_code && orderAmounts && orderAmounts.promoDiscountAmount > 0 && (
+                  <p className="text-sm text-emerald-700">
+                    Промокод {order.promo_code}: −
+                    {Math.round(orderAmounts.promoDiscountAmount).toLocaleString("uk-UA")} грн
+                  </p>
+                )}
+                <p className="text-lg font-semibold text-black">
+                  До сплати: {Math.round(total).toLocaleString("uk-UA")} грн
+                </p>
+              </div>
             </div>
           )}
 

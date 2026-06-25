@@ -1578,6 +1578,7 @@ export async function sqlGetOrderByInvoiceId(invoiceId: string) {
   let order = await prisma.order.findUnique({
     where: { invoiceId },
     include: {
+      promoCode: { select: { code: true } },
       items: {
         include: {
           product: {
@@ -1604,6 +1605,7 @@ export async function sqlGetOrderByInvoiceId(invoiceId: string) {
       order = await prisma.order.findUnique({
         where: { merchantReference: invoiceId },
         include: {
+          promoCode: { select: { code: true } },
           items: {
             include: {
               product: {
@@ -1644,6 +1646,13 @@ export async function sqlGetOrderByInvoiceId(invoiceId: string) {
     payment_type: order.paymentType,
     payment_status: order.paymentStatus,
     nova_poshta_ttn: order.novaPoshtaTtn,
+    loyalty_discount_amount: order.loyaltyDiscountAmount
+      ? Number(order.loyaltyDiscountAmount)
+      : 0,
+    promo_code: order.promoCode?.code ?? null,
+    promo_discount_amount: order.promoDiscountAmount
+      ? Number(order.promoDiscountAmount)
+      : 0,
     created_at: order.createdAt,
     items: order.items.map((item) => {
       const product = item.product as

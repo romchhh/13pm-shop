@@ -107,24 +107,24 @@ export async function POST(req: NextRequest) {
       console.warn("[Mono webhook] TTN creation failed:", e);
     }
 
-    try {
-      const items = order.items.map((item) => ({
-        product_name: item.productName ?? item.product?.name ?? "Товар",
-        size: item.size,
-        quantity: item.quantity,
-        price: Number(item.price),
-        color: item.color,
-      }));
-      const amounts = summarizeOrderAmounts({
-        items,
-        loyaltyDiscountAmount: order.loyaltyDiscountAmount
-          ? Number(order.loyaltyDiscountAmount)
-          : 0,
-        promoDiscountAmount: order.promoDiscountAmount
-          ? Number(order.promoDiscountAmount)
-          : 0,
-      });
+    const notificationItems = order.items.map((item) => ({
+      product_name: item.productName ?? item.product?.name ?? "Товар",
+      size: item.size,
+      quantity: item.quantity,
+      price: Number(item.price),
+      color: item.color,
+    }));
+    const orderAmounts = summarizeOrderAmounts({
+      items: notificationItems,
+      loyaltyDiscountAmount: order.loyaltyDiscountAmount
+        ? Number(order.loyaltyDiscountAmount)
+        : 0,
+      promoDiscountAmount: order.promoDiscountAmount
+        ? Number(order.promoDiscountAmount)
+        : 0,
+    });
 
+    try {
       await sendOrderNotification(
         {
           id: order.id,
@@ -140,11 +140,11 @@ export async function POST(req: NextRequest) {
           payment_status: "paid",
           status: order.status,
           nova_poshta_ttn: ttnNumber,
-          loyalty_discount_amount: amounts.bulkDiscountAmount || null,
+          loyalty_discount_amount: orderAmounts.bulkDiscountAmount || null,
           promo_code: order.promoCode?.code ?? null,
-          promo_discount_amount: amounts.promoDiscountAmount || null,
-          order_total: amounts.orderTotal,
-          items,
+          promo_discount_amount: orderAmounts.promoDiscountAmount || null,
+          order_total: orderAmounts.orderTotal,
+          items: notificationItems,
           created_at: order.createdAt,
         },
         true
@@ -186,6 +186,14 @@ export async function POST(req: NextRequest) {
             invoice_id: order.invoiceId,
             nova_poshta_ttn: ttnNumber,
             created_at: order.createdAt,
+            loyalty_discount_amount: order.loyaltyDiscountAmount
+              ? Number(order.loyaltyDiscountAmount)
+              : undefined,
+            promo_code: order.promoCode?.code ?? null,
+            promo_discount_amount: order.promoDiscountAmount
+              ? Number(order.promoDiscountAmount)
+              : undefined,
+            order_total: orderAmounts.orderTotal,
             items: order.items.map((item) => ({
               product_id: item.productId,
               product_name: item.productName ?? item.product?.name ?? null,
