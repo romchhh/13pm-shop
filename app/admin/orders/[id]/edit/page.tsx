@@ -8,6 +8,31 @@ import Label from "@/components/admin/form/Label";
 import Input from "@/components/admin/form/input/InputField";
 import Select from "@/components/admin/form/Select";
 import { getPaymentTypeLabel } from "@/lib/paymentTypeLabels";
+import { summarizeOrderAmounts } from "@/lib/orderAmounts";
+
+type OrderItemRow = {
+  id: number;
+  product_name: string;
+  color?: string | null;
+  size: string;
+  quantity: number;
+  price: string | number;
+};
+
+type OrderFormData = {
+  customer_name: string;
+  phone_number: string;
+  email: string;
+  delivery_method: string;
+  city: string;
+  post_office: string;
+  status: string;
+  payment_type: string;
+  promo_code: string | null;
+  promo_discount_amount: number;
+  loyalty_discount_amount: number;
+  items: OrderItemRow[];
+};
 
 export default function EditOrderPage() {
   const params = useParams();
@@ -20,7 +45,7 @@ export default function EditOrderPage() {
     { value: "complete", label: "Завершено" },
   ];
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<OrderFormData>({
     customer_name: "",
     phone_number: "",
     email: "",
@@ -29,6 +54,9 @@ export default function EditOrderPage() {
     post_office: "",
     status: "",
     payment_type: "",
+    promo_code: null,
+    promo_discount_amount: 0,
+    loyalty_discount_amount: 0,
     items: [],
   });
 
@@ -47,6 +75,9 @@ export default function EditOrderPage() {
           post_office: data.post_office || "",
           status: data.status || "",
           payment_type: data.payment_type || "",
+          promo_code: data.promo_code ?? null,
+          promo_discount_amount: Number(data.promo_discount_amount) || 0,
+          loyalty_discount_amount: Number(data.loyalty_discount_amount) || 0,
           items: data.items || [],
         });
       } catch (err) {
@@ -71,26 +102,21 @@ export default function EditOrderPage() {
     router.push("/admin/orders");
   };
 
-  const calculateTotal = () => {
-    return formData.items.reduce(
-      (
-        total,
-        item: {
-          product_id: number;
-          size: string;
-          quantity: number;
-          price: string;
-        }
-      ) => {
-        const subtotal = parseFloat(item.price) * item.quantity;
-        return total + subtotal;
-      },
-      0
-    );
-  };
+  const orderAmounts = summarizeOrderAmounts({
+    items: formData.items.map((item) => ({
+      price: Number(item.price),
+      quantity: item.quantity,
+    })),
+    loyaltyDiscountAmount: formData.loyalty_discount_amount,
+    promoDiscountAmount: formData.promo_discount_amount,
+  });
+
+  const calculateTotal = () => orderAmounts.subtotal;
+
+  const calculatePayableTotal = () => orderAmounts.orderTotal;
 
   const calculateRemainingPayment = () => {
-    const total = calculateTotal();
+    const total = calculatePayableTotal();
     if (formData.payment_type === "full" || formData.payment_type === "crypto") {
       return 0;
     } else if (formData.payment_type === "prepay") {
@@ -180,6 +206,14 @@ export default function EditOrderPage() {
               />
             </div>
             <div className="md:col-span-2">
+              <Label>Промокод</Label>
+              <Input
+                type="text"
+                value={formData.promo_code || "—"}
+                disabled
+              />
+            </div>
+            <div className="md:col-span-2">
               <Label>Статус</Label>
               <div className="relative">
                 <Select
@@ -226,15 +260,7 @@ export default function EditOrderPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
-                  {formData.items.map(
-                    (item: {
-                      id: number;
-                      product_name: string;
-                      color?: string | null;
-                      size: string;
-                      quantity: number;
-                      price: string;
-                    }) => (
+                  {formData.items.map((item) => (
                       <tr
                         key={item.id}
                         className="hover:bg-gray-50 bg-white"
@@ -258,19 +284,43 @@ export default function EditOrderPage() {
                           {(Number(item.price) * item.quantity).toFixed(2)}
                         </td>
                       </tr>
-                    )
-                  )}
+                  ))}
                 </tbody>
                 <tfoot>
                   <tr className="bg-white">
-                    <td
-                      colSpan={5}
-                      className="px-4 py-3 text-right font-semibold text-black"
-                    >
-                      Загальна сума:
+                    <td colSpan={5} className="px-4 py-3 text-right font-semibold text-black">
+                      Сума товарів:
+                    </td>
+                    <td className="px-4 py-3 text-right text-black">
+                      {calculateTotal().toFixed(2)} ₴
+                    </td>
+                  </tr>
+                  {orderAmounts.bulkDiscountAmount > 0 && (
+                    <tr className="bg-white">
+                      <td colSpan={5} className="px-4 py-3 text-right font-semibold text-black">
+                        Знижка на замовлення:
+                      </td>
+                      <td className="px-4 py-3 text-right text-emerald-700">
+                        −{orderAmounts.bulkDiscountAmount.toFixed(2)} ₴
+                      </td>
+                    </tr>
+                  )}
+                  {formData.promo_code && orderAmounts.promoDiscountAmount > 0 && (
+                    <tr className="bg-white">
+                      <td colSpan={5} className="px-4 py-3 text-right font-semibold text-black">
+                        Промокод {formData.promo_code}:
+                      </td>
+                      <td className="px-4 py-3 text-right text-emerald-700">
+                        −{orderAmounts.promoDiscountAmount.toFixed(2)} ₴
+                      </td>
+                    </tr>
+                  )}
+                  <tr className="bg-white">
+                    <td colSpan={5} className="px-4 py-3 text-right font-semibold text-black">
+                      До сплати:
                     </td>
                     <td className="px-4 py-3 font-bold text-green-600">
-                      {calculateTotal().toFixed(2)} ₴
+                      {calculatePayableTotal().toFixed(2)} ₴
                     </td>
                   </tr>
                   {formData.payment_type && (

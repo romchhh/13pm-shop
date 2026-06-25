@@ -4,6 +4,7 @@
 
 import { PAYMENT_TYPE_LABELS_LONG } from "@/lib/paymentTypeLabels";
 import { TELEGRAM_BRAND_FOOTER } from "@/lib/siteBrand";
+import { summarizeOrderAmounts } from "@/lib/orderAmounts";
 
 interface OrderData {
   id: number;
@@ -19,6 +20,11 @@ interface OrderData {
   payment_status: string;
   status?: string | null;
   nova_poshta_ttn?: string | null;
+  delivery_cost?: number;
+  loyalty_discount_amount?: number | null;
+  promo_code?: string | null;
+  promo_discount_amount?: number | null;
+  order_total?: number | null;
   items: Array<{
     product_name: string;
     size: string;
@@ -45,11 +51,13 @@ function formatOrderMessage(order: OrderData, isPaid: boolean = false): string {
   const paymentStatusEmoji = isPaid ? "✅" : "⏳";
   const paymentStatusText = isPaid ? "ОФОРМЛЕНО" : "ОЧІКУЄ ОПЛАТИ";
 
-  // Calculate total
-  const total = order.items.reduce(
-    (sum, item) => sum + Number(item.price) * item.quantity,
-    0
-  );
+  const amounts = summarizeOrderAmounts({
+    items: order.items,
+    deliveryCost: order.delivery_cost,
+    loyaltyDiscountAmount: order.loyalty_discount_amount,
+    promoDiscountAmount: order.promo_discount_amount,
+  });
+  const total = order.order_total ?? amounts.orderTotal;
 
   // Get base URL for order link
   const baseUrl = process.env.PUBLIC_URL || process.env.NEXT_PUBLIC_PUBLIC_URL || "";
@@ -85,7 +93,21 @@ function formatOrderMessage(order: OrderData, isPaid: boolean = false): string {
     message += `   Кількість: ${item.quantity} × ${Number(item.price).toFixed(2)} ₴ = ${itemTotal.toFixed(2)} ₴\n`;
   });
 
-  message += `\n💰 <b>Загальна сума:</b> ${total.toFixed(2)} ₴\n`;
+  message += `\n🧾 <b>Сума товарів:</b> ${amounts.subtotal.toFixed(2)} ₴\n`;
+
+  if (amounts.bulkDiscountAmount > 0) {
+    message += `🏷️ <b>Знижка на замовлення:</b> −${amounts.bulkDiscountAmount.toFixed(2)} ₴\n`;
+  }
+
+  if (order.promo_code && amounts.promoDiscountAmount > 0) {
+    message += `🎟️ <b>Промокод ${order.promo_code}:</b> −${amounts.promoDiscountAmount.toFixed(2)} ₴\n`;
+  }
+
+  if (amounts.deliveryCost > 0) {
+    message += `🚚 <b>Доставка:</b> ${amounts.deliveryCost.toFixed(2)} ₴\n`;
+  }
+
+  message += `\n💰 <b>До сплати:</b> ${total.toFixed(2)} ₴\n`;
   message += `\n🕐 <b>Дата:</b> ${new Date(order.created_at).toLocaleString("uk-UA")}\n`;
   message += `\n${TELEGRAM_BRAND_FOOTER}`;
 

@@ -53,6 +53,66 @@ async function tryCreateOrderTtn(params: {
   return null;
 }
 
+type OrderTelegramContext = {
+  dbOrderId: number;
+  invoiceId: string;
+  customer_name: string;
+  phone_number: string;
+  email?: string | null;
+  delivery_method: string;
+  city: string;
+  post_office: string;
+  comment?: string | null;
+  payment_type: string;
+  nova_poshta_ttn?: string | null;
+  items: NormalizedOrderItem[];
+  deliveryCost: number;
+  bulkDiscountAmount: number;
+  promoCode: string | null;
+  promoDiscountAmount: number;
+  orderTotal: number;
+};
+
+async function sendOrderTelegramNotification(params: OrderTelegramContext) {
+  try {
+    await sendOrderNotification(
+      {
+        id: params.dbOrderId,
+        invoice_id: params.invoiceId,
+        customer_name: params.customer_name,
+        phone_number: params.phone_number,
+        email: params.email || null,
+        delivery_method: params.delivery_method,
+        city: params.city,
+        post_office: params.post_office,
+        comment: params.comment ?? null,
+        payment_type: params.payment_type,
+        payment_status: "paid",
+        status: null,
+        nova_poshta_ttn: params.nova_poshta_ttn ?? null,
+        delivery_cost: params.deliveryCost,
+        loyalty_discount_amount:
+          params.bulkDiscountAmount > 0 ? params.bulkDiscountAmount : null,
+        promo_code: params.promoCode,
+        promo_discount_amount:
+          params.promoDiscountAmount > 0 ? params.promoDiscountAmount : null,
+        order_total: params.orderTotal,
+        items: params.items.map((item) => ({
+          product_name: item.product_name,
+          size: item.size,
+          quantity: item.quantity,
+          price: item.price,
+          color: item.color,
+        })),
+        created_at: new Date(),
+      },
+      true
+    );
+  } catch (e) {
+    log.warn("Telegram notification failed:", e);
+  }
+}
+
 type IncomingOrderItem = {
   product_id?: number | string;
   productId?: number | string;
@@ -443,6 +503,27 @@ export async function POST(req: NextRequest) {
           log.warn("Order confirmation email (test_payment) failed:", e);
         }
       }
+
+      await sendOrderTelegramNotification({
+        dbOrderId,
+        invoiceId: orderId,
+        customer_name,
+        phone_number,
+        email: email || null,
+        delivery_method,
+        city,
+        post_office,
+        comment: comment ?? null,
+        payment_type: "test_payment",
+        nova_poshta_ttn: ttnNumber,
+        items: normalizedItems,
+        deliveryCost,
+        bulkDiscountAmount,
+        promoCode: promoCodeId ? promoCode : null,
+        promoDiscountAmount,
+        orderTotal,
+      });
+
       return NextResponse.json({
         success: true,
         orderId,
@@ -477,36 +558,25 @@ export async function POST(req: NextRequest) {
         })),
       });
 
-      try {
-        await sendOrderNotification(
-          {
-            id: dbOrderId,
-            invoice_id: orderId,
-            customer_name,
-            phone_number,
-            email: email || null,
-            delivery_method,
-            city,
-            post_office,
-            comment: comment ?? null,
-            payment_type: "prepay",
-            payment_status: "paid",
-            status: null,
-            nova_poshta_ttn: ttnNumber,
-            items: normalizedItems.map((item) => ({
-              product_name: item.product_name,
-              size: item.size,
-              quantity: item.quantity,
-              price: item.price,
-              color: item.color,
-            })),
-            created_at: new Date(),
-          },
-          true
-        );
-      } catch (e) {
-        log.warn("Telegram notification (prepay) failed:", e);
-      }
+      await sendOrderTelegramNotification({
+        dbOrderId,
+        invoiceId: orderId,
+        customer_name,
+        phone_number,
+        email: email || null,
+        delivery_method,
+        city,
+        post_office,
+        comment: comment ?? null,
+        payment_type: "prepay",
+        nova_poshta_ttn: ttnNumber,
+        items: normalizedItems,
+        deliveryCost,
+        bulkDiscountAmount,
+        promoCode: promoCodeId ? promoCode : null,
+        promoDiscountAmount,
+        orderTotal,
+      });
 
       if (email && String(email).trim()) {
         try {

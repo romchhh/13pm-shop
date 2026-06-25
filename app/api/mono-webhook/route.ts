@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendOrderNotification } from "@/lib/telegram";
 import { sendOrderConfirmationEmail } from "@/lib/orderConfirmationEmail";
+import { summarizeOrderAmounts } from "@/lib/orderAmounts";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,6 +30,7 @@ export async function POST(req: NextRequest) {
     const order = await prisma.order.findFirst({
       where: { invoiceId },
       include: {
+        promoCode: { select: { code: true } },
         items: {
           include: {
             product: { select: { name: true } },
@@ -106,6 +108,23 @@ export async function POST(req: NextRequest) {
     }
 
     try {
+      const items = order.items.map((item) => ({
+        product_name: item.productName ?? item.product?.name ?? "Товар",
+        size: item.size,
+        quantity: item.quantity,
+        price: Number(item.price),
+        color: item.color,
+      }));
+      const amounts = summarizeOrderAmounts({
+        items,
+        loyaltyDiscountAmount: order.loyaltyDiscountAmount
+          ? Number(order.loyaltyDiscountAmount)
+          : 0,
+        promoDiscountAmount: order.promoDiscountAmount
+          ? Number(order.promoDiscountAmount)
+          : 0,
+      });
+
       await sendOrderNotification(
         {
           id: order.id,
@@ -121,13 +140,11 @@ export async function POST(req: NextRequest) {
           payment_status: "paid",
           status: order.status,
           nova_poshta_ttn: ttnNumber,
-          items: order.items.map((item) => ({
-            product_name: item.product?.name ?? "Товар",
-            size: item.size,
-            quantity: item.quantity,
-            price: Number(item.price),
-            color: item.color,
-          })),
+          loyalty_discount_amount: amounts.bulkDiscountAmount || null,
+          promo_code: order.promoCode?.code ?? null,
+          promo_discount_amount: amounts.promoDiscountAmount || null,
+          order_total: amounts.orderTotal,
+          items,
           created_at: order.createdAt,
         },
         true

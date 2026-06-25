@@ -1231,6 +1231,7 @@ export async function sqlGetOrder(id: number) {
   const order = await prisma.order.findUnique({
     where: { id },
     include: {
+      promoCode: { select: { code: true } },
       items: {
         include: {
           product: {
@@ -1256,6 +1257,14 @@ export async function sqlGetOrder(id: number) {
     invoice_id: order.invoiceId,
     payment_status: order.paymentStatus,
     status: order.status,
+    loyalty_discount_amount: order.loyaltyDiscountAmount
+      ? Number(order.loyaltyDiscountAmount)
+      : 0,
+    promo_code_id: order.promoCodeId,
+    promo_code: order.promoCode?.code ?? null,
+    promo_discount_amount: order.promoDiscountAmount
+      ? Number(order.promoDiscountAmount)
+      : 0,
     created_at: order.createdAt,
     items: order.items.map((item) => ({
       id: item.id,
@@ -1369,30 +1378,40 @@ export async function sqlPostOrder(order: OrderInput) {
     }
 
     const bonusSpent = order.bonus_points_spent ?? 0;
-    if (bonusSpent > 0) {
-      try {
-        await tx.$executeRaw`UPDATE orders SET bonus_points_spent = ${bonusSpent} WHERE id = ${createdId}`;
-      } catch {
-        // Колонка bonus_points_spent може відсутня
-      }
-    }
-
     const loyaltyDiscount = order.loyalty_discount_amount ?? 0;
+    const promoCodeId = order.promo_code_id ?? null;
+    const promoDiscount = order.promo_discount_amount ?? 0;
+
+    const discountData: {
+      bonusPointsSpent?: number;
+      loyaltyDiscountAmount?: number;
+      promoCodeId?: number;
+      promoDiscountAmount?: number;
+    } = {};
+
+    if (bonusSpent > 0) {
+      discountData.bonusPointsSpent = bonusSpent;
+    }
     if (loyaltyDiscount > 0) {
-      try {
-        await tx.$executeRaw`UPDATE orders SET loyalty_discount_amount = ${loyaltyDiscount} WHERE id = ${createdId}`;
-      } catch {
-        // Колонка loyalty_discount_amount може відсутня
-      }
+      discountData.loyaltyDiscountAmount = loyaltyDiscount;
+    }
+    if (promoCodeId != null && promoDiscount > 0) {
+      discountData.promoCodeId = promoCodeId;
+      discountData.promoDiscountAmount = promoDiscount;
     }
 
-    if (order.promo_code_id != null && order.promo_discount_amount != null) {
-      try {
-        await tx.$executeRaw`UPDATE orders SET promo_code_id = ${order.promo_code_id}, promo_discount_amount = ${order.promo_discount_amount} WHERE id = ${createdId}`;
-        await tx.$executeRaw`UPDATE promo_codes SET used_count = used_count + 1 WHERE id = ${order.promo_code_id}`;
-      } catch {
-        // Колонки promo можуть відсутня
-      }
+    if (Object.keys(discountData).length > 0) {
+      await tx.order.update({
+        where: { id: createdId },
+        data: discountData,
+      });
+    }
+
+    if (promoCodeId != null && promoDiscount > 0) {
+      await tx.promoCode.update({
+        where: { id: promoCodeId },
+        data: { usedCount: { increment: 1 } },
+      });
     }
 
     if (order.decrement_stock) {
