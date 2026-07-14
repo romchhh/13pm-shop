@@ -46,11 +46,11 @@ Robots: /robots.txt
 Canonical домен: змінна PUBLIC_URL / NEXT_PUBLIC_PUBLIC_URL
 
 ## Контакти (сторінка співпраці)
-Телефон: +380 93 267 97 96 (+380932679796)
+Телефон: +380 63 944 20 61 (+380639442061)
 Facebook: https://www.facebook.com/share/1E3r8Gt91M/?mibextid=wwXIfr
 Instagram: https://www.instagram.com/13pm.tactic
 TikTok: https://www.tiktok.com/@13pm.tactic
-Telegram: https://t.me/+380932679796
+Telegram: https://t.me/+380639442061
 
 ## Дозволи для AI-краулерів
 Дозволено індексувати публічний каталог, товари та інформаційні сторінки.
