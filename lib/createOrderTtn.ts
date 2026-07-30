@@ -121,6 +121,7 @@ export async function createOrderTtn(params: {
       city,
       postOffice,
       deliveryMethod,
+      recipientName: customerName,
     });
 
     const result = await createNovaPoshtaTtn(ttnParams);

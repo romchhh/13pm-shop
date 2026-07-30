@@ -304,30 +304,122 @@ function splitFullName(fullName: string): {
   };
 }
 
-type NpCounterpartySaveRow = {
+function normalizeNpNamePart(value: string | undefined | null): string {
+  return (value ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function npPersonNamesMatch(
+  expected: { firstName: string; lastName: string; middleName: string },
+  actual: { FirstName?: string; LastName?: string; MiddleName?: string; Description?: string }
+): boolean {
+  const expectedFirst = normalizeNpNamePart(expected.firstName);
+  const expectedLast = normalizeNpNamePart(expected.lastName);
+  const actualFirst = normalizeNpNamePart(actual.FirstName);
+  const actualLast = normalizeNpNamePart(actual.LastName);
+
+  if (actualFirst && actualLast) {
+    const direct =
+      actualFirst === expectedFirst && actualLast === expectedLast;
+    // Інколи в НП Ім'я/Прізвище поміняні місцями відносно нашого формату
+    const swapped =
+      actualFirst === expectedLast && actualLast === expectedFirst;
+    if (direct || swapped) return true;
+  }
+
+  const description = normalizeNpNamePart(actual.Description);
+  if (!description) return false;
+  const expectedFull = [expected.lastName, expected.firstName, expected.middleName]
+    .map(normalizeNpNamePart)
+    .filter(Boolean)
+    .join(" ");
+  const expectedAlt = [expected.firstName, expected.lastName, expected.middleName]
+    .map(normalizeNpNamePart)
+    .filter(Boolean)
+    .join(" ");
+  return description === expectedFull || description === expectedAlt;
+}
+
+type NpContactPersonRow = {
   Ref?: string;
+  FirstName?: string;
+  LastName?: string;
+  MiddleName?: string;
+  Description?: string;
+  Phones?: string;
 };
 
-type NpContactPersonsRow = { Ref?: string };
+type NpCounterpartySaveRow = {
+  Ref?: string;
+  FirstName?: string;
+  LastName?: string;
+  MiddleName?: string;
+  Description?: string;
+  ContactPerson?:
+    | NpContactPersonRow[]
+    | { data?: NpContactPersonRow[] }
+    | string;
+};
 
+function extractContactPersonFromCounterparty(
+  row: NpCounterpartySaveRow | undefined
+): NpContactPersonRow | null {
+  if (!row?.ContactPerson || typeof row.ContactPerson === "string") return null;
+  const cp = row.ContactPerson;
+  if (Array.isArray(cp)) {
+    return (
+      cp.find(
+        (p): p is NpContactPersonRow =>
+          !!p && typeof p === "object" && typeof p.Ref === "string"
+      ) ?? null
+    );
+  }
+  if (cp && typeof cp === "object" && Array.isArray(cp.data)) {
+    return cp.data.find((p) => typeof p?.Ref === "string") ?? null;
+  }
+  return null;
+}
+
+async function resolveContactPersonRef(
+  recipientRef: string,
+  fromSave?: NpCounterpartySaveRow
+): Promise<string | null> {
+  const fromResponse = extractContactPersonFromCounterparty(fromSave)?.Ref;
+  if (fromResponse) return fromResponse;
+
+  const contactResp = await npRequest<NpContactPersonRow[]>(
+    "Counterparty",
+    "getCounterpartyContactPersons",
+    { Ref: recipientRef }
+  );
+  return contactResp.data?.find((p) => p.Ref)?.Ref ?? null;
+}
+
+/**
+ * НП за телефоном часто повертає вже існуючого отримувача з іншим ПІБ.
+ * Ім'я на ТТН береться з ContactRecipient, тому синхронізуємо контрагента і контакт.
+ */
 async function ensureRecipientCounterparty(params: {
   fullName: string;
   phoneDigits: string;
   cityRef: string;
 }): Promise<{ recipientRef: string; contactRef: string } | { error: string }> {
   const { firstName, lastName, middleName } = splitFullName(params.fullName);
-
-  const saveResp = await npRequest<NpCounterpartySaveRow[]>("Counterparty", "save", {
-    CounterpartyProperty: "Recipient",
-    CounterpartyType: "PrivatePerson",
+  const nameProps = {
     FirstName: firstName,
     LastName: lastName,
     MiddleName: middleName,
     Phone: params.phoneDigits,
+  };
+
+  const saveResp = await npRequest<NpCounterpartySaveRow[]>("Counterparty", "save", {
+    CounterpartyProperty: "Recipient",
+    CounterpartyType: "PrivatePerson",
     CityRef: params.cityRef,
+    ...nameProps,
   });
 
-  const recipientRef = saveResp.data?.[0]?.Ref;
+  const saved = saveResp.data?.[0];
+  const recipientRef = saved?.Ref;
   if (!saveResp.success || !recipientRef) {
     return {
       error:
@@ -336,18 +428,61 @@ async function ensureRecipientCounterparty(params: {
     };
   }
 
-  const contactResp = await npRequest<NpContactPersonsRow[]>(
-    "Counterparty",
-    "getCounterpartyContactPersons",
-    { Ref: recipientRef }
-  );
-  const contactRef = contactResp.data?.[0]?.Ref;
-  if (!contactResp.success || !contactRef) {
-    return {
-      error:
-        (contactResp.errors ?? []).join("; ") ||
-        "Не вдалося отримати ContactRecipient у НП",
-    };
+  const savedContact = extractContactPersonFromCounterparty(saved);
+  const namesAlreadyOk =
+    npPersonNamesMatch({ firstName, lastName, middleName }, saved ?? {}) ||
+    (savedContact
+      ? npPersonNamesMatch({ firstName, lastName, middleName }, savedContact)
+      : false);
+
+  if (!namesAlreadyOk) {
+    // Оновлюємо ПІБ існуючого отримувача (типовий кейс: той самий телефон, інше ім'я)
+    await npRequest<NpCounterpartySaveRow[]>("Counterparty", "update", {
+      Ref: recipientRef,
+      CounterpartyProperty: "Recipient",
+      CounterpartyType: "PrivatePerson",
+      CityRef: params.cityRef,
+      ...nameProps,
+    });
+  }
+
+  let contactRef = await resolveContactPersonRef(recipientRef, saved);
+  if (!contactRef) {
+    return { error: "Не вдалося отримати ContactRecipient у НП" };
+  }
+
+  if (!namesAlreadyOk) {
+    const contactUpdate = await npRequest<NpContactPersonRow[]>(
+      "ContactPerson",
+      "update",
+      {
+        Ref: contactRef,
+        CounterpartyRef: recipientRef,
+        FirstName: firstName,
+        LastName: lastName,
+        MiddleName: middleName || "",
+        Phone: params.phoneDigits,
+      }
+    );
+
+    if (!contactUpdate.success) {
+      // Якщо оновлення заборонене (інколи для PrivatePerson) — створюємо контакт з потрібним ПІБ
+      const contactSave = await npRequest<NpContactPersonRow[]>(
+        "ContactPerson",
+        "save",
+        {
+          CounterpartyRef: recipientRef,
+          FirstName: firstName,
+          LastName: lastName,
+          MiddleName: middleName || "",
+          Phone: params.phoneDigits,
+        }
+      );
+      const createdRef = contactSave.data?.[0]?.Ref;
+      if (contactSave.success && createdRef) {
+        contactRef = createdRef;
+      }
+    }
   }
 
   return { recipientRef, contactRef };
