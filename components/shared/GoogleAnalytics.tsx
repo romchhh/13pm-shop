@@ -1,5 +1,5 @@
 import Script from "next/script";
-import { GA_MEASUREMENT_ID } from "@/lib/googleAnalytics";
+import { GA_MEASUREMENT_ID, GOOGLE_ADS_ID } from "@/lib/googleAnalytics";
 
 export function GoogleAnalytics() {
   return (
@@ -14,6 +14,7 @@ export function GoogleAnalytics() {
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
           gtag('config', '${GA_MEASUREMENT_ID}');
+          gtag('config', '${GOOGLE_ADS_ID}');
         `}
       </Script>
     </>
