@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useBasket } from "@/lib/BasketProvider";
 import { GA4_BRAND, GA4_CURRENCY, GA4_VERTICAL, pushGA4EcommerceEvent } from "@/lib/ga4Ecommerce";
+import { trackGoogleAdsPurchaseConversion } from "@/lib/googleAnalytics";
 import { summarizeOrderAmounts } from "@/lib/orderAmounts";
 
 interface OrderItem {
@@ -215,12 +216,25 @@ function PaymentSuccessContent() {
     }
 
     if (!convAlreadyTracked) {
+      const phone = normalizePhoneForAds(order?.phone_number);
+      trackGoogleAdsPurchaseConversion({
+        value,
+        transactionId: txId,
+        currency: GA4_CURRENCY,
+        email: order?.email,
+        phone,
+      });
+
+      // Legacy dataLayer hook (GTM / enhanced conversions listeners)
       const w = window as Window & { dataLayer?: Array<Record<string, unknown>> };
       w.dataLayer = w.dataLayer ?? [];
       w.dataLayer.push({
         event: "convGoogleAds",
         email: (order?.email ?? "").trim(),
-        phone: normalizePhoneForAds(order?.phone_number),
+        phone,
+        value,
+        currency: GA4_CURRENCY,
+        transaction_id: txId,
       });
 
       hasTrackedConvAdsRef.current = true;
