@@ -8,7 +8,7 @@ export const GOOGLE_ADS_ID = "AW-17017770137";
 export const GOOGLE_ADS_PURCHASE_SEND_TO =
   "AW-17017770137/25aHCJeasroaEJmh2rI_";
 
-export const GTM_CONTAINER_ID = "GTM-N98NJ7ST";
+export const GTM_CONTAINER_ID = "GTM-N98NJ7ST11";
 
 declare global {
   interface Window {
