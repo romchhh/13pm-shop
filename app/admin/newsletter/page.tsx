@@ -6,6 +6,7 @@ import ComponentCard from "@/components/admin/ComponentCard";
 import Label from "@/components/admin/form/Label";
 import TextArea from "@/components/admin/form/input/TextArea";
 import Input from "@/components/admin/form/input/InputField";
+import { formatDateTimeKyiv } from "@/lib/formatDateKyiv";
 
 interface Recipient {
   id: string;
@@ -301,7 +302,7 @@ export default function NewsletterPage() {
                   <div className="min-w-0">
                     <p className="font-medium text-gray-900 truncate">{c.subject}</p>
                     <p className="text-xs text-gray-500 mt-0.5">
-                      {new Date(c.createdAt).toLocaleString("uk-UA")} · надіслано {c.sentCount} разів
+                      {formatDateTimeKyiv(c.createdAt)} · надіслано {c.sentCount} разів
                     </p>
                   </div>
                   <div className="flex gap-2 flex-shrink-0">
@@ -361,7 +362,7 @@ export default function NewsletterPage() {
               </div>
               <div className="px-6 py-4 overflow-y-auto flex-1 text-sm">
                 <p className="text-gray-500 mb-2">
-                  {new Date(viewCampaign.createdAt).toLocaleString("uk-UA")} · надіслано{" "}
+                  {formatDateTimeKyiv(viewCampaign.createdAt)} · надіслано{" "}
                   {viewCampaign.sentCount} разів · {viewCampaign.isHtml ? "HTML" : "Текст"}
                 </p>
                 {viewCampaign.isHtml ? (

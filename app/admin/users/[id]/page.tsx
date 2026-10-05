@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import PageBreadCrumb from "@/components/admin/PageBreadCrumb";
+import { formatDateKyiv, formatDateTimeKyiv } from "@/lib/formatDateKyiv";
 
 interface OrderItem {
   id: number;
@@ -169,14 +170,14 @@ export default function UserDetailPage() {
               <dt className="text-sm font-medium text-gray-500">Дата народження</dt>
               <dd className="mt-1 text-sm text-gray-900">
                 {user.birthDate
-                  ? new Date(user.birthDate).toLocaleDateString("uk-UA")
+                  ? formatDateKyiv(user.birthDate)
                   : "—"}
               </dd>
             </div>
             <div>
               <dt className="text-sm font-medium text-gray-500">Дата реєстрації</dt>
               <dd className="mt-1 text-sm text-gray-900">
-                {new Date(user.createdAt).toLocaleString("uk-UA")}
+                {formatDateTimeKyiv(user.createdAt)}
               </dd>
             </div>
             {user.accounts.length > 0 && (
@@ -206,7 +207,7 @@ export default function UserDetailPage() {
             <dt className="text-sm font-medium text-gray-500">З нами з</dt>
             <dd className="mt-1 text-2xl font-semibold text-gray-900">
               {user.firstOrderAt
-                ? new Date(user.firstOrderAt).toLocaleDateString("uk-UA")
+                ? formatDateKyiv(user.firstOrderAt)
                 : "—"}
             </dd>
           </div>
@@ -259,7 +260,7 @@ export default function UserDetailPage() {
                           #{order.id}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(order.createdAt).toLocaleDateString("uk-UA")}
+                          {formatDateKyiv(order.createdAt)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span

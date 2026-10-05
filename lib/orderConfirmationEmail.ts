@@ -4,6 +4,7 @@
  */
 
 import { sendEmail } from "@/lib/email";
+import { formatDateTimeKyiv } from "@/lib/formatDateKyiv";
 import { PAYMENT_TYPE_LABELS_LONG } from "@/lib/paymentTypeLabels";
 import { summarizeOrderAmounts } from "@/lib/orderAmounts";
 import { SITE_STORE_NAME } from "@/lib/siteBrand";
@@ -78,7 +79,7 @@ export function buildOrderConfirmationHtml(
   const paymentLabel =
     PAYMENT_TYPE_LABELS_LONG[order.payment_type] || order.payment_type;
   const deliveryLabel = DELIVERY_LABELS[order.delivery_method] || order.delivery_method;
-  const dateStr = new Date(order.created_at).toLocaleString("uk-UA");
+  const dateStr = formatDateTimeKyiv(order.created_at);
 
   const rows = order.items
     .map((item) => {

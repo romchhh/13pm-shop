@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import ComponentCard from "./ComponentCard";
 import Input from "./form/input/InputField";
 import Label from "./form/Label";
+import { formatDateKyiv } from "@/lib/formatDateKyiv";
 
 interface PromoRow {
   id: number;
@@ -205,7 +206,7 @@ export default function PromoCodesSection() {
                     <td className="px-4 py-3 text-sm text-gray-600">{row.usedCount}</td>
                     <td className="px-4 py-3 text-sm text-gray-600">{row.maxUses ?? "—"}</td>
                     <td className="px-4 py-3 text-sm text-gray-600">
-                      {new Date(row.createdAt).toLocaleDateString("uk-UA")}
+                      {formatDateKyiv(row.createdAt)}
                     </td>
                   </tr>
                 ))}

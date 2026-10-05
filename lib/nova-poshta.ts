@@ -4,6 +4,8 @@
  * Для створення ЕН потрібні реквізити відправника з особистого кабінету НП (refs).
  */
 
+import { formatDateKyiv } from "@/lib/formatDateKyiv";
+
 const NP_JSON = "https://api.novaposhta.ua/v2.0/json/";
 
 export type NpCity = {
@@ -158,13 +160,6 @@ export function normalizeNpPhone(phone: string): string {
   return d;
 }
 
-/** Україна: постійний UTC+2 (без літнього часу з 2024). */
-const KYIV_UTC_OFFSET_MS = 2 * 60 * 60 * 1000;
-
-function pad2(value: number): string {
-  return String(value).padStart(2, "0");
-}
-
 function getNovaPoshtaDescriptionFallback(): string {
   return process.env.NOVA_POSHTA_DESCRIPTION?.trim() || "Одяг";
 }
@@ -174,10 +169,8 @@ function getNovaPoshtaDescriptionFallback(): string {
  * НП не приймає ISO і часто відхиляє формат з часом; UTC-дата на VPS дає «DateTime cannot be less then now».
  */
 export function formatNovaPoshtaDateTime(now = new Date(), addDays = 0): string {
-  const kyivMs = now.getTime() + KYIV_UTC_OFFSET_MS + addDays * 86_400_000;
-  const kyiv = new Date(kyivMs);
-
-  return `${pad2(kyiv.getUTCDate())}.${pad2(kyiv.getUTCMonth() + 1)}.${kyiv.getUTCFullYear()}`;
+  const shifted = new Date(now.getTime() + addDays * 86_400_000);
+  return formatDateKyiv(shifted);
 }
 
 /**

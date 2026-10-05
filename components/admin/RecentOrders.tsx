@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "./ui/table";
 import Badge from "@/components/admin/ui/badge/Badge";
+import { formatDateKyiv } from "@/lib/formatDateKyiv";
 
 interface Order {
   id: number;
@@ -139,7 +140,7 @@ export default function RecentOrders() {
                     </Badge>
                   </TableCell>
                   <TableCell className="py-3 text-gray-700 text-theme-sm">
-                    {new Date(order.created_at).toLocaleDateString()}
+                    {formatDateKyiv(order.created_at)}
                   </TableCell>
                 </TableRow>
               ))}

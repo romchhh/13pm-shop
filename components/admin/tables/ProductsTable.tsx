@@ -17,6 +17,7 @@ import { buildColorLinkGroupLabels } from "@/lib/colorLinkGroups";
 import { buildSizeGroupLabels } from "@/lib/sizeGroupLabels";
 import { compareByCatalogPriority, CATALOG_PRIORITY_HINT } from "@/lib/catalogPriority";
 import AdminPriorityCell from "@/components/admin/AdminPriorityCell";
+import { formatDateKyiv } from "@/lib/formatDateKyiv";
 
 const SIZE_MAP: Record<string, string> = {
   "1": "XL",
@@ -505,7 +506,7 @@ export default function ProductsTable() {
                       {product.top_sale ? "✅" : "—"}
                     </TableCell>
                     <TableCell className="px-5 py-4 text-sm text-gray-700">
-                      {new Date(product.created_at).toLocaleDateString()}
+                      {formatDateKyiv(product.created_at)}
                     </TableCell>
                     <TableCell className="px-5 py-4 space-x-2">
                       <Link

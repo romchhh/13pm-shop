@@ -10,6 +10,7 @@ import {
 } from "../ui/table";
 import Link from "next/link";
 import Pagination from "./Pagination";
+import { formatDateKyiv } from "@/lib/formatDateKyiv";
 import { getPaymentTypeLabel } from "@/lib/paymentTypeLabels";
 
 const ORDERS_CACHE_KEY = "orders_cache";
@@ -321,7 +322,7 @@ export default function OrdersTable() {
                       </select>
                     </TableCell>
                     <TableCell className="px-5 py-4 text-sm text-gray-700">
-                      {new Date(order.created_at).toLocaleDateString()}
+                      {formatDateKyiv(order.created_at)}
                     </TableCell>
                     <TableCell className="px-5 py-4 space-x-2">
                       <Link

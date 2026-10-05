@@ -2,6 +2,7 @@
  * Telegram Bot API utilities for sending order notifications
  */
 
+import { formatDateTimeKyiv } from "@/lib/formatDateKyiv";
 import { PAYMENT_TYPE_LABELS_LONG } from "@/lib/paymentTypeLabels";
 import { TELEGRAM_BRAND_FOOTER } from "@/lib/siteBrand";
 import { summarizeOrderAmounts } from "@/lib/orderAmounts";
@@ -108,7 +109,7 @@ function formatOrderMessage(order: OrderData, isPaid: boolean = false): string {
   }
 
   message += `\n💰 <b>До сплати:</b> ${total.toFixed(2)} ₴\n`;
-  message += `\n🕐 <b>Дата:</b> ${new Date(order.created_at).toLocaleString("uk-UA")}\n`;
+  message += `\n🕐 <b>Дата:</b> ${formatDateTimeKyiv(order.created_at)}\n`;
   message += `\n${TELEGRAM_BRAND_FOOTER}`;
 
   return message;
@@ -187,7 +188,7 @@ export async function sendContactFormNotification(data: {
       `👤 <b>Ім'я:</b> ${escapeHtml(data.name)}\n` +
       `📧 <b>Email:</b> ${escapeHtml(data.email)}\n\n` +
       `💬 <b>Повідомлення:</b>\n${escapeHtml(data.message)}\n\n` +
-      `🕐 <b>Дата:</b> ${new Date().toLocaleString("uk-UA")}\n\n` +
+      `🕐 <b>Дата:</b> ${formatDateTimeKyiv(new Date())}\n\n` +
       TELEGRAM_BRAND_FOOTER;
 
     const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
@@ -230,7 +231,7 @@ export async function sendNewsletterSubscribeNotification(email: string): Promis
     const text =
       `📬 <b>ПІДПИСКА НА РОЗСИЛКУ</b>\n\n` +
       `📧 <b>Email:</b> ${escapeHtml(email)}\n\n` +
-      `🕐 <b>Дата:</b> ${new Date().toLocaleString("uk-UA")}\n\n` +
+      `🕐 <b>Дата:</b> ${formatDateTimeKyiv(new Date())}\n\n` +
       TELEGRAM_BRAND_FOOTER;
 
     const url = `https://api.telegram.org/bot${botToken}/sendMessage`;

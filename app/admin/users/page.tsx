@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import PageBreadCrumb from "@/components/admin/PageBreadCrumb";
+import { formatDateKyiv } from "@/lib/formatDateKyiv";
 
 interface User {
   id: string;
@@ -127,7 +128,7 @@ export default function UsersPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-500">
-                            {new Date(user.createdAt).toLocaleDateString("uk-UA")}
+                            {formatDateKyiv(user.createdAt)}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right">
