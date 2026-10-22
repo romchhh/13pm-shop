@@ -505,6 +505,11 @@ export type CreateTtnParams = {
   warehouseRef?: string | null;
   /** Оціночна вартість, грн */
   cost: number;
+  /**
+   * Контроль оплати NovaPay (грн). Лише для післяоплати.
+   * Не сумісний з класичною «наложкою» (BackwardDeliveryData).
+   */
+  afterpaymentOnGoodsCost?: number | null;
   /** Текст накладної */
   description: string;
   /** WarehouseWarehouse | WarehouseDoors … */
@@ -576,6 +581,13 @@ export async function createNovaPoshtaTtn(
     "Вантаж",
   ].filter((value, index, list) => list.indexOf(value) === index);
 
+  const afterpayment =
+    params.afterpaymentOnGoodsCost != null &&
+    Number.isFinite(params.afterpaymentOnGoodsCost) &&
+    params.afterpaymentOnGoodsCost > 0
+      ? Math.round(params.afterpaymentOnGoodsCost)
+      : null;
+
   const baseProperties: Record<string, unknown> = {
     Sender: process.env.NOVA_POSHTA_SENDER_REF,
     CitySender: process.env.NOVA_POSHTA_CITY_SENDER_REF,
@@ -596,6 +608,9 @@ export async function createNovaPoshtaTtn(
     ContactRecipient: ensured.contactRef,
     CityRecipient: cityRef,
     RecipientAddress: warehouseRef,
+    ...(afterpayment != null
+      ? { AfterpaymentOnGoodsCost: String(afterpayment) }
+      : {}),
   };
 
   let lastError = "Nova Poshta save failed";

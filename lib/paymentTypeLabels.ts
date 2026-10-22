@@ -9,6 +9,11 @@ export const PAYMENT_TYPE_LABELS_LONG: Record<string, string> = {
   crypto: "Криптовалюта",
 };
 
+/** Післяоплата → на ТТН потрібен контроль оплати NovaPay (`AfterpaymentOnGoodsCost`). */
+export function isCodPaymentType(type: string | null | undefined): boolean {
+  return type === "prepay" || type === "pay_after";
+}
+
 /** Короткі підписи для таблиць адмінки */
 export const PAYMENT_TYPE_LABELS_SHORT: Record<string, string> = {
   prepay: "Післяоплата",

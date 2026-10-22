@@ -60,12 +60,7 @@ function formatOrderMessage(order: OrderData, isPaid: boolean = false): string {
   });
   const total = order.order_total ?? amounts.orderTotal;
 
-  // Get base URL for order link
-  const baseUrl = process.env.PUBLIC_URL || process.env.NEXT_PUBLIC_PUBLIC_URL || "";
-  const orderLink = `${baseUrl}/admin/orders/${order.id}/edit`;
-  
   let message = `${paymentStatusEmoji} <b>НОВЕ ЗАМОВЛЕННЯ ${paymentStatusText}</b>\n\n`;
-  message += `📋 <b>ID:</b> <a href="${orderLink}">${order.invoice_id}</a>\n`;
   message += `👤 <b>Клієнт:</b> ${order.customer_name}\n`;
   message += `📞 <b>Телефон:</b> ${order.phone_number}\n`;
 
@@ -109,8 +104,7 @@ function formatOrderMessage(order: OrderData, isPaid: boolean = false): string {
   }
 
   message += `\n💰 <b>До сплати:</b> ${total.toFixed(2)} ₴\n`;
-  message += `\n🕐 <b>Дата:</b> ${formatDateTimeKyiv(order.created_at)}\n`;
-  message += `\n${TELEGRAM_BRAND_FOOTER}`;
+  message += `\n🕐 <b>Дата:</b> ${formatDateTimeKyiv(order.created_at)}`;
 
   return message;
 }

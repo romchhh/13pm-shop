@@ -34,6 +34,7 @@ async function tryCreateOrderTtn(params: {
   warehouseRef?: string | null;
   deliveryMethod: string;
   orderTotal: number;
+  paymentType?: string | null;
   orderItems: { productId: number; productName: string }[];
 }): Promise<string | null> {
   try {
@@ -483,6 +484,7 @@ export async function POST(req: NextRequest) {
         warehouseRef: npWarehouseRef || null,
         deliveryMethod: delivery_method,
         orderTotal: Math.round(orderTotal),
+        paymentType: payment_type,
         orderItems: normalizedItems.map((i) => ({
           productId: i.product_id,
           productName: i.product_name,
@@ -583,6 +585,7 @@ export async function POST(req: NextRequest) {
         warehouseRef: npWarehouseRef || null,
         deliveryMethod: delivery_method,
         orderTotal: Math.round(orderTotal),
+        paymentType: "prepay",
         orderItems: normalizedItems.map((i) => ({
           productId: i.product_id,
           productName: i.product_name,

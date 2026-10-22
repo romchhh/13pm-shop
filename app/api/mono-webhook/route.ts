@@ -90,6 +90,7 @@ export async function POST(req: NextRequest) {
         warehouseRef: order.novaPoshtaWarehouseRef,
         deliveryMethod: order.deliveryMethod,
         orderTotal: Math.round(orderTotal),
+        paymentType: order.paymentType,
         orderItems: order.items.map((i) => ({
           productId: i.productId,
           productName: i.productName ?? i.product?.name ?? null,

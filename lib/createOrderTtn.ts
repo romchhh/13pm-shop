@@ -7,6 +7,7 @@ import {
   isNovaPoshtaConfiguredForTtn,
   type CreateTtnParams,
 } from "@/lib/nova-poshta";
+import { isCodPaymentType } from "@/lib/paymentTypeLabels";
 import { prisma } from "@/lib/prisma";
 import { createLogger } from "@/lib/logger";
 
@@ -63,6 +64,8 @@ export async function createOrderTtn(params: {
   warehouseRef?: string | null;
   deliveryMethod: string;
   orderTotal: number;
+  /** Спосіб оплати замовлення — для післяоплати ставимо контроль NovaPay */
+  paymentType?: string | null;
   orderItems: { productId: number | null; productName: string | null }[];
 }): Promise<{ ttn: string } | { error: string }> {
   const {
@@ -75,6 +78,7 @@ export async function createOrderTtn(params: {
     warehouseRef,
     deliveryMethod,
     orderTotal,
+    paymentType,
     orderItems,
   } = params;
 
@@ -101,6 +105,10 @@ export async function createOrderTtn(params: {
       serviceType = "WarehouseWarehouse"; // Поштомат = відділення
     }
 
+    const afterpaymentOnGoodsCost = isCodPaymentType(paymentType)
+      ? Math.max(1, Math.round(orderTotal))
+      : null;
+
     const ttnParams: CreateTtnParams = {
       recipientName: customerName,
       recipientPhone: phoneNumber,
@@ -109,6 +117,7 @@ export async function createOrderTtn(params: {
       cityRef: cityRef ?? undefined,
       warehouseRef: warehouseRef ?? undefined,
       cost: orderTotal,
+      afterpaymentOnGoodsCost,
       description: process.env.NOVA_POSHTA_DESCRIPTION?.trim() || "Одяг",
       serviceType,
       weight: dimensions.weight,
@@ -121,6 +130,8 @@ export async function createOrderTtn(params: {
       city,
       postOffice,
       deliveryMethod,
+      paymentType: paymentType ?? null,
+      afterpaymentOnGoodsCost,
       recipientName: customerName,
     });
 
