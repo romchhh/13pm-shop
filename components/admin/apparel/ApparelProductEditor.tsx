@@ -11,6 +11,7 @@ import ToggleSwitch from "@/components/admin/form/ToggleSwitch";
 import ProductMediaOrderEditor from "@/components/admin/ProductMediaOrderEditor";
 import BoughtTogetherPicker from "@/components/admin/BoughtTogetherPicker";
 import ApparelColorField from "@/components/admin/apparel/ApparelColorField";
+import ApparelKitOptionsEditor from "@/components/admin/apparel/ApparelKitOptionsEditor";
 import ApparelSizeStockEditor from "@/components/admin/apparel/ApparelSizeStockEditor";
 import ColorLinkedProductsPicker from "@/components/admin/apparel/ColorLinkedProductsPicker";
 import { parseProductPageText } from "@/lib/parseProductFile";
@@ -30,7 +31,9 @@ import {
   defaultApparelSizeRows,
   type ApparelProductFormValues,
 } from "@/lib/apparelProduct";
+import { defaultKitOptions, defaultKitSizeRows } from "@/lib/productKit";
 import { generateProductArticleFromName } from "@/lib/productArticle";
+import { sortSizeStockRows } from "@/lib/productOptions";
 
 interface Category {
   id: number;
@@ -68,6 +71,8 @@ export default function ApparelProductEditor({
       colorLinkedIds: [],
       boughtTogetherIds: [],
       sizeRows: defaultApparelSizeRows(),
+      isKit: false,
+      kitOptions: defaultKitOptions(),
       inStock: true,
       isNew: false,
       isHit: false,
@@ -191,6 +196,8 @@ export default function ApparelProductEditor({
           colorLinkedIds: [],
           boughtTogetherIds: [],
           sizeRows: defaultApparelSizeRows(),
+          isKit: false,
+          kitOptions: defaultKitOptions(),
           inStock: true,
           isNew: false,
           isHit: false,
@@ -338,11 +345,66 @@ export default function ApparelProductEditor({
             />
           </ComponentCard>
 
-          <ComponentCard title="Розміри">
-            <ApparelSizeStockEditor
-              rows={values.sizeRows}
-              onChange={(sizeRows) => patch({ sizeRows })}
-            />
+          <ComponentCard title="Розміри / комплект">
+            <label className="mb-4 flex cursor-pointer items-start gap-2.5 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5">
+              <input
+                type="checkbox"
+                checked={values.isKit}
+                onChange={(e) => {
+                  const isKit = e.target.checked;
+                  if (!isKit) {
+                    patch({ isKit: false });
+                    return;
+                  }
+                  const fromProduct = sortSizeStockRows(
+                    values.sizeRows.filter((r) => r.label.trim())
+                  );
+                  const seed =
+                    fromProduct.length > 0
+                      ? fromProduct.map((r) => ({
+                          label: r.label,
+                          stock: r.stock,
+                          price: null as number | null,
+                        }))
+                      : defaultKitSizeRows();
+                  const hasKitRows =
+                    values.kitOptions.top.length > 0 || values.kitOptions.bottom.length > 0;
+                  patch({
+                    isKit: true,
+                    kitOptions: hasKitRows
+                      ? values.kitOptions
+                      : {
+                          ...defaultKitOptions(),
+                          top: seed,
+                          bottom: seed.map((r) => ({ ...r })),
+                        },
+                  });
+                }}
+                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span>
+                <span className="block font-['Montserrat'] text-sm font-medium text-gray-800">
+                  Це комплект (верх + низ)
+                </span>
+                <span className="mt-0.5 block text-xs text-gray-500">
+                  Покупець обере два розміри. При увімкненні підставляються поточні розміри
+                  товару.
+                </span>
+              </span>
+            </label>
+
+            {values.isKit ? (
+              <ApparelKitOptionsEditor
+                value={values.kitOptions}
+                onChange={(kitOptions) => patch({ kitOptions })}
+                basePrice={values.price}
+              />
+            ) : (
+              <ApparelSizeStockEditor
+                rows={values.sizeRows}
+                onChange={(sizeRows) => patch({ sizeRows })}
+              />
+            )}
           </ComponentCard>
         </div>
 

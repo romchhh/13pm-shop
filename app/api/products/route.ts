@@ -120,6 +120,8 @@ export async function POST(req: Request) {
         color_options,
         white_color_surcharge_enabled = true,
         size_variants,
+        is_kit = false,
+        kit_options = null,
         is_new = false,
         size_group_ordered_ids: sizeGroupOrderedBody = undefined,
       } = body || {};
@@ -183,6 +185,8 @@ export async function POST(req: Request) {
         color_options: color_options ?? [],
         white_color_surcharge_enabled: white_color_surcharge_enabled !== false,
         size_variants: size_variants ?? [],
+        is_kit: is_kit === true,
+        kit_options: is_kit === true ? kit_options ?? null : null,
         is_new: is_new === true,
         category_id,
         subcategory_id,

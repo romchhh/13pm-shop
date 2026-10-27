@@ -192,6 +192,8 @@ export async function PUT(
       white_color_surcharge_enabled: body.white_color_surcharge_enabled !== false,
       size_variants:
         useSizeGroupOrder || useLegacySizeLinks ? undefined : body.size_variants,
+      is_kit: body.is_kit === true,
+      kit_options: body.is_kit === true ? (body.kit_options ?? null) : null,
       is_new: isNew,
       stock,
       category_id: categoryId,

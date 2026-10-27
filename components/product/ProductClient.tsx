@@ -27,8 +27,17 @@ import {
   type ProductSizeStock,
   type ProductSizeVariant,
 } from "@/lib/productOptions";
+import {
+  formatKitSizeLabel,
+  kitComboAvailable,
+  parseKitOptions,
+  resolveKitUnitPrice,
+} from "@/lib/productKit";
 import OneClickOrderModal from "@/components/product/OneClickOrderModal";
 import ProductDeliveryPaymentTab from "@/components/product/ProductDeliveryPaymentTab";
+import ProductKitSizePicker, {
+  getKitDisplayRows,
+} from "@/components/product/ProductKitSizePicker";
 import ProductSizePickerBlock from "@/components/product/ProductSizePickerBlock";
 import { ProductDetailDescription } from "@/components/product/ProductDetailDescription";
 import ProductMediaLightbox from "@/components/product/ProductMediaLightbox";
@@ -88,6 +97,8 @@ interface ProductClientProps {
     color_options?: ProductColorOption[];
     white_color_surcharge_enabled?: boolean;
     size_variants?: unknown;
+    is_kit?: boolean;
+    kit_options?: unknown;
     color_linked_products?: {
       id: number;
       name: string;
@@ -120,18 +131,47 @@ export default function ProductClient({ product }: ProductClientProps) {
   const mobileGalleryScrollRef = useRef<HTMLDivElement>(null);
 
   const colors = product.color_options ?? [];
+  const kitOptions = useMemo(
+    () => (product.is_kit ? parseKitOptions(product.kit_options) : null),
+    [product.is_kit, product.kit_options]
+  );
+  const isKit = Boolean(kitOptions);
   const sizeStock = useMemo(() => {
+    if (isKit) return [];
     const expanded = expandSizeStockForDisplay(parseSizeStock(product.size_variants));
     return effectiveSizeStockForDisplay(expanded, product.in_stock);
-  }, [product.in_stock, product.size_variants]);
+  }, [isKit, product.in_stock, product.size_variants]);
   const legacySizeVariants = useMemo(
-    () => parseSizeVariants(product.size_variants),
-    [product.size_variants]
+    () => (isKit ? [] : parseSizeVariants(product.size_variants)),
+    [isKit, product.size_variants]
   );
 
   const colorLinked = product.color_linked_products ?? [];
 
+  const kitRows = useMemo(
+    () => (kitOptions ? getKitDisplayRows(kitOptions, product.in_stock) : null),
+    [kitOptions, product.in_stock]
+  );
+
+  const [selectedTopIndex, setSelectedTopIndex] = useState(() => {
+    if (!product.is_kit) return 0;
+    const kit = parseKitOptions(product.kit_options);
+    if (!kit) return 0;
+    const rows = getKitDisplayRows(kit, product.in_stock).top;
+    const firstAvailable = rows.findIndex((row) => row.stock > 0);
+    return firstAvailable >= 0 ? firstAvailable : 0;
+  });
+  const [selectedBottomIndex, setSelectedBottomIndex] = useState(() => {
+    if (!product.is_kit) return 0;
+    const kit = parseKitOptions(product.kit_options);
+    if (!kit) return 0;
+    const rows = getKitDisplayRows(kit, product.in_stock).bottom;
+    const firstAvailable = rows.findIndex((row) => row.stock > 0);
+    return firstAvailable >= 0 ? firstAvailable : 0;
+  });
+
   const [selectedSizeIndex, setSelectedSizeIndex] = useState(() => {
+    if (product.is_kit) return 0;
     const rows = effectiveSizeStockForDisplay(
       expandSizeStockForDisplay(parseSizeStock(product.size_variants)),
       product.in_stock
@@ -159,11 +199,30 @@ export default function ProductClient({ product }: ProductClientProps) {
   const selectedSizeRow: ProductSizeStock | null =
     sizeStock.length > 0 ? sizeStock[selectedSizeIndex] ?? sizeStock[0] : null;
 
+  const selectedTopRow = kitRows?.top[selectedTopIndex] ?? kitRows?.top[0] ?? null;
+  const selectedBottomRow =
+    kitRows?.bottom[selectedBottomIndex] ?? kitRows?.bottom[0] ?? null;
+
   const currentSizeLabel = useMemo(() => {
+    if (kitOptions && selectedTopRow && selectedBottomRow) {
+      return formatKitSizeLabel(
+        selectedTopRow.label,
+        selectedBottomRow.label,
+        kitOptions.topLabel,
+        kitOptions.bottomLabel
+      );
+    }
     if (selectedSizeRow?.label) return selectedSizeRow.label;
     const v = legacySizeVariants.find((s) => s.productId === product.id);
     return v?.label ?? "—";
-  }, [selectedSizeRow, legacySizeVariants, product.id]);
+  }, [
+    kitOptions,
+    selectedTopRow,
+    selectedBottomRow,
+    selectedSizeRow,
+    legacySizeVariants,
+    product.id,
+  ]);
 
   const selectedColorName =
     colors.length > 0 && colors[selectedColorIndex]
@@ -171,13 +230,39 @@ export default function ProductClient({ product }: ProductClientProps) {
       : undefined;
 
   const analyticsCategory = product.subcategory_name ?? product.category_name ?? null;
-  const displayPrice = getProductDisplayPrice(product.price);
-  const strikePrice = getProductStrikePrice(product.price, product.old_price);
+  const kitUnitPrice =
+    kitOptions && selectedTopRow && selectedBottomRow
+      ? resolveKitUnitPrice(
+          product.price,
+          kitOptions,
+          selectedTopRow.label,
+          selectedBottomRow.label
+        )
+      : product.price;
+  const displayPrice = getProductDisplayPrice(kitUnitPrice);
+  const strikePrice = getProductStrikePrice(kitUnitPrice, product.old_price);
   const articleCode = resolveProductArticle(product.article, product.name);
 
   const handleAddToCart = async () => {
     if (isAddingToCartRef.current) return;
-    if (sizeStock.length > 0 && (!selectedSizeRow || selectedSizeRow.stock <= 0)) {
+    if (isKit) {
+      if (
+        !kitOptions ||
+        !selectedTopRow ||
+        !selectedBottomRow ||
+        !kitComboAvailable(
+          kitOptions,
+          selectedTopRow.label,
+          selectedBottomRow.label,
+          product.in_stock
+        )
+      ) {
+        setAlertMessage("Оберіть розміри верху та низу, які є в наявності");
+        setAlertType("warning");
+        setTimeout(() => setAlertMessage(null), 4000);
+        return;
+      }
+    } else if (sizeStock.length > 0 && (!selectedSizeRow || selectedSizeRow.stock <= 0)) {
       setAlertMessage("Оберіть розмір, який є в наявності");
       setAlertType("warning");
       setTimeout(() => setAlertMessage(null), 4000);
@@ -196,7 +281,7 @@ export default function ProductClient({ product }: ProductClientProps) {
       await addItem({
         id: product.id,
         name: product.name,
-        price: product.price,
+        price: kitUnitPrice,
         size: currentSizeLabel,
         quantity,
         imageUrl: getFirstProductImage(media),
@@ -225,13 +310,24 @@ export default function ProductClient({ product }: ProductClientProps) {
     stock: product.stock,
     size_variants: product.size_variants,
   });
-  const selectedSizeUnavailable =
-    sizeStock.length > 0 &&
-    !productHasSizeStockAvailable(
-      sizeStock,
-      selectedSizeRow?.label ?? null,
-      product.in_stock
-    );
+  const selectedSizeUnavailable = isKit
+    ? Boolean(
+        kitOptions &&
+          selectedTopRow &&
+          selectedBottomRow &&
+          !kitComboAvailable(
+            kitOptions,
+            selectedTopRow.label,
+            selectedBottomRow.label,
+            product.in_stock
+          )
+      )
+    : sizeStock.length > 0 &&
+      !productHasSizeStockAvailable(
+        sizeStock,
+        selectedSizeRow?.label ?? null,
+        product.in_stock
+      );
   const outOfStock = productOutOfStock;
   const cannotAddToCart = productOutOfStock || selectedSizeUnavailable;
   const categorySlug =
@@ -631,17 +727,29 @@ export default function ProductClient({ product }: ProductClientProps) {
               </div>
             )}
 
-            <ProductSizePickerBlock
-              productId={product.id}
-              categoryName={product.category_name}
-              categorySlug={product.category_slug}
-              subcategoryName={product.subcategory_name}
-              sizeVariants={product.size_variants}
-              currentSizeLabel={currentSizeLabel}
-              selectedSizeIndex={selectedSizeIndex}
-              onSelectSizeIndex={setSelectedSizeIndex}
-              onLegacySizeClick={onSizeClick}
-            />
+            {isKit && kitOptions ? (
+              <ProductKitSizePicker
+                kit={kitOptions}
+                productInStock={product.in_stock}
+                selectedTopIndex={selectedTopIndex}
+                selectedBottomIndex={selectedBottomIndex}
+                onSelectTopIndex={setSelectedTopIndex}
+                onSelectBottomIndex={setSelectedBottomIndex}
+                unitPrice={displayPrice}
+              />
+            ) : (
+              <ProductSizePickerBlock
+                productId={product.id}
+                categoryName={product.category_name}
+                categorySlug={product.category_slug}
+                subcategoryName={product.subcategory_name}
+                sizeVariants={product.size_variants}
+                currentSizeLabel={currentSizeLabel}
+                selectedSizeIndex={selectedSizeIndex}
+                onSelectSizeIndex={setSelectedSizeIndex}
+                onLegacySizeClick={onSizeClick}
+              />
+            )}
 
             {product.gift_product && (
               <div className="rounded-xl border border-black/10 bg-[#faf8f5] p-4 text-sm">
@@ -724,12 +832,14 @@ export default function ProductClient({ product }: ProductClientProps) {
               product={{
                 id: product.id,
                 name: product.name,
-                price: product.price,
+                price: kitUnitPrice,
                 discount_percentage: product.discount_percentage,
                 in_stock: product.in_stock,
                 stock: product.stock,
               }}
               quantity={quantity}
+              size={currentSizeLabel}
+              unitPriceOverride={kitUnitPrice}
             />
 
           </div>

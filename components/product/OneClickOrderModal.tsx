@@ -27,6 +27,10 @@ type Props = {
   onClose: () => void;
   product: ProductForOneClick;
   quantity: number;
+  /** Обраний розмір (для комплекту — «Верх: S / Низ: M») */
+  size?: string;
+  /** Ціна одиниці з урахуванням комплекту */
+  unitPriceOverride?: number;
 };
 
 function normalizePhoneDigits(phone: string): string {
@@ -38,6 +42,8 @@ export default function OneClickOrderModal({
   onClose,
   product,
   quantity,
+  size,
+  unitPriceOverride,
 }: Props) {
   const router = useRouter();
   const [customerName, setCustomerName] = useState("");
@@ -70,8 +76,13 @@ export default function OneClickOrderModal({
 
   if (!open) return null;
 
-  const unitPrice = getDiscountedPrice(product.price, product.discount_percentage);
+  const baseUnit =
+    unitPriceOverride != null && Number.isFinite(unitPriceOverride)
+      ? unitPriceOverride
+      : product.price;
+  const unitPrice = getDiscountedPrice(baseUnit, product.discount_percentage);
   const lineTotal = Math.round(unitPrice * quantity * 100) / 100;
+  const orderSize = (size && size.trim()) || DEFAULT_SIZE;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,7 +116,7 @@ export default function OneClickOrderModal({
             {
               product_id: product.id,
               product_name: product.name,
-              size: DEFAULT_SIZE,
+              size: orderSize,
               quantity,
               price: Math.round(unitPrice * 100) / 100,
             },

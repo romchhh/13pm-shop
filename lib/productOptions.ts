@@ -8,10 +8,12 @@ export type ProductColorOption = {
   name: string;
 };
 
-/** Розмір одягу з кількістю на складі */
+/** Розмір одягу з кількістю на складі (price — для частин комплекту) */
 export type ProductSizeStock = {
   label: string;
   stock: number;
+  /** Ціна частини комплекту (грн), опційно */
+  price?: number | null;
 };
 
 /** Legacy: окремий товар на кожен розмір */
@@ -111,7 +113,16 @@ export function parseSizeStock(raw: unknown): ProductSizeStock[] {
     if (!label) continue;
     const stockRaw = typeof o.stock === "number" ? o.stock : Number(o.stock);
     const stock = Number.isFinite(stockRaw) ? Math.max(0, Math.round(stockRaw)) : 0;
-    out.push({ label, stock });
+    const priceRaw = o.price;
+    const priceNum =
+      priceRaw == null || priceRaw === ""
+        ? null
+        : typeof priceRaw === "number"
+          ? priceRaw
+          : Number(priceRaw);
+    const price =
+      priceNum != null && Number.isFinite(priceNum) ? Math.max(0, Math.round(priceNum)) : null;
+    out.push(price != null ? { label, stock, price } : { label, stock });
   }
   return out;
 }
@@ -144,10 +155,16 @@ export function serializeColorOptions(colors: ProductColorOption[]): unknown {
 export function serializeSizeStock(sizes: ProductSizeStock[]): unknown {
   return sizes
     .filter((s) => s.label.trim())
-    .map((s) => ({
-      label: s.label.trim(),
-      stock: Math.max(0, Math.round(s.stock)),
-    }));
+    .map((s) => {
+      const row: { label: string; stock: number; price?: number } = {
+        label: s.label.trim(),
+        stock: Math.max(0, Math.round(s.stock)),
+      };
+      if (s.price != null && Number.isFinite(s.price)) {
+        row.price = Math.max(0, Math.round(s.price));
+      }
+      return row;
+    });
 }
 
 export function serializeSizeVariants(variants: ProductSizeVariant[]): unknown {

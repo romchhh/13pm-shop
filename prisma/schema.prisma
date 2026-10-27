@@ -153,6 +153,10 @@ model Product {
   whiteColorSurchargeEnabled Boolean  @default(true) @map("white_color_surcharge_enabled")
   /// Варіанти розміру як окремі товари: [{ "label": "30×40", "productId": 12, "slug": "..." }]
   sizeVariants         Json?          @default("[]") @map("size_variants")
+  /// Комплект: окремий вибір розміру верху та низу
+  isKit                Boolean        @default(false) @map("is_kit")
+  /// { topLabel, bottomLabel, top: [{label,stock,price?}], bottom: [...] }
+  kitOptions           Json?          @map("kit_options")
   isNew                Boolean        @default(false) @map("is_new")
   season               String[]       @default([])
   stock                Int            @default(0)

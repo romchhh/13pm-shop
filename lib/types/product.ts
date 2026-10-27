@@ -51,6 +51,9 @@ export interface Product {
   white_color_surcharge_enabled?: boolean;
   /** Legacy: [{ label, productId }] або одяг: [{ label, stock }] */
   size_variants?: unknown;
+  /** Комплект: окремий розмір верху і низу */
+  is_kit?: boolean;
+  kit_options?: unknown;
   gift_product?: {
     id: number;
     name: string;

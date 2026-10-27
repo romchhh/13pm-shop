@@ -19,7 +19,6 @@ const heroSubtitleShadow = "0 1px 14px rgba(0,0,0,0.45)";
 
 const HERO_FEATURES = [
   { label: "-10% для ЗСУ, ДСНС, Поліції" },
-  { label: "-15% знижка, якщо замовлення на суму від 5000 грн" },
   { label: "1–3 дні доставка" },
 ] as const;
 

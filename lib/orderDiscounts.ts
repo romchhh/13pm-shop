@@ -1,13 +1,14 @@
-/** Автоматична знижка на замовлення від цієї суми товарів (грн). */
+/** Автоматична знижка на замовлення від цієї суми товарів (грн). Вимкнено. */
 export const BULK_ORDER_DISCOUNT_MIN_SUBTOTAL_UAH = 5000;
 
-/** Відсоток автоматичної знижки на замовлення. */
-export const BULK_ORDER_DISCOUNT_PERCENT = 15;
+/** Відсоток автоматичної знижки на замовлення. `0` = знижку вимкнено. */
+export const BULK_ORDER_DISCOUNT_PERCENT = 0;
 
 export const BULK_ORDER_DISCOUNT_LABEL = `−${BULK_ORDER_DISCOUNT_PERCENT}% від ${BULK_ORDER_DISCOUNT_MIN_SUBTOTAL_UAH.toLocaleString("uk-UA")} грн`;
 
-/** Знижка на суму товарів (без доставки), якщо досягнуто поріг. */
+/** Знижка на суму товарів (без доставки). Зараз вимкнена (`PERCENT = 0`). */
 export function getBulkOrderDiscountAmount(subtotal: number): number {
+  if (BULK_ORDER_DISCOUNT_PERCENT <= 0) return 0;
   const normalizedSubtotal = Math.max(0, Math.round(Number(subtotal) || 0));
   if (normalizedSubtotal < BULK_ORDER_DISCOUNT_MIN_SUBTOTAL_UAH) {
     return 0;

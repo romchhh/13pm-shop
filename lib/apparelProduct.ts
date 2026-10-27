@@ -1,5 +1,13 @@
 import { VIRTUAL_STOCK_WHEN_IN_STOCK } from "@/lib/productAvailability";
 import {
+  defaultKitOptions,
+  flattenKitSizesForCatalog,
+  parseKitOptions,
+  serializeKitOptions,
+  totalKitStock,
+  type ProductKitOptions,
+} from "@/lib/productKit";
+import {
   parseColorOptions,
   parseSizeStock,
   serializeColorOptions,
@@ -23,6 +31,9 @@ export type ApparelProductFormValues = {
   colorLinkedIds: number[];
   boughtTogetherIds: number[];
   sizeRows: ProductSizeStock[];
+  /** Комплект: окремі розміри верху / низу */
+  isKit: boolean;
+  kitOptions: ProductKitOptions;
   inStock: boolean;
   isNew: boolean;
   isHit: boolean;
@@ -54,6 +65,8 @@ export type ApparelProductApiBody = {
   color_options: unknown;
   white_color_surcharge_enabled: boolean;
   size_variants: unknown;
+  is_kit: boolean;
+  kit_options: unknown;
   subtitle: null;
   category_id: number | null;
   subcategory_id: number | null;
@@ -81,10 +94,20 @@ export function buildApparelProductApiBody(
 ): ApparelProductApiBody {
   const colorName = values.color.name.trim();
   const colorHex = values.color.hex.trim() || "#888888";
-  const sizeRows = sortSizeStockRows(
-    values.sizeRows.filter((row) => row.label.trim())
-  );
-  const totalStock = totalStockFromSizeRows(sizeRows);
+  const kitOptions: ProductKitOptions = {
+    topLabel: values.kitOptions.topLabel.trim() || "Верх",
+    bottomLabel: values.kitOptions.bottomLabel.trim() || "Низ",
+    top: sortSizeStockRows(values.kitOptions.top.filter((row) => row.label.trim())),
+    bottom: sortSizeStockRows(
+      values.kitOptions.bottom.filter((row) => row.label.trim())
+    ),
+  };
+  const sizeRows = values.isKit
+    ? flattenKitSizesForCatalog(kitOptions)
+    : sortSizeStockRows(values.sizeRows.filter((row) => row.label.trim()));
+  const totalStock = values.isKit
+    ? totalKitStock(kitOptions)
+    : totalStockFromSizeRows(sizeRows);
   const categoryIds = Array.from(new Set(values.categoryIds));
   const subcategoryIds = Array.from(new Set(values.subcategoryIds));
 
@@ -120,6 +143,8 @@ export function buildApparelProductApiBody(
       : [],
     white_color_surcharge_enabled: false,
     size_variants: serializeSizeStock(sizeRows),
+    is_kit: values.isKit,
+    kit_options: values.isKit ? serializeKitOptions(kitOptions) : null,
     subtitle: null,
     category_id: categoryIds[0] ?? null,
     subcategory_id: subcategoryIds[0] ?? null,
@@ -142,6 +167,8 @@ export function apparelFormFromProduct(product: {
   pair_together_ids?: number[];
   bought_together_ids?: number[];
   size_variants?: unknown;
+  is_kit?: boolean;
+  kit_options?: unknown;
   in_stock?: boolean;
   stock?: number;
   is_new?: boolean;
@@ -156,6 +183,8 @@ export function apparelFormFromProduct(product: {
 
   const sizeRows = parseSizeStock(product.size_variants);
   const sizes = sizeRows.length > 0 ? sizeRows : defaultApparelSizeRows();
+  const isKit = product.is_kit === true;
+  const kitOptions = parseKitOptions(product.kit_options) ?? defaultKitOptions();
 
   const categoryIds = Array.isArray(product.category_ids)
     ? product.category_ids
@@ -186,6 +215,8 @@ export function apparelFormFromProduct(product: {
       ? product.bought_together_ids.filter((n) => Number.isInteger(n) && n > 0)
       : [],
     sizeRows: sizes,
+    isKit,
+    kitOptions,
     inStock: product.in_stock !== false,
     isNew: product.is_new === true,
     isHit: product.is_hit === true,

@@ -40,6 +40,8 @@ export type AdminProductPayload = {
   color_options?: unknown;
   white_color_surcharge_enabled?: boolean;
   size_variants?: unknown;
+  is_kit?: boolean;
+  kit_options?: unknown;
   size_group_ordered_ids?: number[];
   size_linked_ids?: number[];
   season?: string[];
@@ -157,6 +159,8 @@ export function parseAdminProductPayload(body: Record<string, unknown>): AdminPr
     color_options: body.color_options ?? [],
     white_color_surcharge_enabled: body.white_color_surcharge_enabled === true,
     size_variants: body.size_variants ?? [],
+    is_kit: body.is_kit === true,
+    kit_options: body.kit_options ?? null,
     size_group_ordered_ids: parseIdArray(body.size_group_ordered_ids),
     size_linked_ids: parseIdArray(body.size_linked_ids),
     season: parseStringArray(body.season),
@@ -282,6 +286,8 @@ export function adminProductPayloadToSql(
     color_options: payload.color_options ?? [],
     white_color_surcharge_enabled: payload.white_color_surcharge_enabled === true,
     size_variants: payload.size_variants ?? [],
+    is_kit: payload.is_kit === true,
+    kit_options: payload.kit_options ?? null,
     season: payload.season ?? [],
     category_id: payload.category_id ?? null,
     subcategory_id: payload.subcategory_id ?? null,

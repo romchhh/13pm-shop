@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { prisma } from "./prisma";
 import { applyCategoryMediaFallback } from "@/lib/categoryMediaFallback";
 import { dedupeCatalogBySizeGroup } from "@/lib/dedupeCatalogBySizeGroup";
@@ -127,6 +127,8 @@ async function _sqlGetAllProducts() {
     first_media: pickFirstProductMedia(p.media),
     is_new: (p as any).isNew ?? false,
     size_variants: (p as any).sizeVariants ?? [],
+    is_kit: (p as any).isKit === true,
+    kit_options: (p as any).kitOptions ?? null,
     color_options: parseColorOptions((p as any).colorOptions ?? []),
     white_color_surcharge_enabled: (p as any).whiteColorSurchargeEnabled ?? true,
     pair_together_ids: (p as any).pairTogetherIds ?? [],
@@ -262,6 +264,8 @@ export async function sqlGetProduct(id: number) {
         pair_together_ids: (product as any).pairTogetherIds ?? [],
         color_options: parseColorOptions((product as any).colorOptions ?? []),
         size_variants: (product as any).sizeVariants ?? [],
+        is_kit: (product as any).isKit === true,
+        kit_options: (product as any).kitOptions ?? null,
         white_color_surcharge_enabled:
           (product as any).whiteColorSurchargeEnabled ?? true,
         is_new: (product as any).isNew ?? false,
@@ -370,6 +374,8 @@ export async function sqlGetProductBySlug(slug: string) {
     pair_together_ids: product.pairTogetherIds ?? [],
     color_options: parseColorOptions(product.colorOptions ?? []),
     size_variants: product.sizeVariants ?? [],
+    is_kit: product.isKit === true,
+    kit_options: product.kitOptions ?? null,
     white_color_surcharge_enabled: product.whiteColorSurchargeEnabled ?? true,
     is_new: product.isNew ?? false,
   };
@@ -714,6 +720,8 @@ export async function sqlPostProduct(product: {
   color_options?: unknown;
   white_color_surcharge_enabled?: boolean;
   size_variants?: unknown;
+  is_kit?: boolean;
+  kit_options?: unknown;
   is_new?: boolean;
   season?: string[];
   stock?: number;
@@ -773,6 +781,11 @@ export async function sqlPostProduct(product: {
       colorOptions: (product.color_options as Prisma.InputJsonValue) ?? [],
       whiteColorSurchargeEnabled: product.white_color_surcharge_enabled ?? true,
       sizeVariants: (product.size_variants as Prisma.InputJsonValue) ?? [],
+      isKit: product.is_kit === true,
+      kitOptions:
+        product.kit_options === undefined || product.kit_options === null
+          ? Prisma.JsonNull
+          : (product.kit_options as Prisma.InputJsonValue),
       isNew: product.is_new ?? false,
       season: product.season ?? [],
       stock: product.stock ?? 0,
@@ -910,6 +923,8 @@ export async function sqlPutProduct(
     color_options?: unknown;
     white_color_surcharge_enabled?: boolean;
     size_variants?: unknown;
+    is_kit?: boolean;
+    kit_options?: unknown;
     is_new?: boolean;
     season?: string[];
     stock?: number;
@@ -996,6 +1011,13 @@ export async function sqlPutProduct(
           update.size_variants === undefined
             ? undefined
             : (update.size_variants as Prisma.InputJsonValue),
+        isKit: update.is_kit ?? undefined,
+        kitOptions:
+          update.kit_options === undefined
+            ? undefined
+            : update.kit_options === null
+              ? Prisma.JsonNull
+              : (update.kit_options as Prisma.InputJsonValue),
         isNew: update.is_new ?? undefined,
         season: update.season === undefined ? undefined : update.season,
         stock: update.stock ?? undefined,

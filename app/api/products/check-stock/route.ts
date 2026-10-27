@@ -18,7 +18,13 @@ export async function POST(req: NextRequest) {
         async (item: { product_id: number; size?: string; quantity: number }) => {
           const product = await prisma.product.findUnique({
             where: { id: item.product_id },
-            select: { stock: true, inStock: true, sizeVariants: true },
+            select: {
+              stock: true,
+              inStock: true,
+              sizeVariants: true,
+              isKit: true,
+              kitOptions: true,
+            },
           });
 
           const requestedQuantity = item.quantity;
@@ -28,6 +34,8 @@ export async function POST(req: NextRequest) {
                 stock: product.stock,
                 inStock: product.inStock,
                 sizeVariants: product.sizeVariants,
+                isKit: product.isKit,
+                kitOptions: product.kitOptions,
               }
             : null;
 

@@ -13,9 +13,17 @@ import {
 type Props = {
   rows: ProductSizeStock[];
   onChange: (rows: ProductSizeStock[]) => void;
+  /** Для комплекту: ціна частини (верх/низ) за розміром */
+  showPrice?: boolean;
+  hint?: string;
 };
 
-export default function ApparelSizeStockEditor({ rows, onChange }: Props) {
+export default function ApparelSizeStockEditor({
+  rows,
+  onChange,
+  showPrice = false,
+  hint,
+}: Props) {
   const [oneSizeMode, setOneSizeMode] = useState(() =>
     rows.length === 1 && isOneSizeLabel(rows[0]?.label ?? "")
   );
@@ -63,8 +71,8 @@ export default function ApparelSizeStockEditor({ rows, onChange }: Props) {
   return (
     <div className="space-y-3">
       <p className="text-xs text-gray-500">
-        Для кожного розміру вкажіть кількість на складі. На сайті покупець обирає розмір на одній
-        сторінці товару.
+        {hint ??
+          "Для кожного розміру вкажіть кількість на складі. На сайті покупець обирає розмір на одній сторінці товару."}
       </p>
 
       <label className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5">
@@ -127,6 +135,22 @@ export default function ApparelSizeStockEditor({ rows, onChange }: Props) {
                     }
                   />
                 </div>
+                {showPrice ? (
+                  <div className="w-32">
+                    <Label className="text-xs">Ціна, грн</Label>
+                    <Input
+                      type="number"
+                      value={row.price != null ? String(row.price) : ""}
+                      onChange={(e) => {
+                        const raw = e.target.value.trim();
+                        updateRow(index, {
+                          price: raw === "" ? null : Math.max(0, Number(raw) || 0),
+                        });
+                      }}
+                      placeholder="—"
+                    />
+                  </div>
+                ) : null}
                 <button
                   type="button"
                   onClick={() => removeRow(index)}
