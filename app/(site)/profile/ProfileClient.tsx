@@ -8,6 +8,7 @@ import Image from "next/image";
 import { useFavorites } from "@/lib/FavoritesProvider";
 import { getProductImageSrc } from "@/lib/getFirstProductImage";
 import { getLoyaltyTier, getLoyaltyTiersForProgress, LOYALTY_TIERS } from "@/lib/loyalty";
+import BirthDatePicker from "@/components/profile/BirthDatePicker";
 
 interface UserProfile {
   id: string;
@@ -626,14 +627,12 @@ export default function ProfilePage() {
                         </span>
                       ) : null}
                     </label>
-                    <input
-                      type="date"
+                    <BirthDatePicker
                       value={formData.birthDate}
-                      onChange={(e) =>
-                        setFormData({ ...formData, birthDate: e.target.value })
+                      onChange={(iso) =>
+                        setFormData({ ...formData, birthDate: iso })
                       }
                       disabled={!!profile.birthDate}
-                      className={`${inputClass} disabled:bg-black/[0.03] disabled:cursor-not-allowed`}
                     />
                   </div>
 
