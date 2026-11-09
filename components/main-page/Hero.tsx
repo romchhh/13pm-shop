@@ -18,7 +18,7 @@ const heroTextShadow = "0 2px 28px rgba(0,0,0,0.5)";
 const heroSubtitleShadow = "0 1px 14px rgba(0,0,0,0.45)";
 
 const HERO_FEATURES = [
-  { label: "-10% для ЗСУ, ДСНС, Поліції" },
+  { label: "-5% для ЗСУ, ДСНС, Поліції" },
   { label: "1–3 дні доставка" },
 ] as const;
 

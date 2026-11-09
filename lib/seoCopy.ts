@@ -9,7 +9,7 @@ export const seoCopy = {
   },
   about: {
     title: "Про нас — виробник тактичного одягу",
-    description: `${SITE_STORE_NAME}: власне виробництво тактичного одягу в Україні, лінійки ALPHA, BRAVO, DELTA. Доставка по світу, знижка −10% для силових структур.`,
+    description: `${SITE_STORE_NAME}: власне виробництво тактичного одягу в Україні, лінійки ALPHA, BRAVO, DELTA. Доставка по світу, знижка −5% для силових структур.`,
     imageAlt: `${SITE_STORE_NAME} — про бренд та виробництво`,
   },
   cooperation: {

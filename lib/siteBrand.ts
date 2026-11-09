@@ -34,7 +34,7 @@ export const siteRootSeoTitle = "Тактичний одяг в Україні �
  * Meta description для головної та за замовчуванням (~155 символів).
  */
 export const siteMetaDescription =
-  "13pm tactic — тактичний одяг власного виробництва в Україні. Лінійки ALPHA, BRAVO та DELTA: куртки, штани, фліс, поло. Доставка Нова Пошта 1–3 дні, −10% для силових структур.";
+  "13pm tactic — тактичний одяг власного виробництва в Україні. Лінійки ALPHA, BRAVO та DELTA: куртки, штани, фліс, поло. Доставка Нова Пошта 1–3 дні, −5% для силових структур.";
 
 /** Розширений абзац для Open Graph, schema.org та ai.txt. */
 export const siteFooterLead =
@@ -72,7 +72,7 @@ export const LABEL_PRODUCT_COURSE = "Термін виготовлення";
 export const LABEL_PRODUCT_PACKAGE = "Розміри / фасування";
 
 /** Плашка у хедері про переваги бренду. */
-export const LABEL_FREE_DELIVERY_FROM_2000 = "-10% для силових структур · доставка 1–3 дні";
+export const LABEL_FREE_DELIVERY_FROM_2000 = "-5% для силових структур · доставка 1–3 дні";
 
 /** Підпис для Telegram-сповіщень */
 export const TELEGRAM_BRAND_FOOTER =
