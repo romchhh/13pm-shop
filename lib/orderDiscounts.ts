@@ -20,17 +20,24 @@ export function computeOrderTotals({
   subtotal,
   deliveryCost = 0,
   promoDiscountAmount = 0,
+  loyaltyDiscountAmount = 0,
 }: {
   subtotal: number;
   deliveryCost?: number;
   promoDiscountAmount?: number;
+  /** Знижка програми лояльності (грн), окремо від bulk. */
+  loyaltyDiscountAmount?: number;
 }) {
   const normalizedSubtotal = Math.max(0, Number(subtotal) || 0);
   const normalizedDelivery = Math.max(0, Number(deliveryCost) || 0);
   const bulkDiscountAmount = getBulkOrderDiscountAmount(normalizedSubtotal);
+  const normalizedLoyaltyDiscount = Math.min(
+    Math.max(0, Number(loyaltyDiscountAmount) || 0),
+    Math.max(0, normalizedSubtotal - bulkDiscountAmount)
+  );
   const amountBeforePromo = Math.max(
     0,
-    normalizedSubtotal - bulkDiscountAmount + normalizedDelivery
+    normalizedSubtotal - bulkDiscountAmount - normalizedLoyaltyDiscount + normalizedDelivery
   );
   const normalizedPromoDiscount = Math.min(
     Math.max(0, Number(promoDiscountAmount) || 0),
@@ -40,8 +47,10 @@ export function computeOrderTotals({
 
   return {
     bulkDiscountAmount,
+    loyaltyDiscountAmount: normalizedLoyaltyDiscount,
     promoDiscountAmount: normalizedPromoDiscount,
-    totalDiscountAmount: bulkDiscountAmount + normalizedPromoDiscount,
+    totalDiscountAmount:
+      bulkDiscountAmount + normalizedLoyaltyDiscount + normalizedPromoDiscount,
     orderTotal,
   };
 }

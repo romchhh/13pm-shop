@@ -26,31 +26,26 @@ export function summarizeOrderAmounts(params: {
   const promoDiscountAmount = Math.max(0, Number(params.promoDiscountAmount) || 0);
   const deliveryCost = Math.max(0, Number(params.deliveryCost) || 0);
 
-  const { orderTotal } = computeOrderTotals({
+  const {
+    orderTotal,
+    bulkDiscountAmount: bulkFromCompute,
+    loyaltyDiscountAmount: normalizedLoyalty,
+    promoDiscountAmount: normalizedPromo,
+  } = computeOrderTotals({
     subtotal,
     deliveryCost,
     promoDiscountAmount,
+    loyaltyDiscountAmount,
   });
 
-  const bulkFromCompute = computeOrderTotals({
-    subtotal,
-    deliveryCost: 0,
-    promoDiscountAmount: 0,
-  }).bulkDiscountAmount;
-
   const bulkDiscountAmount =
-    loyaltyDiscountAmount > 0 ? loyaltyDiscountAmount : bulkFromCompute;
-
-  const finalTotal =
-    loyaltyDiscountAmount > 0 || promoDiscountAmount > 0 || deliveryCost > 0
-      ? Math.max(0, subtotal - bulkDiscountAmount - promoDiscountAmount + deliveryCost)
-      : orderTotal;
+    normalizedLoyalty > 0 ? normalizedLoyalty : bulkFromCompute;
 
   return {
     subtotal,
     deliveryCost,
     bulkDiscountAmount,
-    promoDiscountAmount,
-    orderTotal: finalTotal,
+    promoDiscountAmount: normalizedPromo,
+    orderTotal,
   };
 }

@@ -2,11 +2,15 @@
 
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useRef } from "react";
+import {
+  captureUtmInSession,
+  getStoredUtmAttribution,
+  LANDING_UTM_STORAGE_KEY,
+} from "@/lib/utmAttribution";
 
 const VISITOR_KEY = "site_visitor_id";
 const SESSION_KEY = "site_traffic_session_id";
 const LANDING_REFERRER_KEY = "site_landing_referrer";
-const LANDING_UTM_KEY = "site_landing_utm";
 const HEARTBEAT_MS = 45_000;
 
 type LandingUtm = {
@@ -34,39 +38,44 @@ function getOrCreateStorageId(storage: Storage, key: string): string {
   return id;
 }
 
-function readUtmFromUrl(): LandingUtm {
-  const params = new URLSearchParams(window.location.search);
-  return {
-    utmSource: params.get("utm_source"),
-    utmMedium: params.get("utm_medium"),
-    utmCampaign: params.get("utm_campaign"),
-  };
-}
-
 function getLandingData(): { referrer: string | null; utm: LandingUtm } {
   const storedReferrer = sessionStorage.getItem(LANDING_REFERRER_KEY);
-  const storedUtmRaw = sessionStorage.getItem(LANDING_UTM_KEY);
+  const attribution = captureUtmInSession(window.location.search);
+  // Для аналітики — camelCase; у sessionStorage також snake_case через captureUtmInSession
+  const utm: LandingUtm = {
+    utmSource: attribution.utm_source ?? null,
+    utmMedium: attribution.utm_medium ?? null,
+    utmCampaign: attribution.utm_campaign ?? null,
+  };
 
-  if (storedReferrer !== null || storedUtmRaw) {
-    let utm: LandingUtm = {
-      utmSource: null,
-      utmMedium: null,
-      utmCampaign: null,
+  if (storedReferrer !== null) {
+    const stored = getStoredUtmAttribution();
+    return {
+      referrer: storedReferrer || null,
+      utm: {
+        utmSource: stored.utm_source ?? utm.utmSource,
+        utmMedium: stored.utm_medium ?? utm.utmMedium,
+        utmCampaign: stored.utm_campaign ?? utm.utmCampaign,
+      },
     };
-    if (storedUtmRaw) {
-      try {
-        utm = JSON.parse(storedUtmRaw) as LandingUtm;
-      } catch {
-        // ignore invalid JSON
-      }
-    }
-    return { referrer: storedReferrer, utm };
   }
 
   const referrer = document.referrer || null;
-  const utm = readUtmFromUrl();
   sessionStorage.setItem(LANDING_REFERRER_KEY, referrer ?? "");
-  sessionStorage.setItem(LANDING_UTM_KEY, JSON.stringify(utm));
+  // Дублюємо camelCase для сумісності зі старим форматом трекера
+  try {
+    sessionStorage.setItem(
+      LANDING_UTM_STORAGE_KEY,
+      JSON.stringify({
+        ...attribution,
+        utmSource: utm.utmSource,
+        utmMedium: utm.utmMedium,
+        utmCampaign: utm.utmCampaign,
+      })
+    );
+  } catch {
+    /* ignore */
+  }
   return { referrer, utm };
 }
 

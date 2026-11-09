@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import PageBreadCrumb from "@/components/admin/PageBreadCrumb";
 import { formatDateKyiv } from "@/lib/formatDateKyiv";
@@ -13,15 +13,21 @@ interface User {
   address: string | null;
   bonusPoints: number;
   createdAt: string;
+  isRegistered?: boolean;
+  authProviders?: string[];
+  hasPassword?: boolean;
   _count: {
     orders: number;
   };
 }
 
+type FilterTab = "all" | "registered" | "guests";
+
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [filter, setFilter] = useState<FilterTab>("all");
 
   useEffect(() => {
     fetchUsers();
@@ -31,7 +37,7 @@ export default function UsersPage() {
     try {
       const res = await fetch("/api/admin/users");
       const data = await res.json();
-      setUsers(data);
+      setUsers(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error fetching users:", error);
     } finally {
@@ -39,13 +45,23 @@ export default function UsersPage() {
     }
   };
 
-  const filteredUsers = users.filter(
-    (user) =>
-      user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.phone?.includes(searchTerm) ||
-      user.address?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const registeredCount = users.filter((u) => u.isRegistered).length;
+  const guestCount = users.length - registeredCount;
+
+  const filteredUsers = useMemo(() => {
+    const q = searchTerm.toLowerCase().trim();
+    return users.filter((user) => {
+      if (filter === "registered" && !user.isRegistered) return false;
+      if (filter === "guests" && user.isRegistered) return false;
+      if (!q) return true;
+      return (
+        user.name?.toLowerCase().includes(q) ||
+        user.email?.toLowerCase().includes(q) ||
+        user.phone?.includes(searchTerm) ||
+        user.address?.toLowerCase().includes(q)
+      );
+    });
+  }, [users, searchTerm, filter]);
 
   return (
     <div className="w-full h-full p-4 md:p-6">
@@ -54,7 +70,7 @@ export default function UsersPage() {
       <div className="mt-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <h1 className="text-2xl font-bold">Користувачі</h1>
-          
+
           <div className="w-full sm:w-auto">
             <input
               type="text"
@@ -64,6 +80,29 @@ export default function UsersPage() {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
+        </div>
+
+        <div className="mb-4 flex flex-wrap gap-2">
+          {(
+            [
+              { id: "all", label: `Усі (${users.length})` },
+              { id: "registered", label: `Акаунти (${registeredCount})` },
+              { id: "guests", label: `Клієнти з замовлень (${guestCount})` },
+            ] as const
+          ).map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setFilter(tab.id)}
+              className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                filter === tab.id
+                  ? "bg-gray-900 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
 
         {loading ? (
@@ -86,6 +125,9 @@ export default function UsersPage() {
                       Телефон
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Тип
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Замовлень
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -99,10 +141,10 @@ export default function UsersPage() {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredUsers.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                      <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
                         {searchTerm
                           ? "Користувачів не знайдено"
-                          : "Немає зареєстрованих користувачів"}
+                          : "Немає користувачів"}
                       </td>
                     </tr>
                   ) : (
@@ -114,12 +156,28 @@ export default function UsersPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{user.email}</div>
+                          <div className="text-sm text-gray-900">{user.email || "—"}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">
                             {user.phone || "—"}
                           </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {user.isRegistered ? (
+                            <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+                              Акаунт
+                              {user.authProviders?.includes("google")
+                                ? " · Google"
+                                : user.hasPassword
+                                  ? " · email"
+                                  : ""}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
+                              Клієнт
+                            </span>
+                          )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">
@@ -148,12 +206,11 @@ export default function UsersPage() {
           </div>
         )}
 
-        {/* Stats */}
         <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-3">
           <div className="bg-white overflow-hidden shadow rounded-lg">
             <div className="px-4 py-5 sm:p-6">
               <dt className="text-sm font-medium text-gray-500 truncate">
-                Всього користувачів
+                Всього записів
               </dt>
               <dd className="mt-1 text-3xl font-semibold text-gray-900">
                 {users.length}
@@ -163,10 +220,10 @@ export default function UsersPage() {
           <div className="bg-white overflow-hidden shadow rounded-lg">
             <div className="px-4 py-5 sm:p-6">
               <dt className="text-sm font-medium text-gray-500 truncate">
-                Користувачів з замовленнями
+                Зареєстровані акаунти
               </dt>
-              <dd className="mt-1 text-3xl font-semibold text-gray-900">
-                {users.filter((u) => u._count.orders > 0).length}
+              <dd className="mt-1 text-3xl font-semibold text-emerald-700">
+                {registeredCount}
               </dd>
             </div>
           </div>

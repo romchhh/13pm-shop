@@ -19,30 +19,29 @@ export const authConfig: NextAuthConfig = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        const email = credentials?.email as string | undefined;
+        const emailRaw = credentials?.email as string | undefined;
         const password = credentials?.password as string | undefined;
+        const email = emailRaw?.trim().toLowerCase();
 
         if (!email || !password) {
           throw new Error("Будь ласка, введіть email та пароль");
         }
 
         const user = await prisma.user.findUnique({
-          where: {
-            email,
-          },
+          where: { email },
         });
 
         if (!user || !user.password) {
           throw new Error("Невірний email або пароль");
         }
 
-        const isPasswordValid = await bcrypt.compare(
-          password,
-          user.password
-        );
-
+        const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
           throw new Error("Невірний email або пароль");
+        }
+
+        if (!user.emailVerified) {
+          throw new Error("EMAIL_NOT_VERIFIED");
         }
 
         return {
@@ -57,6 +56,7 @@ export const authConfig: NextAuthConfig = {
   session: {
     strategy: "jwt",
   },
+  trustHost: true,
   pages: {
     signIn: "/",
   },

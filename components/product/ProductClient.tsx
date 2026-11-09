@@ -2,9 +2,11 @@
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { useBasket } from "@/lib/BasketProvider";
 import Image from "next/image";
 import Link from "next/link";
+import LoginModal from "@/components/auth/LoginModal";
 import Alert from "@/components/shared/Alert";
 import CartAlert from "@/components/shared/CartAlert";
 import { getFirstProductImage } from "@/lib/getFirstProductImage";
@@ -125,6 +127,8 @@ export default function ProductClient({ product }: ProductClientProps) {
   const [alertType, setAlertType] = useState<"success" | "error" | "warning" | "info">("info");
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [oneClickOpen, setOneClickOpen] = useState(false);
+  const [loginOpen, setLoginOpen] = useState(false);
+  const { status: authStatus } = useSession();
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const isAddingToCartRef = useRef(false);
@@ -812,6 +816,23 @@ export default function ProductClient({ product }: ProductClientProps) {
               Купити в 1 клік
             </button>
 
+            {authStatus === "unauthenticated" ? (
+              <button
+                type="button"
+                onClick={() => setLoginOpen(true)}
+                className="mt-3 w-full rounded-2xl border border-[var(--site-accent,#4A5840)]/25 bg-[var(--site-accent,#4A5840)]/[0.06] px-4 py-3 text-left font-['Montserrat'] text-sm leading-snug text-[var(--site-accent,#4A5840)] transition-colors hover:bg-[var(--site-accent,#4A5840)]/10"
+              >
+                <span className="font-semibold">Зареєструйтесь</span>
+                <span className="block mt-0.5 text-black/55">
+                  Дані підтягнуться автоматично · −3% на першу покупку
+                </span>
+              </button>
+            ) : authStatus === "authenticated" ? (
+              <p className="mt-3 font-['Montserrat'] text-xs text-black/45">
+                Ви в кабінеті — при оформленні контакти заповняться самі
+              </p>
+            ) : null}
+
             <CartAlert
               isVisible={showCartAlert}
               onGoToCart={() => {
@@ -840,6 +861,12 @@ export default function ProductClient({ product }: ProductClientProps) {
               quantity={quantity}
               size={currentSizeLabel}
               unitPriceOverride={kitUnitPrice}
+            />
+
+            <LoginModal
+              isOpen={loginOpen}
+              onClose={() => setLoginOpen(false)}
+              initialMode="register"
             />
 
           </div>

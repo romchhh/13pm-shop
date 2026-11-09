@@ -20,6 +20,7 @@ export async function GET(
         birthDate: true,
         bonusPoints: true,
         image: true,
+        password: true,
         createdAt: true,
         updatedAt: true,
         accounts: {
@@ -92,8 +93,14 @@ export async function GET(
       firstOrderAt = firstOrder?.createdAt.toISOString() ?? null;
     }
 
+    const { password, ...safeUser } = user;
+    const isRegistered =
+      Boolean(password) || (user.accounts?.length ?? 0) > 0;
+
     return NextResponse.json({
-      ...user,
+      ...safeUser,
+      isRegistered,
+      hasPassword: Boolean(password),
       totalSpent: Math.round(totalSpent * 100) / 100,
       firstOrderAt,
     });

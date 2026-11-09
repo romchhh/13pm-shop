@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { sendOrderNotification } from "@/lib/telegram";
 import { sendOrderConfirmationEmail } from "@/lib/orderConfirmationEmail";
 import { summarizeOrderAmounts } from "@/lib/orderAmounts";
+import { creditBonusesForPaidOrder } from "@/lib/loyalty";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -71,6 +72,29 @@ export async function POST(req: NextRequest) {
         }
       }
     });
+
+    if (order.userId) {
+      try {
+        const user = await prisma.user.findUnique({
+          where: { id: order.userId },
+          select: { birthDate: true },
+        });
+        await creditBonusesForPaidOrder(prisma, {
+          id: order.id,
+          userId: order.userId,
+          createdAt: order.createdAt,
+          bonusPointsSpent: order.bonusPointsSpent,
+          loyaltyDiscountAmount: order.loyaltyDiscountAmount,
+          user: user ? { birthDate: user.birthDate } : null,
+          items: order.items.map((item) => ({
+            price: item.price,
+            quantity: item.quantity,
+          })),
+        });
+      } catch (e) {
+        console.warn("[Mono webhook] Bonus credit failed:", e);
+      }
+    }
 
     // Створюємо TTN для Нової пошти
     let ttnNumber: string | null = null;

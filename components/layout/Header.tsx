@@ -5,12 +5,14 @@ import Link from "next/link";
 import BrandLogo from "./BrandLogo";
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { useAppContext } from "@/lib/GeneralProvider";
 import { useBasket } from "@/lib/BasketProvider";
 import { useFavorites } from "@/lib/FavoritesProvider";
 import { useCategories } from "@/lib/CategoriesProvider";
 import SidebarSearch from "./SidebarSearch";
 import SidebarMenu from "./SidebarMenu";
+import LoginModal from "@/components/auth/LoginModal";
 import { siteContact } from "@/lib/siteContact";
 import { LABEL_FREE_DELIVERY_FROM_2000 } from "@/lib/siteBrand";
 
@@ -162,10 +164,12 @@ export default function Header() {
   } = useAppContext();
 
   const pathname = usePathname();
+  const { data: session, status: authStatus } = useSession();
   const { items } = useBasket();
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const { count: favoritesCount } = useFavorites();
   const { categories } = useCategories();
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   const [catalogOpen, setCatalogOpen] = useState(false);
   const [hoveredCategoryId, setHoveredCategoryId] = useState<number | null>(null);
@@ -405,6 +409,51 @@ export default function Header() {
               </button>
 
               <div className="flex shrink-0 items-center gap-2">
+                {authStatus === "authenticated" && session?.user ? (
+                  <Link
+                    href="/profile"
+                    className={`relative flex h-11 w-11 items-center justify-center rounded-full transition-colors ${iconHoverClass}`}
+                    aria-label="Особистий кабінет"
+                    title={session.user.name || session.user.email || "Кабінет"}
+                  >
+                    <svg
+                      className={`h-5 w-5 ${headerTransparent ? "text-white" : "text-[#1C1C1C]"}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.8}
+                        d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
+                      />
+                    </svg>
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setIsLoginModalOpen(true)}
+                    className={`relative flex h-11 w-11 items-center justify-center rounded-full transition-colors ${iconHoverClass}`}
+                    aria-label="Увійти в кабінет"
+                  >
+                    <svg
+                      className={`h-5 w-5 ${headerTransparent ? "text-white" : "text-[#1C1C1C]"}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.8}
+                        d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
+                      />
+                    </svg>
+                  </button>
+                )}
                 <Link
                   href="/cart"
                   className={`relative flex h-11 w-11 items-center justify-center rounded-full transition-colors ${iconHoverClass}`}
@@ -472,6 +521,50 @@ export default function Header() {
                 />
                 <span className="text-xs font-['Montserrat'] font-bold hidden xs:inline">Пошук</span>
               </button>
+              {authStatus === "authenticated" && session?.user ? (
+                <Link
+                  href="/profile"
+                  className="relative flex h-10 w-10 items-center justify-center"
+                  aria-label="Особистий кабінет"
+                >
+                  <svg
+                    className={`h-[18px] w-[18px] ${headerTransparent ? "text-white" : "text-[#1C1C1C]"}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.8}
+                      d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
+                    />
+                  </svg>
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setIsLoginModalOpen(true)}
+                  className="relative flex h-10 w-10 items-center justify-center"
+                  aria-label="Увійти в кабінет"
+                >
+                  <svg
+                    className={`h-[18px] w-[18px] ${headerTransparent ? "text-white" : "text-[#1C1C1C]"}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.8}
+                      d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
+                    />
+                  </svg>
+                </button>
+              )}
               <Link
                 href="/favorites"
                 className="relative flex h-10 w-10 items-center justify-center"
@@ -503,6 +596,7 @@ export default function Header() {
 
       <SidebarMenu isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
       <SidebarSearch isOpen={isSearchOpen} setIsOpen={setIsSearchOpen} />
+      <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
     </>
   );
 }

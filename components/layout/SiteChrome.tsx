@@ -6,6 +6,7 @@ import Footer from "@/components/layout/Footer";
 import NewsletterSubscribe from "@/components/layout/NewsletterSubscribe";
 import MainContent from "@/components/shared/MainContent";
 import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
+import AuthProvider from "@/lib/AuthProvider";
 import { AppProvider } from "@/lib/GeneralProvider";
 import { BasketProvider } from "@/lib/BasketProvider";
 import { FavoritesProvider } from "@/lib/FavoritesProvider";
@@ -22,27 +23,29 @@ export default function SiteChrome({ children }: SiteChromeProps) {
         Перейти до основного контенту
       </a>
       <ErrorBoundary>
-        <AppProvider>
-          <BasketProvider>
-            <FavoritesProvider>
-              <CategoriesProvider>
-                <Header />
-                <Suspense
-                  fallback={
-                    <main
-                      id="main-content"
-                      className="mt-[var(--site-header-offset)] min-h-screen bg-[var(--background-warm-yellow)]"
-                    />
-                  }
-                >
-                  <MainContent id="main-content">{children}</MainContent>
-                </Suspense>
-                <NewsletterSubscribe />
-                <Footer />
-              </CategoriesProvider>
-            </FavoritesProvider>
-          </BasketProvider>
-        </AppProvider>
+        <AuthProvider>
+          <AppProvider>
+            <BasketProvider>
+              <FavoritesProvider>
+                <CategoriesProvider>
+                  <Header />
+                  <Suspense
+                    fallback={
+                      <main
+                        id="main-content"
+                        className="mt-[var(--site-header-offset)] min-h-screen bg-[var(--background-warm-yellow)]"
+                      />
+                    }
+                  >
+                    <MainContent id="main-content">{children}</MainContent>
+                  </Suspense>
+                  <NewsletterSubscribe />
+                  <Footer />
+                </CategoriesProvider>
+              </FavoritesProvider>
+            </BasketProvider>
+          </AppProvider>
+        </AuthProvider>
       </ErrorBoundary>
     </>
   );

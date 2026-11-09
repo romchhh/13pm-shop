@@ -41,6 +41,8 @@ interface UserDetail {
   image: string | null;
   createdAt: string;
   updatedAt: string;
+  isRegistered?: boolean;
+  hasPassword?: boolean;
   accounts: Array<{ provider: string; providerAccountId: string }>;
   _count: { orders: number; wishlist: number };
   orders: Order[];
@@ -132,9 +134,25 @@ export default function UserDetailPage() {
       </div>
 
       <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl font-bold text-gray-900">
-          {user.name || "Без імені"}
-        </h1>
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="text-2xl font-bold text-gray-900">
+            {user.name || "Без імені"}
+          </h1>
+          {user.isRegistered ? (
+            <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+              Зареєстрований акаунт
+              {user.accounts.some((a) => a.provider === "google")
+                ? " · Google"
+                : user.hasPassword
+                  ? " · email/пароль"
+                  : ""}
+            </span>
+          ) : (
+            <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
+              Клієнт без акаунту (з замовлення)
+            </span>
+          )}
+        </div>
         <Link
           href="/admin/users"
           className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"

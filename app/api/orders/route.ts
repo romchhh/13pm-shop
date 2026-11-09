@@ -8,6 +8,9 @@ import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import { ENABLE_ONLINE_CARD_PAYMENT } from "@/lib/paymentConfig";
 import { computeOrderTotals, getBulkOrderDiscountAmount } from "@/lib/orderDiscounts";
+import { getBonusPercentForPurchase } from "@/lib/loyalty";
+import { enqueueLpCrmOrder } from "@/lib/lpCrm";
+import { normalizeUtmFromBody } from "@/lib/utmAttribution";
 
 const log = createLogger("POST /api/orders");
 
@@ -219,6 +222,7 @@ export async function POST(req: NextRequest) {
       typeof novaPoshtaCityRef === "string" ? novaPoshtaCityRef.trim() : "";
     const npWarehouseRef =
       typeof novaPoshtaWarehouseRef === "string" ? novaPoshtaWarehouseRef.trim() : "";
+    const utmAttribution = normalizeUtmFromBody(body.utm ?? body);
 
     if (one_click) {
       delivery_method = "one_click";
@@ -323,6 +327,30 @@ export async function POST(req: NextRequest) {
       }
     );
 
+    const pushOrderToLpCrm = (siteOrderRef: string) => {
+      // Позиції сайту — у comment CRM; у products лише службовий дефолтний id.
+      enqueueLpCrmOrder({
+        siteOrderRef,
+        customerName: customer_name,
+        phone: phone_number,
+        email: email || null,
+        city,
+        postOffice: post_office,
+        deliveryMethod: delivery_method,
+        paymentType: payment_type,
+        comment: comment || null,
+        utm: utmAttribution,
+        products: normalizedItems.map((item) => ({
+          productId: item.product_id,
+          price: Number(item.price),
+          count: item.quantity,
+          name: item.product_name,
+          size: item.size,
+          color: item.color,
+        })),
+      });
+    };
+
     // Check stock availability before creating order (inStock + product.stock)
     const { prisma } = await import("@/lib/prisma");
     const { canFulfillQuantity } = await import("@/lib/productAvailability");
@@ -367,9 +395,71 @@ export async function POST(req: NextRequest) {
 
     let promoCodeId: number | null = null;
     let promoDiscountAmount = 0;
+    // Прив'язка до зареєстрованого користувача (якщо передано валідний user_id)
+    let customerUserId: string | null = null;
+    let loyaltyDiscountAmount = 0;
+    if (typeof user_id === "string" && user_id.trim()) {
+      try {
+        const existing = await prisma.user.findUnique({
+          where: { id: user_id.trim() },
+          select: { id: true },
+        });
+        if (existing) {
+          customerUserId = existing.id;
+          const address = [city, post_office].filter(Boolean).join(", ");
+          await prisma.user.update({
+            where: { id: existing.id },
+            data: {
+              name: customer_name?.trim() || undefined,
+              phone: phone_number?.trim() || undefined,
+              email: email?.trim() || undefined,
+              address: address || undefined,
+            },
+          });
+
+          const paidOrders = await prisma.order.findMany({
+            where: { userId: existing.id, paymentStatus: "paid" },
+            select: {
+              items: { select: { price: true, quantity: true } },
+            },
+          });
+          const totalSpent = paidOrders.reduce((sum, order) => {
+            return (
+              sum +
+              order.items.reduce(
+                (s, it) => s + Number(it.price) * it.quantity,
+                0
+              )
+            );
+          }, 0);
+          const bonusPercent = getBonusPercentForPurchase(
+            totalSpent,
+            paidOrders.length
+          );
+          loyaltyDiscountAmount =
+            Math.round(((subtotal * bonusPercent) / 100) * 100) / 100;
+        }
+      } catch (err) {
+        log.warn("Failed to resolve logged-in user_id:", err);
+      }
+    }
+
+    if (!customerUserId) {
+      try {
+        customerUserId = await getOrCreateOrderCustomer({
+          customer_name,
+          email: email || null,
+          phone: phone_number,
+          city,
+          post_office,
+        });
+      } catch (err) {
+        log.warn("Failed to get/create order customer, order will have no user_id:", err);
+      }
+    }
+
     const promoCode = typeof promoCodeFromBody === "string" ? promoCodeFromBody.trim().toUpperCase() : "";
     if (promoCode) {
-      const { prisma } = await import("@/lib/prisma");
       const promo = await prisma.promoCode.findUnique({ where: { code: promoCode } });
       if (promo) {
         const now = new Date();
@@ -380,7 +470,7 @@ export async function POST(req: NextRequest) {
           const bulkDiscountBeforePromo = getBulkOrderDiscountAmount(subtotal);
           const amountBeforePromo = Math.max(
             0,
-            subtotal - bulkDiscountBeforePromo + deliveryCost
+            subtotal - bulkDiscountBeforePromo - loyaltyDiscountAmount + deliveryCost
           );
           if (promo.type === "percent") {
             promoDiscountAmount = Math.round((amountBeforePromo * value) / 100);
@@ -396,6 +486,7 @@ export async function POST(req: NextRequest) {
 
     const {
       bulkDiscountAmount,
+      loyaltyDiscountAmount: normalizedLoyaltyDiscount,
       promoDiscountAmount: normalizedPromoDiscount,
       totalDiscountAmount,
       orderTotal,
@@ -403,35 +494,31 @@ export async function POST(req: NextRequest) {
       subtotal,
       deliveryCost,
       promoDiscountAmount,
+      loyaltyDiscountAmount,
     });
     promoDiscountAmount = normalizedPromoDiscount;
+    loyaltyDiscountAmount = normalizedLoyaltyDiscount;
+    const storedLoyaltyOrBulk =
+      loyaltyDiscountAmount > 0
+        ? loyaltyDiscountAmount
+        : bulkDiscountAmount > 0
+          ? bulkDiscountAmount
+          : 0;
+    // Для сповіщень/листів: показуємо фактичну знижку (лояльність або bulk)
+    const discountForNotifications = storedLoyaltyOrBulk;
     const amountToPay = orderTotal;
     const fullAmount = subtotal + deliveryCost;
 
     log.debug(" Amount calculation:", {
       fullAmount,
       bulkDiscountAmount,
+      loyaltyDiscountAmount,
       promoDiscountAmount,
       totalDiscountAmount,
       orderTotal,
       amountToPay,
       payment_type,
     });
-
-    // Зберігаємо клієнта в таблиці users для адмінки та майбутніх розсилок
-    let customerUserId: string | null = user_id || null;
-    try {
-      const createdOrExistingId = await getOrCreateOrderCustomer({
-        customer_name,
-        email: email || null,
-        phone: phone_number,
-        city,
-        post_office,
-      });
-      customerUserId = createdOrExistingId;
-    } catch (err) {
-      log.warn("Failed to get/create order customer, order will have no user_id:", err);
-    }
 
     const orderId = crypto.randomUUID();
     const isTestPayment = payment_type === "test_payment";
@@ -449,7 +536,7 @@ export async function POST(req: NextRequest) {
       comment,
       payment_type,
       bonus_points_spent: 0,
-      loyalty_discount_amount: bulkDiscountAmount > 0 ? bulkDiscountAmount : undefined,
+      loyalty_discount_amount: storedLoyaltyOrBulk > 0 ? storedLoyaltyOrBulk : undefined,
       promo_code_id: promoCodeId ?? undefined,
       promo_discount_amount: promoDiscountAmount > 0 ? promoDiscountAmount : undefined,
       items: normalizedItems.map(
@@ -525,7 +612,7 @@ export async function POST(req: NextRequest) {
               nova_poshta_ttn: ttnNumber,
               items: normalizedItems,
               deliveryCost,
-              bulkDiscountAmount,
+              bulkDiscountAmount: discountForNotifications,
               promoCode: promoCodeId ? promoCode : null,
               promoDiscountAmount,
               orderTotal,
@@ -551,11 +638,13 @@ export async function POST(req: NextRequest) {
         nova_poshta_ttn: ttnNumber,
         items: normalizedItems,
         deliveryCost,
-        bulkDiscountAmount,
+        bulkDiscountAmount: discountForNotifications,
         promoCode: promoCodeId ? promoCode : null,
         promoDiscountAmount,
         orderTotal,
       });
+
+      pushOrderToLpCrm(orderId);
 
       return NextResponse.json({
         success: true,
@@ -606,7 +695,7 @@ export async function POST(req: NextRequest) {
         nova_poshta_ttn: ttnNumber,
         items: normalizedItems,
         deliveryCost,
-        bulkDiscountAmount,
+        bulkDiscountAmount: discountForNotifications,
         promoCode: promoCodeId ? promoCode : null,
         promoDiscountAmount,
         orderTotal,
@@ -646,7 +735,7 @@ export async function POST(req: NextRequest) {
               nova_poshta_ttn: ttnNumber,
               items: normalizedItems,
               deliveryCost,
-              bulkDiscountAmount,
+              bulkDiscountAmount: discountForNotifications,
               promoCode: promoCodeId ? promoCode : null,
               promoDiscountAmount,
               orderTotal,
@@ -657,6 +746,8 @@ export async function POST(req: NextRequest) {
           log.warn("Order confirmation email (prepay) failed:", e);
         }
       }
+
+      pushOrderToLpCrm(orderId);
 
       return NextResponse.json({
         success: true,
@@ -776,6 +867,8 @@ export async function POST(req: NextRequest) {
       payment_status: "pending",
     });
     await persistNovaPoshtaRefs(monoDbOrderId, npCityRef, npWarehouseRef);
+
+    pushOrderToLpCrm(orderId);
 
     return NextResponse.json({
       success: true,

@@ -1,17 +1,16 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { sqlGetCatalogProducts } from "@/lib/sql";
 import { apiLogger } from "@/lib/logger";
 
-export const revalidate = 1200;
+export const dynamic = "force-dynamic";
 
 /**
  * GET /api/products/catalog — список для вітрини (без дублів груп розмірів).
  */
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const limit = searchParams.get("limit");
-    const offset = searchParams.get("offset");
+    const limit = request.nextUrl.searchParams.get("limit");
+    const offset = request.nextUrl.searchParams.get("offset");
 
     let products = await sqlGetCatalogProducts();
 

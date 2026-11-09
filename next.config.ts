@@ -9,6 +9,18 @@ const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
 });
 
+/** Один PUBLIC_URL у .env → підставляємо і для клієнта, і для Auth.js */
+const sitePublicUrl = (
+  process.env.PUBLIC_URL ||
+  process.env.NEXT_PUBLIC_PUBLIC_URL ||
+  process.env.NEXTAUTH_URL ||
+  "http://localhost:3000"
+).replace(/\/$/, "");
+process.env.PUBLIC_URL = sitePublicUrl;
+process.env.NEXT_PUBLIC_PUBLIC_URL = sitePublicUrl;
+process.env.NEXTAUTH_URL = sitePublicUrl;
+process.env.AUTH_URL = sitePublicUrl;
+
 /** ngrok / тунелі в dev — HMR і dev-ресурси (див. allowedDevOrigins у Next.js) */
 const allowedDevOrigins = [
   "gramophonic-melany-mettlesome.ngrok-free.dev",
@@ -19,6 +31,9 @@ const allowedDevOrigins = [
 
 const nextConfig: NextConfig = {
   allowedDevOrigins,
+  env: {
+    NEXT_PUBLIC_PUBLIC_URL: sitePublicUrl,
+  },
   images: {
     remotePatterns: [
       {

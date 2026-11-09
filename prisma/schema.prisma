@@ -165,6 +165,8 @@ model Product {
   fabricComposition    String?        @map("fabric_composition") @db.Text
   hasLining            Boolean        @default(false) @map("has_lining")
   liningDescription    String?        @map("lining_description") @db.Text
+  /// ID товару в каталозі LP-CRM (для addNewOrder)
+  crmProductId         Int?           @map("crm_product_id")
   createdAt            DateTime       @default(now()) @map("created_at")
 
   category             Category?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)

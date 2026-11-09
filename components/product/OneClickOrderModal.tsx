@@ -2,8 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { getDiscountedPrice } from "@/lib/pricing";
 import { useBodyScrollLock } from "@/lib/useBodyScrollLock";
+import LoginModal from "@/components/auth/LoginModal";
+import { getStoredUtmAttribution } from "@/lib/utmAttribution";
 
 const DEFAULT_SIZE = "—";
 
@@ -46,11 +49,14 @@ export default function OneClickOrderModal({
   unitPriceOverride,
 }: Props) {
   const router = useRouter();
+  const { data: session, status: authStatus } = useSession();
   const [customerName, setCustomerName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [profileUserId, setProfileUserId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loginOpen, setLoginOpen] = useState(false);
 
   useBodyScrollLock(open);
 
@@ -69,10 +75,30 @@ export default function OneClickOrderModal({
       setCustomerName("");
       setPhone("");
       setEmail("");
+      setProfileUserId(null);
       setError(null);
       setSubmitting(false);
+      return;
     }
-  }, [open]);
+
+    if (authStatus !== "authenticated" || !session?.user) return;
+
+    let cancelled = false;
+    fetch("/api/users/profile")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!data || cancelled) return;
+        setProfileUserId(data.id || null);
+        if (data.name) setCustomerName(data.name);
+        if (data.phone) setPhone(data.phone);
+        if (data.email) setEmail(data.email);
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, authStatus, session?.user]);
 
   if (!open) return null;
 
@@ -112,6 +138,8 @@ export default function OneClickOrderModal({
           email: email.trim() || null,
           payment_type: "prepay",
           delivery_cost: 0,
+          user_id: profileUserId || undefined,
+          utm: getStoredUtmAttribution(),
           items: [
             {
               product_id: product.id,
@@ -203,10 +231,24 @@ export default function OneClickOrderModal({
         </div>
 
         <div className="px-5 py-5 sm:px-6 sm:py-6">
-          <p className="mb-5 rounded-xl border border-black/[0.06] bg-[#F2F2F0] px-4 py-3 text-sm leading-relaxed text-black/70">
+          <p className="mb-4 rounded-xl border border-black/[0.06] bg-[#F2F2F0] px-4 py-3 text-sm leading-relaxed text-black/70">
             Залиште контакти — менеджер уточнить доставку та відділення. Оплата післяоплатою
             при отриманні.
           </p>
+
+          {authStatus === "authenticated" && profileUserId ? (
+            <p className="mb-4 rounded-xl bg-[var(--site-accent,#4A5840)]/10 px-4 py-2.5 text-sm text-[var(--site-accent,#4A5840)]">
+              Дані підтягнуто з кабінету
+            </p>
+          ) : authStatus === "unauthenticated" ? (
+            <button
+              type="button"
+              onClick={() => setLoginOpen(true)}
+              className="mb-4 text-left text-sm font-medium text-[var(--site-accent,#4A5840)] underline underline-offset-2"
+            >
+              Увійти — щоб заповнити дані автоматично · −3% на першу покупку
+            </button>
+          ) : null}
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
@@ -280,6 +322,15 @@ export default function OneClickOrderModal({
           </form>
         </div>
       </div>
+
+      <LoginModal
+        isOpen={loginOpen}
+        onClose={() => setLoginOpen(false)}
+        redirectAfterLogin={
+          typeof window !== "undefined" ? window.location.pathname : "/catalog"
+        }
+        initialMode="register"
+      />
     </div>
   );
 }

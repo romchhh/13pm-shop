@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState, useRef, useMemo } from "react";
+import { useSession } from "next-auth/react";
 import { useBasket } from "@/lib/BasketProvider";
 import Link from "next/link";
 import CartLineItems from "@/components/cart/CartLineItems";
+import LoginModal from "@/components/auth/LoginModal";
 import { getBasketUnitPrice, getItemSubtotal } from "@/lib/pricing";
 import { clearCartPromo, loadCartPromo, saveCartPromo } from "@/lib/cartPromoStorage";
 import {
@@ -18,6 +20,7 @@ import {
   BULK_ORDER_DISCOUNT_LABEL,
   computeOrderTotals,
 } from "@/lib/orderDiscounts";
+import { getStoredUtmAttribution } from "@/lib/utmAttribution";
 
 /** Calculate order subtotal from basket items */
 const CHECKOUT_CTA_PRIMARY =
@@ -60,7 +63,13 @@ function getSubtotal(
 export default function FinalCard() {
   // GENERAL
   const { items, clearBasket } = useBasket();
+  const { data: session, status: authStatus } = useSession();
   const [mounted, setMounted] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isAccountPromoModalOpen, setIsAccountPromoModalOpen] = useState(false);
+  const [profileUserId, setProfileUserId] = useState<string | null>(null);
+  const [loyaltyPercent, setLoyaltyPercent] = useState(0);
+  const profileFilledRef = useRef(false);
 
   // Prevent hydration mismatch by only rendering after mount
   useEffect(() => {
@@ -96,6 +105,75 @@ export default function FinalCard() {
       setWarehouseRef("");
     }
   }, [deliveryMethod]);
+
+  // Гостю з товарами в кошику — пропозиція увійти (один раз за візит на /final)
+  useEffect(() => {
+    if (!mounted || authStatus !== "unauthenticated" || items.length === 0) return;
+    try {
+      if (sessionStorage.getItem("checkout_account_promo_shown") === "1") return;
+      sessionStorage.setItem("checkout_account_promo_shown", "1");
+      setIsAccountPromoModalOpen(true);
+    } catch {
+      setIsAccountPromoModalOpen(true);
+    }
+  }, [mounted, authStatus, items.length]);
+
+  // Автозаповнення з профілю + % лояльності
+  useEffect(() => {
+    if (authStatus !== "authenticated" || !session?.user) {
+      setProfileUserId(null);
+      setLoyaltyPercent(0);
+      profileFilledRef.current = false;
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const [profileRes, loyaltyRes] = await Promise.all([
+          fetch("/api/users/profile"),
+          fetch("/api/users/loyalty"),
+        ]);
+        if (cancelled) return;
+
+        if (loyaltyRes.ok) {
+          const loyalty = await loyaltyRes.json();
+          setLoyaltyPercent(Number(loyalty.bonusPercent) || 0);
+        }
+
+        if (!profileRes.ok) return;
+        const data = await profileRes.json();
+        if (!data || cancelled) return;
+
+        setProfileUserId(data.id || null);
+        if (profileFilledRef.current) return;
+        profileFilledRef.current = true;
+
+        if (data.name) {
+          const parts = String(data.name).trim().split(/\s+/);
+          setFirstName(parts[0] || "");
+          setLastName(parts.slice(1).join(" ") || "");
+        }
+        if (data.email) setEmail(data.email);
+        if (data.phone) setPhoneNumber(data.phone);
+        if (data.address && deliveryMethod !== "showroom_pickup") {
+          const commaIdx = String(data.address).indexOf(", ");
+          if (commaIdx > 0) {
+            setCity(String(data.address).slice(0, commaIdx));
+            setPostOffice(String(data.address).slice(commaIdx + 2));
+            setCityRef("");
+            setWarehouseRef("");
+          }
+        }
+      } catch {
+        /* ignore */
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authStatus, session?.user, deliveryMethod]);
 
   // Track InitiateCheckout event for Meta Pixel when component mounts with items
   useEffect(() => {
@@ -422,10 +500,15 @@ export default function FinalCard() {
 
     const subtotal = getSubtotal(items);
     const deliveryCost = deliveryMethod === "nova_poshta_branch" ? DELIVERY_COST_BRANCH : 0;
+    const loyaltyDiscountPreview =
+      loyaltyPercent > 0
+        ? Math.round(((subtotal * loyaltyPercent) / 100) * 100) / 100
+        : 0;
     const { orderTotal: fullAmount } = computeOrderTotals({
       subtotal,
       deliveryCost,
       promoDiscountAmount: appliedPromo?.discountAmount ?? 0,
+      loyaltyDiscountAmount: loyaltyDiscountPreview,
     });
 
     const orderComment = comment.trim();
@@ -446,6 +529,8 @@ export default function FinalCard() {
         bonus_points_to_spend: 0,
         delivery_cost: deliveryCost,
         promo_code: appliedPromo ? promoCodeInput.trim().toUpperCase() : undefined,
+        user_id: profileUserId || undefined,
+        utm: getStoredUtmAttribution(),
         items: apiItems,
       };
       
@@ -847,14 +932,20 @@ export default function FinalCard() {
   const checkoutSectionHint = "mb-4 font-['Montserrat'] text-sm text-black/50";
   const deliveryCostDisplay = deliveryMethod === "nova_poshta_branch" ? DELIVERY_COST_BRANCH : 0;
   const summarySubtotal = getSubtotal(items);
+  const summaryLoyaltyPreview =
+    loyaltyPercent > 0
+      ? Math.round(((summarySubtotal * loyaltyPercent) / 100) * 100) / 100
+      : 0;
   const {
     bulkDiscountAmount: summaryBulk,
+    loyaltyDiscountAmount: summaryLoyalty,
     promoDiscountAmount: summaryPromo,
     orderTotal: summaryTotal,
   } = computeOrderTotals({
     subtotal: summarySubtotal,
     deliveryCost: deliveryCostDisplay,
     promoDiscountAmount: appliedPromo?.discountAmount ?? 0,
+    loyaltyDiscountAmount: summaryLoyaltyPreview,
   });
 
   return (
@@ -928,6 +1019,20 @@ export default function FinalCard() {
                 <div className={checkoutCard}>
                   <h2 className={`mb-1 ${checkoutSectionTitle}`}>Інформація про покупця</h2>
                   <p className={checkoutSectionHint}>Контакти для підтвердження замовлення</p>
+                  {authStatus === "authenticated" && profileUserId ? (
+                    <p className="mb-4 rounded-xl bg-[var(--site-accent,#4A5840)]/10 px-3 py-2 font-['Montserrat'] text-sm text-[var(--site-accent,#4A5840)]">
+                      Дані підтягнуто з кабінету
+                      {loyaltyPercent > 0 ? ` · знижка лояльності −${loyaltyPercent}%` : ""}
+                    </p>
+                  ) : authStatus === "unauthenticated" ? (
+                    <button
+                      type="button"
+                      onClick={() => setIsAccountPromoModalOpen(true)}
+                      className="mb-4 text-left font-['Montserrat'] text-sm text-[var(--site-accent,#4A5840)] underline underline-offset-2 transition-colors hover:opacity-80"
+                    >
+                      Маєте акаунт? Увійдіть — дані заповняться самі · −3% на першу покупку
+                    </button>
+                  ) : null}
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
                     <div className="flex flex-col gap-1.5">
                       <label htmlFor="firstName" className="text-sm font-['Montserrat'] text-black/70">
@@ -1239,6 +1344,12 @@ export default function FinalCard() {
                       <span className="font-medium">−{Math.round(summaryBulk).toLocaleString("uk-UA")} грн</span>
                     </div>
                   )}
+                  {summaryLoyalty > 0 && (
+                    <div className="flex justify-between gap-3 text-red-600">
+                      <span>Знижка лояльності (−{loyaltyPercent}%)</span>
+                      <span className="font-medium">−{Math.round(summaryLoyalty).toLocaleString("uk-UA")} грн</span>
+                    </div>
+                  )}
                   {summaryPromo > 0 && (
                     <div className="flex justify-between gap-3 text-red-600">
                       <span>Знижка (промокод)</span>
@@ -1412,6 +1523,56 @@ export default function FinalCard() {
         </>
       )}
       </div>
+
+      {isAccountPromoModalOpen && (
+        <div
+          className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setIsAccountPromoModalOpen(false)}
+        >
+          <div
+            className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-5 py-6 sm:px-6">
+              <h3 className="mb-3 font-['Montserrat'] text-lg font-bold text-[#1C1C1C]">
+                Маєте акаунт?
+              </h3>
+              <p className="mb-3 font-['Montserrat'] text-sm text-black/60">
+                Увійдіть, щоб автоматично заповнити ім&apos;я, телефон, email і відділення НП.
+              </p>
+              <p className="mb-5 font-['Montserrat'] text-sm text-black/60">
+                За першу покупку з акаунтом — знижка{" "}
+                <strong className="text-[var(--site-accent,#4A5840)]">3%</strong>.
+              </p>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAccountPromoModalOpen(false);
+                    setIsLoginModalOpen(true);
+                  }}
+                  className="flex-1 rounded-2xl bg-[#1C1C1C] px-4 py-3 font-['Montserrat'] text-sm font-bold text-white hover:bg-black"
+                >
+                  Увійти або зареєструватися
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsAccountPromoModalOpen(false)}
+                  className="rounded-2xl px-4 py-3 font-['Montserrat'] text-sm font-medium text-black/60 hover:bg-black/[0.04]"
+                >
+                  Продовжити без входу
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        redirectAfterLogin="/final"
+      />
     </section>
   );
 }
