@@ -7,6 +7,7 @@ import Label from "@/components/admin/form/Label";
 import TextArea from "@/components/admin/form/input/TextArea";
 import Input from "@/components/admin/form/input/InputField";
 import { formatDateTimeKyiv } from "@/lib/formatDateKyiv";
+import { useBodyScrollLock } from "@/lib/useBodyScrollLock";
 
 interface Recipient {
   id: string;
@@ -38,6 +39,8 @@ export default function NewsletterPage() {
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [viewCampaign, setViewCampaign] = useState<SavedCampaign | null>(null);
   const [showPreview, setShowPreview] = useState(false);
+
+  useBodyScrollLock(Boolean(viewCampaign));
 
   const fetchCampaigns = () => {
     setCampaignsLoading(true);

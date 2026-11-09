@@ -7,6 +7,7 @@ import Input from "@/components/admin/form/input/InputField";
 import { formatAdminProductPrice } from "@/lib/formatAdminProductPrice";
 import { buildColorLinkGroupLabels } from "@/lib/colorLinkGroups";
 import { buildSizeGroupLabels, groupProductsForAdminPicker } from "@/lib/sizeGroupLabels";
+import { useBodyScrollLock } from "@/lib/useBodyScrollLock";
 
 type CatalogProduct = {
   id: number;
@@ -48,6 +49,8 @@ export default function BoughtTogetherPicker({
   const [catalog, setCatalog] = useState<CatalogProduct[]>([]);
   const [catalogLoading, setCatalogLoading] = useState(false);
   const [query, setQuery] = useState("");
+
+  useBodyScrollLock(pickerOpen);
 
   const setIds = (ids: number[]) => {
     onChange(Array.from(new Set(ids.filter((n) => n > 0))));

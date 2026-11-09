@@ -21,6 +21,7 @@ import {
   computeOrderTotals,
 } from "@/lib/orderDiscounts";
 import { getStoredUtmAttribution } from "@/lib/utmAttribution";
+import { useBodyScrollLock } from "@/lib/useBodyScrollLock";
 
 /** Calculate order subtotal from basket items */
 const CHECKOUT_CTA_PRIMARY =
@@ -70,6 +71,8 @@ export default function FinalCard() {
   const [profileUserId, setProfileUserId] = useState<string | null>(null);
   const [loyaltyPercent, setLoyaltyPercent] = useState(0);
   const profileFilledRef = useRef(false);
+
+  useBodyScrollLock(isAccountPromoModalOpen);
 
   // Prevent hydration mismatch by only rendering after mount
   useEffect(() => {

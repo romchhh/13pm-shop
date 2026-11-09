@@ -10,12 +10,15 @@ type SavedBodyStyles = {
   right: string;
   width: string;
   paddingRight: string;
+  touchAction: string;
+  overscrollBehavior: string;
 };
 
 let lockCount = 0;
 let savedScrollY = 0;
 let savedBodyStyles: SavedBodyStyles | null = null;
 let savedHtmlOverflow = "";
+let savedHtmlOverscroll = "";
 
 function getScrollbarWidth(): number {
   if (typeof window === "undefined") return 0;
@@ -35,8 +38,11 @@ function lockBody(): void {
       right: document.body.style.right,
       width: document.body.style.width,
       paddingRight: document.body.style.paddingRight,
+      touchAction: document.body.style.touchAction,
+      overscrollBehavior: document.body.style.overscrollBehavior,
     };
     savedHtmlOverflow = document.documentElement.style.overflow;
+    savedHtmlOverscroll = document.documentElement.style.overscrollBehavior;
 
     document.body.style.overflow = "hidden";
     document.body.style.position = "fixed";
@@ -44,11 +50,14 @@ function lockBody(): void {
     document.body.style.left = "0";
     document.body.style.right = "0";
     document.body.style.width = "100%";
+    document.body.style.touchAction = "none";
+    document.body.style.overscrollBehavior = "none";
     if (scrollbarWidth > 0) {
       document.body.style.paddingRight = `${scrollbarWidth}px`;
     }
 
     document.documentElement.style.overflow = "hidden";
+    document.documentElement.style.overscrollBehavior = "none";
   }
   lockCount += 1;
 }
@@ -66,7 +75,10 @@ function unlockBody(): void {
   document.body.style.right = styles.right;
   document.body.style.width = styles.width;
   document.body.style.paddingRight = styles.paddingRight;
+  document.body.style.touchAction = styles.touchAction;
+  document.body.style.overscrollBehavior = styles.overscrollBehavior;
   document.documentElement.style.overflow = savedHtmlOverflow;
+  document.documentElement.style.overscrollBehavior = savedHtmlOverscroll;
 
   savedBodyStyles = null;
   window.scrollTo(0, savedScrollY);

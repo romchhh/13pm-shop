@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useBodyScrollLock } from "@/lib/useBodyScrollLock";
 
 const WEEKDAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"];
 const MONTHS = [
@@ -90,6 +91,8 @@ export default function BirthDatePicker({
   );
   const [viewMonth, setViewMonth] = useState(selected?.getMonth() ?? 0);
   const rootRef = useRef<HTMLDivElement>(null);
+
+  useBodyScrollLock(open && !disabled);
 
   useEffect(() => {
     if (!open) return;
