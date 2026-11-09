@@ -402,18 +402,29 @@ export async function POST(req: NextRequest) {
       try {
         const existing = await prisma.user.findUnique({
           where: { id: user_id.trim() },
-          select: { id: true },
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            address: true,
+            clothingSize: true,
+          },
         });
         if (existing) {
           customerUserId = existing.id;
           const address = [city, post_office].filter(Boolean).join(", ");
+          const sizeFromOrder = normalizedItems
+            .map((item) => String(item.size || "").trim())
+            .find((s) => s && s.toLowerCase() !== "one" && s !== "-");
           await prisma.user.update({
             where: { id: existing.id },
             data: {
-              name: customer_name?.trim() || undefined,
-              phone: phone_number?.trim() || undefined,
+              name: customer_name?.trim() || existing.name || undefined,
+              phone: phone_number?.trim() || existing.phone || undefined,
               email: email?.trim() || undefined,
-              address: address || undefined,
+              address: address || existing.address || undefined,
+              clothingSize:
+                existing.clothingSize || sizeFromOrder || undefined,
             },
           });
 

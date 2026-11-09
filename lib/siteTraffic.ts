@@ -63,19 +63,6 @@ export async function trackSiteVisit(payload: TrackPayload): Promise<void> {
     utmCampaign,
   } = payload;
 
-  const existing = await prisma.siteTrafficSession.findUnique({
-    where: { id: sessionId },
-    select: { id: true },
-  });
-
-  if (existing) {
-    await prisma.siteTrafficSession.update({
-      where: { id: sessionId },
-      data: { lastSeenAt: now, lastPath: path },
-    });
-    return;
-  }
-
   const siteHost = getSiteHost();
   const { sourceType, referrerHost } = classifyTrafficSource({
     referrer: heartbeat ? null : referrer,
@@ -84,8 +71,10 @@ export async function trackSiteVisit(payload: TrackPayload): Promise<void> {
     siteHost,
   });
 
-  await prisma.siteTrafficSession.create({
-    data: {
+  // upsert: паралельні track/heartbeat з тим самим sessionId не падають на P2002
+  await prisma.siteTrafficSession.upsert({
+    where: { id: sessionId },
+    create: {
       id: sessionId,
       visitorId,
       lastPath: path,
@@ -96,6 +85,12 @@ export async function trackSiteVisit(payload: TrackPayload): Promise<void> {
       utmSource: utmSource ?? null,
       utmMedium: utmMedium ?? null,
       utmCampaign: utmCampaign ?? null,
+      lastSeenAt: now,
+    },
+    update: {
+      lastSeenAt: now,
+      lastPath: path,
+      visitorId,
     },
   });
 }

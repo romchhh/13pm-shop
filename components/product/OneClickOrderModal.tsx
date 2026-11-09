@@ -237,16 +237,26 @@ export default function OneClickOrderModal({
           </p>
 
           {authStatus === "authenticated" && profileUserId ? (
-            <p className="mb-4 rounded-xl bg-[var(--site-accent,#4A5840)]/10 px-4 py-2.5 text-sm text-[var(--site-accent,#4A5840)]">
+            <p className="mb-4 rounded-2xl bg-[var(--site-accent,#4A5840)]/10 px-4 py-2.5 text-sm text-[var(--site-accent,#4A5840)]">
               Дані підтягнуто з кабінету
             </p>
           ) : authStatus === "unauthenticated" ? (
             <button
               type="button"
               onClick={() => setLoginOpen(true)}
-              className="mb-4 text-left text-sm font-medium text-[var(--site-accent,#4A5840)] underline underline-offset-2"
+              className="mb-4 flex w-full items-start gap-3 rounded-2xl border-2 border-[var(--site-accent,#5A6B47)]/35 bg-[var(--site-accent,#5A6B47)]/[0.08] px-4 py-3.5 text-left transition-colors hover:bg-[var(--site-accent,#5A6B47)]/15"
             >
-              Увійти — щоб заповнити дані автоматично · −3% на першу покупку
+              <span className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[var(--site-accent,#5A6B47)] text-sm font-bold text-white">
+                −3%
+              </span>
+              <span className="min-w-0">
+                <span className="block text-sm font-bold text-[#1C1C1C]">
+                  Увійти в кабінет
+                </span>
+                <span className="mt-0.5 block text-sm leading-snug text-black/65">
+                  Дані заповняться самі · −3% на першу покупку
+                </span>
+              </span>
             </button>
           ) : null}
 

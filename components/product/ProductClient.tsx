@@ -820,11 +820,18 @@ export default function ProductClient({ product }: ProductClientProps) {
               <button
                 type="button"
                 onClick={() => setLoginOpen(true)}
-                className="mt-3 w-full rounded-2xl border border-[var(--site-accent,#4A5840)]/25 bg-[var(--site-accent,#4A5840)]/[0.06] px-4 py-3 text-left font-['Montserrat'] text-sm leading-snug text-[var(--site-accent,#4A5840)] transition-colors hover:bg-[var(--site-accent,#4A5840)]/10"
+                className="mt-3 flex w-full items-start gap-3 rounded-2xl border-2 border-[var(--site-accent,#5A6B47)]/35 bg-[var(--site-accent,#5A6B47)]/[0.08] px-4 py-3.5 text-left font-['Montserrat'] transition-colors hover:bg-[var(--site-accent,#5A6B47)]/15"
               >
-                <span className="font-semibold">Зареєструйтесь</span>
-                <span className="block mt-0.5 text-black/55">
-                  Дані підтягнуться автоматично · −3% на першу покупку
+                <span className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[var(--site-accent,#5A6B47)] text-sm font-bold text-white">
+                  −3%
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-bold text-[#1C1C1C]">
+                    Зареєструйтесь або увійдіть
+                  </span>
+                  <span className="mt-0.5 block text-sm leading-snug text-black/65">
+                    Дані підтягнуться автоматично · −3% на першу покупку
+                  </span>
                 </span>
               </button>
             ) : authStatus === "authenticated" ? (

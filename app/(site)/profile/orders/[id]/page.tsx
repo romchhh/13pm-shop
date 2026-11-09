@@ -63,23 +63,32 @@ export default function OrderDetailPage() {
       .finally(() => setLoading(false));
   }, [session, status, id, router]);
 
+  const panelClass =
+    "rounded-2xl border border-black/[0.06] bg-white p-5 shadow-[0_4px_20px_rgba(0,0,0,0.05)] sm:p-6";
+  const btnPrimary =
+    "inline-flex items-center justify-center min-h-[3.25rem] rounded-2xl bg-[#1C1C1C] px-6 py-3.5 font-['Montserrat'] text-sm font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-black";
+  const btnGhost =
+    "inline-flex items-center justify-center min-h-[44px] rounded-2xl border border-[#1C1C1C] px-5 py-2.5 font-['Montserrat'] text-xs font-bold uppercase tracking-[0.12em] text-[#1C1C1C] transition-colors hover:bg-[#1C1C1C] hover:text-white";
+
   if (status === "loading" || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white pt-20">
-        <div className="text-xl font-['Montserrat'] text-gray-600">Завантаження...</div>
+      <div className="min-h-[60vh] flex items-center justify-center bg-[#faf9f7]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 border-2 border-black/10 border-t-[#1C1C1C] rounded-full animate-spin" />
+          <p className="font-['Montserrat'] text-sm text-black/60">Завантаження…</p>
+        </div>
       </div>
     );
   }
 
   if (error || !order) {
     return (
-      <div className="min-h-screen bg-white pt-20 pb-12 px-4">
-        <div className="max-w-2xl mx-auto text-center py-12">
-          <p className="text-gray-600 font-['Montserrat'] mb-6">{error || "Замовлення не знайдено"}</p>
-          <Link
-            href="/profile?tab=orders"
-            className="inline-block px-6 py-3 bg-black text-white font-['Montserrat'] font-medium uppercase hover:bg-gray-800 transition-colors"
-          >
+      <div className="min-h-screen bg-[#faf9f7] pt-10 pb-16 px-4 sm:px-6 lg:px-12">
+        <div className={`mx-auto max-w-2xl ${panelClass} py-14 text-center`}>
+          <p className="text-black/60 font-['Montserrat'] text-sm mb-6">
+            {error || "Замовлення не знайдено"}
+          </p>
+          <Link href="/profile?tab=orders" className={btnPrimary}>
             Назад до замовлень
           </Link>
         </div>
@@ -113,10 +122,10 @@ export default function OrderDetailPage() {
           : order.paymentType === "test_payment"
             ? "Тест оплата"
             : order.paymentType === "installment"
-            ? "В розсрочку"
-            : order.paymentType === "crypto"
-              ? "Криптовалюта"
-              : order.paymentType;
+              ? "В розстрочку"
+              : order.paymentType === "crypto"
+                ? "Криптовалюта"
+                : order.paymentType;
 
   const paymentStatusLabel =
     order.paymentStatus === "paid"
@@ -125,185 +134,173 @@ export default function OrderDetailPage() {
         ? "Скасовано"
         : "Очікує оплати";
 
+  const paymentStatusClass =
+    order.paymentStatus === "paid"
+      ? "text-[var(--site-accent,#5A6B47)]"
+      : order.paymentStatus === "canceled"
+        ? "text-red-700"
+        : "text-amber-800";
+
   return (
-    <div className="min-h-screen bg-white pt-20 pb-12 px-4">
-      <div className="max-w-2xl mx-auto">
+    <div className="min-h-screen bg-[#faf9f7] pt-8 sm:pt-10 pb-16 sm:pb-20 px-4 sm:px-6 lg:px-12">
+      <div className="mx-auto max-w-2xl">
         <Link
           href="/profile?tab=orders"
-          className="inline-flex items-center gap-2 text-gray-600 hover:text-black font-['Montserrat'] text-sm mb-8 transition-colors"
+          className="inline-flex items-center gap-2 text-black/50 hover:text-[#1C1C1C] font-['Montserrat'] text-sm mb-6 transition-colors"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
-          Назад до замовлень
+          До замовлень
         </Link>
 
-        <h1 className="text-2xl font-bold font-['Montserrat'] uppercase tracking-wider mb-2">
+        <h1 className="text-2xl sm:text-3xl font-bold font-['Montserrat'] tracking-tight text-[#1C1C1C] mb-2">
           Замовлення #{order.id}
         </h1>
-        <p className="text-gray-600 font-['Montserrat'] text-sm mb-8">
+        <p className="text-black/55 font-['Montserrat'] text-sm mb-6 sm:mb-8">
           {new Date(order.createdAt).toLocaleDateString("uk-UA", {
             day: "2-digit",
-            month: "2-digit",
+            month: "long",
             year: "numeric",
             hour: "2-digit",
             minute: "2-digit",
           })}
         </p>
 
-        <div className="space-y-6">
-          <section className="border border-gray-200 p-6">
-            <h2 className="text-sm font-bold font-['Montserrat'] uppercase text-gray-500 mb-4">
+        <div className="space-y-4">
+          <section className={panelClass}>
+            <h2 className="text-sm font-['Montserrat'] font-semibold text-black/50 mb-4">
               Товари
             </h2>
-            <div className="overflow-x-auto">
-              <table className="w-full font-['Montserrat'] text-sm">
-                <thead>
-                  <tr className="border-b border-gray-200 text-left text-gray-500 uppercase tracking-wider">
-                    <th className="py-3 pr-2 w-16 sm:w-20">Фото</th>
-                    <th className="py-3 pr-2">Товар</th>
-                    <th className="py-3 pr-2 hidden sm:table-cell">Розмір</th>
-                    <th className="py-3 pr-2 hidden sm:table-cell">Колір</th>
-                    <th className="py-3 pr-2 text-center">К-сть</th>
-                    <th className="py-3 pr-2 text-right">Ціна</th>
-                    <th className="py-3 text-right">Сума</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {order.items.map((item) => {
-                    const subtotal = Number(item.price) * item.quantity;
-                    return (
-                      <tr key={item.id} className="border-b border-gray-100 align-middle">
-                        <td className="py-3 pr-2">
-                          <Link href={item.product ? `/product/${item.product.id}` : "/catalog"} className="block relative w-14 h-14 sm:w-16 sm:h-16 bg-gray-100 overflow-hidden rounded flex-shrink-0">
-                            {item.product?.imageUrl ? (
-                              <Image
-                                src={`/api/images/${item.product.imageUrl}`}
-                                alt={item.product?.name || "Товар"}
-                                width={64}
-                                height={64}
-                                className="object-cover w-full h-full"
-                              />
-                            ) : (
-                              <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                                <span className="text-gray-400 text-xs">Фото</span>
-                              </div>
-                            )}
-                          </Link>
-                        </td>
-                        <td className="py-3 pr-2">
-                          {item.product ? (
-                            <Link href={`/product/${item.product.id}`} className="text-black hover:underline font-medium">
-                              {item.product.name}
-                            </Link>
-                          ) : (
-                            <span>Товар</span>
-                          )}
-                        </td>
-                        <td className="py-3 pr-2 hidden sm:table-cell">{item.size}</td>
-                        <td className="py-3 pr-2 hidden sm:table-cell text-gray-600">{item.color || "—"}</td>
-                        <td className="py-3 pr-2 text-center">{item.quantity}</td>
-                        <td className="py-3 pr-2 text-right">{Number(item.price).toFixed(2)} грн</td>
-                        <td className="py-3 text-right font-medium">{subtotal.toFixed(2)} грн</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+            <div className="space-y-4">
+              {order.items.map((item) => {
+                const subtotal = Number(item.price) * item.quantity;
+                return (
+                  <div
+                    key={item.id}
+                    className="flex gap-3 sm:gap-4 pb-4 border-b border-black/[0.06] last:border-0 last:pb-0"
+                  >
+                    <Link
+                      href={item.product ? `/product/${item.product.id}` : "/catalog"}
+                      className="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 overflow-hidden rounded-xl bg-[#f5f5f4]"
+                    >
+                      {item.product?.imageUrl ? (
+                        <Image
+                          src={`/api/images/${item.product.imageUrl}`}
+                          alt={item.product?.name || "Товар"}
+                          width={80}
+                          height={80}
+                          className="object-cover w-full h-full"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <span className="text-black/30 text-[10px]">Фото</span>
+                        </div>
+                      )}
+                    </Link>
+                    <div className="flex-1 min-w-0 font-['Montserrat']">
+                      {item.product ? (
+                        <Link
+                          href={`/product/${item.product.id}`}
+                          className="text-sm font-medium text-[#1C1C1C] hover:opacity-70 transition-opacity"
+                        >
+                          {item.product.name}
+                        </Link>
+                      ) : (
+                        <span className="text-sm">Товар</span>
+                      )}
+                      <p className="mt-1 text-xs text-black/50">
+                        {[item.size, item.color].filter(Boolean).join(" · ") || "—"}
+                        {" · "}×{item.quantity}
+                      </p>
+                      <p className="mt-2 text-sm font-semibold tabular-nums text-[#1C1C1C]">
+                        {subtotal.toFixed(0)} грн
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-            <div className="mt-4 pt-4 border-t border-gray-200 flex justify-between font-['Montserrat'] font-bold">
-              <span>Всього:</span>
-              <span>{total.toFixed(2)} грн</span>
+            <div className="mt-5 pt-4 border-t border-black/[0.06] flex justify-between font-['Montserrat']">
+              <span className="text-sm text-black/50 self-center">Разом</span>
+              <span className="text-lg font-semibold tabular-nums text-[#1C1C1C]">
+                {total.toFixed(0)} грн
+              </span>
             </div>
           </section>
 
-          <section className="border border-gray-200 p-6">
-            <h2 className="text-sm font-bold font-['Montserrat'] uppercase text-gray-500 mb-4">
+          <section className={panelClass}>
+            <h2 className="text-sm font-['Montserrat'] font-semibold text-black/50 mb-4">
               Отримувач та доставка
             </h2>
-            <dl className="space-y-2 font-['Montserrat'] text-sm">
-              <div className="flex justify-between gap-4">
-                <dt className="text-gray-600">Ім&apos;я:</dt>
-                <dd>{order.customerName}</dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-gray-600">Телефон:</dt>
-                <dd>{order.phoneNumber}</dd>
-              </div>
-              {order.email && (
-                <div className="flex justify-between gap-4">
-                  <dt className="text-gray-600">Email:</dt>
-                  <dd>{order.email}</dd>
+            <dl className="space-y-3 font-['Montserrat'] text-sm">
+              {[
+                ["Ім'я", order.customerName],
+                ["Телефон", order.phoneNumber],
+                ...(order.email ? [["Email", order.email] as const] : []),
+                ["Доставка", deliveryLabel],
+                ["Місто", order.city],
+                ["Відділення", order.postOffice],
+              ].map(([label, value]) => (
+                <div
+                  key={String(label)}
+                  className="grid grid-cols-[7rem_1fr] gap-3"
+                >
+                  <dt className="text-black/45">{label}</dt>
+                  <dd className="text-[#1C1C1C] break-words">{value}</dd>
                 </div>
-              )}
-              <div className="flex justify-between gap-4">
-                <dt className="text-gray-600">Доставка:</dt>
-                <dd>{deliveryLabel}</dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-gray-600">Місто:</dt>
-                <dd>{order.city}</dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-gray-600">Відділення / адреса:</dt>
-                <dd className="text-right">{order.postOffice}</dd>
-              </div>
-              {order.comment && (
-                <div className="pt-2 border-t border-gray-100">
-                  <dt className="text-gray-600 mb-1">Коментар:</dt>
-                  <dd className="text-gray-800">{order.comment}</dd>
+              ))}
+              {order.comment ? (
+                <div className="pt-3 border-t border-black/[0.06]">
+                  <dt className="text-black/45 mb-1">Коментар</dt>
+                  <dd className="text-black/80">{order.comment}</dd>
                 </div>
-              )}
+              ) : null}
             </dl>
           </section>
 
-          {order.novaPoshtaTtn && (
-            <section className="border border-gray-200 p-6">
-              <h2 className="text-sm font-bold font-['Montserrat'] uppercase text-gray-500 mb-4">
+          {order.novaPoshtaTtn ? (
+            <section className={panelClass}>
+              <h2 className="text-sm font-['Montserrat'] font-semibold text-black/50 mb-4">
                 Нова пошта
               </h2>
-              <dl className="space-y-2 font-['Montserrat'] text-sm">
-                <div className="flex justify-between gap-4">
-                  <dt className="text-gray-600">ТТН:</dt>
-                  <dd className="text-right font-mono text-xs sm:text-sm break-all">
+              <dl className="space-y-3 font-['Montserrat'] text-sm">
+                <div className="grid grid-cols-[7rem_1fr] gap-3">
+                  <dt className="text-black/45">ТТН</dt>
+                  <dd className="font-mono text-xs sm:text-sm break-all text-[#1C1C1C]">
                     {order.novaPoshtaTtn}
                   </dd>
                 </div>
                 {(order.npStatusName || order.npStatusCode) && (
-                  <div className="flex justify-between gap-4">
-                    <dt className="text-gray-600">Статус доставки:</dt>
-                    <dd className="text-right max-w-[60%]">
+                  <div className="grid grid-cols-[7rem_1fr] gap-3">
+                    <dt className="text-black/45">Статус</dt>
+                    <dd className="text-[#1C1C1C]">
                       {order.npStatusName || "—"}
                       {order.npStatusCode ? (
-                        <span className="text-gray-400 ml-1">({order.npStatusCode})</span>
+                        <span className="text-black/40 ml-1">({order.npStatusCode})</span>
                       ) : null}
                     </dd>
                   </div>
                 )}
               </dl>
-              <p className="text-xs text-gray-500 mt-3">
-                Актуальний статус також відображається в особистому кабінеті Нової Пошти за цим номером ТТН.
-              </p>
+              <a
+                href={`https://novaposhta.ua/tracking/${order.novaPoshtaTtn}`}
+                target="_blank"
+                rel="noreferrer"
+                className={`${btnGhost} mt-5`}
+              >
+                Відстежити посилку
+              </a>
             </section>
-          )}
+          ) : null}
 
-          <section className="border border-gray-200 p-6">
-            <h2 className="text-sm font-bold font-['Montserrat'] uppercase text-gray-500 mb-4">
+          <section className={panelClass}>
+            <h2 className="text-sm font-['Montserrat'] font-semibold text-black/50 mb-4">
               Оплата
             </h2>
-            <p className="font-['Montserrat'] text-sm">
-              Спосіб оплати: {paymentLabel}
-            </p>
-            <p
-              className={`font-['Montserrat'] text-sm mt-1 font-medium ${
-                order.paymentStatus === "paid"
-                  ? "text-green-600"
-                  : order.paymentStatus === "canceled"
-                    ? "text-red-600"
-                    : "text-amber-700"
-              }`}
-            >
-              Статус оплати: {paymentStatusLabel}
+            <p className="font-['Montserrat'] text-sm text-[#1C1C1C]">{paymentLabel}</p>
+            <p className={`font-['Montserrat'] text-sm mt-2 font-semibold ${paymentStatusClass}`}>
+              {paymentStatusLabel}
             </p>
           </section>
         </div>

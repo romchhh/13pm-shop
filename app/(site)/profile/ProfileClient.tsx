@@ -305,8 +305,13 @@ export default function ProfilePage() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl font-['Montserrat']">Завантаження...</div>
+      <div className="min-h-[60vh] flex items-center justify-center bg-[var(--background-color-light,#F2F2F0)]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 border-2 border-[#1C1C1C]/20 border-t-[#1C1C1C] rounded-full animate-spin" />
+          <p className="font-['Montserrat'] text-sm tracking-wider uppercase text-[#1C1C1C]/60">
+            Завантаження
+          </p>
+        </div>
       </div>
     );
   }
@@ -315,16 +320,27 @@ export default function ProfilePage() {
     return null;
   }
 
+  const inputClass =
+    "w-full rounded-xl border border-black/12 bg-white px-4 py-3.5 font-['Montserrat'] text-sm text-black placeholder:text-black/35 focus:border-[#1C1C1C] focus:outline-none focus:ring-2 focus:ring-[#1C1C1C]/12 transition-colors";
+  const labelClass =
+    "block text-sm font-['Montserrat'] font-medium text-black/60 mb-2";
+  const btnPrimary =
+    "inline-flex items-center justify-center min-h-[3.25rem] rounded-2xl bg-[#1C1C1C] px-6 py-3.5 font-['Montserrat'] text-sm font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-black";
+  const btnGhost =
+    "inline-flex items-center justify-center min-h-[3.25rem] rounded-2xl border border-[#1C1C1C] px-6 py-3 font-['Montserrat'] text-sm font-bold uppercase tracking-[0.12em] text-[#1C1C1C] transition-colors hover:bg-[#1C1C1C] hover:text-white";
+  const panelClass =
+    "rounded-2xl border border-black/[0.06] bg-white p-5 shadow-[0_4px_20px_rgba(0,0,0,0.05)] sm:p-6";
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "paid":
-        return "text-green-600";
+        return "bg-[var(--site-accent,#5A6B47)]/12 text-[var(--site-accent-hover,#4A5A3A)]";
       case "pending":
-        return "text-yellow-600";
+        return "bg-amber-500/10 text-amber-800";
       case "canceled":
-        return "text-red-600";
+        return "bg-red-500/10 text-red-700";
       default:
-        return "text-gray-600";
+        return "bg-[#1C1C1C]/06 text-[#1C1C1C]/70";
     }
   };
 
@@ -345,118 +361,145 @@ export default function ProfilePage() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-[var(--background-warm-yellow,#FAFAF9)] pt-6 sm:pt-10 pb-8 sm:pb-12">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-4 sm:mb-8">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold font-['Montserrat'] uppercase tracking-wider mb-1 sm:mb-2">
-            Особистий кабінет
-          </h1>
-          <p className="text-sm sm:text-base text-gray-600 font-['Montserrat'] truncate max-w-full">
-            Вітаємо, {profile.name || session.user?.email}
-          </p>
-        </div>
+  const tabs: Array<{ id: typeof activeTab; label: string }> = [
+    { id: "profile", label: "Профіль" },
+    { id: "orders", label: "Замовлення" },
+    { id: "wishlist", label: "Вішлист" },
+    { id: "bonuses", label: "Бонуси" },
+  ];
 
-        {/* Tabs — горизонтальний скрол на малих екранах */}
-        <div className="border-b border-gray-200 mb-4 sm:mb-8 -mx-3 sm:mx-0 px-3 sm:px-0">
-          <nav className="flex gap-4 sm:gap-6 lg:gap-8 overflow-x-auto scrollbar-hide pb-px min-h-[48px] items-end" style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}>
-            <button
-              onClick={() => setActiveTab("profile")}
-              className={`flex-shrink-0 pb-3 sm:pb-4 px-1 border-b-2 font-['Montserrat'] font-medium text-xs sm:text-sm uppercase transition-colors whitespace-nowrap ${
-                activeTab === "profile"
-                  ? "border-black text-black"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              Профіль
-            </button>
-            <button
-              onClick={() => setActiveTab("orders")}
-              className={`flex-shrink-0 pb-3 sm:pb-4 px-1 border-b-2 font-['Montserrat'] font-medium text-xs sm:text-sm uppercase transition-colors whitespace-nowrap ${
-                activeTab === "orders"
-                  ? "border-black text-black"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              Мої замовлення
-            </button>
-            <button
-              onClick={() => setActiveTab("wishlist")}
-              className={`flex-shrink-0 pb-3 sm:pb-4 px-1 border-b-2 font-['Montserrat'] font-medium text-xs sm:text-sm uppercase transition-colors whitespace-nowrap ${
-                activeTab === "wishlist"
-                  ? "border-black text-black"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              Вішлист
-            </button>
-            <button
-              onClick={() => setActiveTab("bonuses")}
-              className={`flex-shrink-0 pb-3 sm:pb-4 px-1 border-b-2 font-['Montserrat'] font-medium text-xs sm:text-sm uppercase transition-colors whitespace-nowrap ${
-                activeTab === "bonuses"
-                  ? "border-black text-black"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              Мої бонуси
-            </button>
+  const displayName = profile.name || session.user?.email || "Клієнт";
+  const initials = displayName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() || "")
+    .join("");
+
+  return (
+    <div className="min-h-screen bg-[#faf9f7] pt-8 sm:pt-10 pb-16 sm:pb-20">
+      <div className="mx-auto w-full max-w-[1920px] px-4 sm:px-6 lg:px-12">
+        {/* Header */}
+        <header className="mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-5">
+            <div className="min-w-0">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold font-['Montserrat'] tracking-tight text-[#1C1C1C]">
+                Особистий кабінет
+              </h1>
+              <div className="mt-4 flex items-center gap-3 min-w-0">
+                <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-[#1C1C1C] text-white font-['Montserrat'] text-sm font-semibold">
+                  {initials || "13"}
+                </div>
+                <div className="min-w-0">
+                  <p className="font-['Montserrat'] text-base sm:text-lg text-[#1C1C1C] truncate">
+                    {displayName}
+                  </p>
+                  <p className="text-xs sm:text-sm text-black/55 font-['Montserrat'] truncate">
+                    {loyaltyTier.name} · −{loyaltyTier.percent}% на покупки
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2 sm:gap-3">
+              <div className="rounded-2xl border border-black/[0.06] bg-white px-4 py-3 min-w-[7.5rem] shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
+                <p className="text-xs text-black/45 font-['Montserrat']">Замовлень</p>
+                <p className="mt-1 font-['Montserrat'] text-xl font-semibold tabular-nums text-[#1C1C1C]">
+                  {orders.length}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-black/[0.06] bg-white px-4 py-3 min-w-[7.5rem] shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
+                <p className="text-xs text-black/45 font-['Montserrat']">Бонуси</p>
+                <p className="mt-1 font-['Montserrat'] text-xl font-semibold tabular-nums text-[#1C1C1C]">
+                  {profile.bonusPoints ?? 0}
+                </p>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Tabs */}
+        <div className="mb-6 sm:mb-8 border-b border-black/[0.06]">
+          <nav
+            className="flex gap-1 sm:gap-2 overflow-x-auto min-h-[48px] items-end"
+            style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}
+          >
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`relative flex-shrink-0 px-3 sm:px-4 pb-3.5 pt-2 font-['Montserrat'] text-xs sm:text-sm font-semibold uppercase tracking-[0.1em] transition-colors whitespace-nowrap ${
+                  activeTab === tab.id
+                    ? "text-[#1C1C1C]"
+                    : "text-black/40 hover:text-black/70"
+                }`}
+              >
+                {tab.label}
+                {tab.id === "orders" && orders.length > 0 ? (
+                  <span className="ml-1.5 tabular-nums text-[10px] opacity-60">
+                    {orders.length}
+                  </span>
+                ) : null}
+                {activeTab === tab.id ? (
+                  <span className="absolute left-3 right-3 sm:left-4 sm:right-4 bottom-0 h-0.5 rounded-full bg-[#1C1C1C]" />
+                ) : null}
+              </button>
+            ))}
           </nav>
         </div>
 
         {/* Content */}
-        <div className="bg-white min-w-0">
+        <div className="min-w-0">
           {activeTab === "profile" && (
             <div className="max-w-2xl w-full">
               {isEditing ? (
-                <form onSubmit={handleUpdateProfile} className="space-y-6">
+                <form
+                  onSubmit={handleUpdateProfile}
+                  className={`space-y-5 ${panelClass}`}
+                >
+                  <h2 className="font-['Montserrat'] text-lg sm:text-xl font-semibold tracking-tight text-[#1C1C1C]">
+                    Редагування профілю
+                  </h2>
+
                   <div>
-                    <label className="block text-sm font-['Montserrat'] font-medium text-gray-700 mb-2">
-                      Ім&apos;я
-                    </label>
+                    <label className={labelClass}>Ім&apos;я</label>
                     <input
                       type="text"
                       value={formData.name}
                       onChange={(e) =>
                         setFormData({ ...formData, name: e.target.value })
                       }
-                      className="w-full px-4 py-2 border border-gray-300 focus:border-black focus:outline-none font-['Montserrat']"
+                      className={inputClass}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-['Montserrat'] font-medium text-gray-700 mb-2">
-                      Email
-                    </label>
+                    <label className={labelClass}>Email</label>
                     <input
                       type="email"
                       value={formData.email}
                       onChange={(e) =>
                         setFormData({ ...formData, email: e.target.value })
                       }
-                      className="w-full px-4 py-2 border border-gray-300 focus:border-black focus:outline-none font-['Montserrat']"
+                      className={inputClass}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-['Montserrat'] font-medium text-gray-700 mb-2">
-                      Телефон
-                    </label>
+                    <label className={labelClass}>Телефон</label>
                     <input
                       type="tel"
                       value={formData.phone}
                       onChange={(e) =>
                         setFormData({ ...formData, phone: e.target.value })
                       }
-                      className="w-full px-4 py-2 border border-gray-300 focus:border-black focus:outline-none font-['Montserrat']"
-                      placeholder="0960908006"
+                      className={inputClass}
+                      placeholder="+380..."
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-['Montserrat'] font-medium text-gray-700 mb-2">
-                      Адреса доставки (Нова пошта)
-                    </label>
+                    <label className={labelClass}>Адреса доставки (Нова пошта)</label>
                     <div className="space-y-3">
                       <div className="relative">
                         <input
@@ -470,19 +513,21 @@ export default function ProfilePage() {
                           }}
                           onFocus={() => npCitiesList.length > 0 && setNpShowCityDropdown(true)}
                           onBlur={() => setTimeout(() => setNpShowCityDropdown(false), 200)}
-                          className="w-full px-4 py-2 border border-gray-300 focus:border-black focus:outline-none font-['Montserrat']"
+                          className={inputClass}
                           placeholder="Місто"
                           autoComplete="off"
                         />
                         {npCitiesLoading && (
-                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">...</span>
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#1C1C1C]/35 text-sm">
+                            …
+                          </span>
                         )}
                         {npShowCityDropdown && npCitiesList.length > 0 && (
-                          <ul className="absolute z-10 mt-1 w-full max-h-48 overflow-auto border border-gray-300 bg-white font-['Montserrat'] text-sm shadow-lg">
+                          <ul className="absolute z-10 mt-1 w-full max-h-48 overflow-auto rounded-xl border border-black/10 bg-white py-1 font-['Montserrat'] text-sm shadow-lg">
                             {npCitiesList.map((name) => (
                               <li
                                 key={name}
-                                className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                                className="cursor-pointer px-4 py-2.5 hover:bg-black/[0.03]"
                                 onMouseDown={() => {
                                   setNpCityInput(name);
                                   setNpCitySelected(name);
@@ -507,39 +552,52 @@ export default function ProfilePage() {
                             setNpWarehouseInput(e.target.value);
                             setNpShowWarehouseDropdown(true);
                           }}
-                          onFocus={() => npCitySelected && npWarehousesList.length > 0 && setNpShowWarehouseDropdown(true)}
-                          onBlur={() => setTimeout(() => setNpShowWarehouseDropdown(false), 200)}
-                          className="w-full px-4 py-2 border border-gray-300 focus:border-black focus:outline-none font-['Montserrat']"
-                          placeholder="Відділення (оберіть спочатку місто)"
+                          onFocus={() =>
+                            npCitySelected &&
+                            npWarehousesList.length > 0 &&
+                            setNpShowWarehouseDropdown(true)
+                          }
+                          onBlur={() =>
+                            setTimeout(() => setNpShowWarehouseDropdown(false), 200)
+                          }
+                          className={`${inputClass} disabled:bg-black/[0.03] disabled:cursor-not-allowed`}
+                          placeholder="Відділення (спочатку оберіть місто)"
                           autoComplete="off"
                           disabled={!npCitySelected}
                         />
                         {npWarehousesLoading && (
-                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">...</span>
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#1C1C1C]/35 text-sm">
+                            …
+                          </span>
                         )}
                         {npShowWarehouseDropdown && npWarehousesList.length > 0 && (
-                          <ul className="absolute z-10 mt-1 w-full max-h-48 overflow-auto border border-gray-300 bg-white font-['Montserrat'] text-sm shadow-lg">
+                          <ul className="absolute z-10 mt-1 w-full max-h-48 overflow-auto rounded-xl border border-black/10 bg-white py-1 font-['Montserrat'] text-sm shadow-lg">
                             {npWarehousesList
-                              .filter((w) => w.toLowerCase().includes(npWarehouseInput.toLowerCase()))
+                              .filter((w) =>
+                                w.toLowerCase().includes(npWarehouseInput.toLowerCase())
+                              )
                               .map((name) => (
-                              <li
-                                key={name}
-                                className="px-4 py-2 cursor-pointer hover:bg-gray-100"
-                                onMouseDown={() => {
-                                  setNpWarehouseInput(name);
-                                  setNpWarehouseSelected(name);
-                                  setNpShowWarehouseDropdown(false);
-                                  setFormData((prev) => ({ ...prev, address: `${npCitySelected}, ${name}` }));
-                                }}
-                              >
-                                {name}
-                              </li>
-                            ))}
+                                <li
+                                  key={name}
+                                  className="cursor-pointer px-4 py-2.5 hover:bg-black/[0.03]"
+                                  onMouseDown={() => {
+                                    setNpWarehouseInput(name);
+                                    setNpWarehouseSelected(name);
+                                    setNpShowWarehouseDropdown(false);
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      address: `${npCitySelected}, ${name}`,
+                                    }));
+                                  }}
+                                >
+                                  {name}
+                                </li>
+                              ))}
                           </ul>
                         )}
                       </div>
                       {formData.address && (
-                        <p className="text-sm font-['Montserrat'] text-gray-600">
+                        <p className="text-xs font-['Montserrat'] text-[#1C1C1C]/55">
                           Збережена адреса: {formData.address}
                         </p>
                       )}
@@ -547,28 +605,26 @@ export default function ProfilePage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-['Montserrat'] font-medium text-gray-700 mb-2">
-                      Розмір одягу
-                    </label>
+                    <label className={labelClass}>Розмір одягу</label>
                     <input
                       type="text"
                       value={formData.clothingSize}
                       onChange={(e) =>
                         setFormData({ ...formData, clothingSize: e.target.value })
                       }
-                      className="w-full px-4 py-2 border border-gray-300 focus:border-black focus:outline-none font-['Montserrat']"
+                      className={inputClass}
                       placeholder="S, M, L, XL"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-['Montserrat'] font-medium text-gray-700 mb-2">
+                    <label className={labelClass}>
                       Дата народження
-                      {profile.birthDate && (
-                        <span className="ml-2 text-xs font-normal text-gray-500">
+                      {profile.birthDate ? (
+                        <span className="ml-2 normal-case tracking-normal font-normal text-[#1C1C1C]/40">
                           (не можна змінити)
                         </span>
-                      )}
+                      ) : null}
                     </label>
                     <input
                       type="date"
@@ -577,78 +633,97 @@ export default function ProfilePage() {
                         setFormData({ ...formData, birthDate: e.target.value })
                       }
                       disabled={!!profile.birthDate}
-                      className="w-full px-4 py-2 border border-gray-300 focus:border-black focus:outline-none font-['Montserrat'] disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      className={`${inputClass} disabled:bg-black/[0.03] disabled:cursor-not-allowed`}
                     />
                   </div>
 
-                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                    <button
-                      type="submit"
-                      className="w-full sm:w-auto px-6 py-3 min-h-[44px] sm:min-h-0 bg-black text-white font-['Montserrat'] font-bold uppercase hover:bg-gray-800 transition-colors"
-                    >
+                  <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                    <button type="submit" className={`${btnPrimary} w-full sm:w-auto`}>
                       Зберегти
                     </button>
                     <button
                       type="button"
                       onClick={() => setIsEditing(false)}
-                      className="w-full sm:w-auto px-6 py-3 min-h-[44px] sm:min-h-0 border border-black text-black font-['Montserrat'] font-bold uppercase hover:bg-black hover:text-white transition-colors"
+                      className={`${btnGhost} w-full sm:w-auto`}
                     >
                       Скасувати
                     </button>
                   </div>
                 </form>
               ) : (
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-sm font-['Montserrat'] font-medium text-gray-700 mb-2">
-                      Контакти
-                    </h3>
-                    <p className="font-['Montserrat']">{profile.email || "Не вказано"}</p>
-                    <p className="font-['Montserrat']">{profile.phone || "Не вказано"}</p>
-                  </div>
+                <div className={`${panelClass} space-y-0`}>
+                  <h2 className="mb-5 font-['Montserrat'] text-lg sm:text-xl font-semibold tracking-tight text-[#1C1C1C]">
+                    Ваші дані
+                  </h2>
 
-                  <div>
-                    <h3 className="text-sm font-['Montserrat'] font-medium text-gray-700 mb-2">
-                      Адреса доставки (Нова пошта)
-                    </h3>
-                    <p className="font-['Montserrat']">{profile.address || "Не вказано"}</p>
-                  </div>
-
-                  <div>
-                    <h3 className="text-sm font-['Montserrat'] font-medium text-gray-700 mb-2">
-                      Розмір одягу
-                    </h3>
-                    <p className="font-['Montserrat']">{profile.clothingSize || "Не вказано"}</p>
-                  </div>
-
-                  <div>
-                    <h3 className="text-sm font-['Montserrat'] font-medium text-gray-700 mb-2">
-                      Дата народження
-                    </h3>
-                    <p className="font-['Montserrat']">
-                      {profile.birthDate
+                  {[
+                    {
+                      label: "Контакти",
+                      value: (
+                        <>
+                          <span className="block">{profile.email || "Не вказано"}</span>
+                          <span className="block mt-1">{profile.phone || "Не вказано"}</span>
+                        </>
+                      ),
+                    },
+                    {
+                      label: "Адреса НП",
+                      value: profile.address || "Не вказано",
+                    },
+                    {
+                      label: "Розмір одягу",
+                      value: profile.clothingSize || "Не вказано",
+                    },
+                    {
+                      label: "Дата народження",
+                      value: profile.birthDate
                         ? new Date(profile.birthDate).toLocaleDateString("uk-UA")
-                        : "Не вказано"}
-                    </p>
-                  </div>
+                        : "Не вказано",
+                    },
+                  ].map((row) => (
+                    <div
+                      key={row.label}
+                      className="grid grid-cols-1 sm:grid-cols-[9rem_1fr] gap-1 sm:gap-6 py-4 border-t border-black/[0.06] first:border-t-0 first:pt-0"
+                    >
+                      <dt className="text-sm font-['Montserrat'] text-black/45 pt-0.5">
+                        {row.label}
+                      </dt>
+                      <dd className="font-['Montserrat'] text-sm sm:text-base text-[#1C1C1C] leading-relaxed">
+                        {row.value}
+                      </dd>
+                    </div>
+                  ))}
 
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="w-full sm:w-auto min-h-[44px] px-6 py-3 bg-black text-white font-['Montserrat'] font-bold uppercase hover:bg-gray-800 transition-colors"
-                  >
-                    Редагувати профіль
-                  </button>
+                  <div className="pt-6">
+                    <button
+                      type="button"
+                      onClick={() => setIsEditing(true)}
+                      className={`${btnPrimary} w-full sm:w-auto`}
+                    >
+                      Редагувати профіль
+                    </button>
+                  </div>
                 </div>
               )}
 
-              <div className="mt-6 sm:mt-8 pt-6 sm:pt-8 border-t border-gray-200">
+              <div className="mt-6 sm:mt-8 flex justify-start">
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-2.5 border border-red-200 bg-red-50 text-red-700 font-['Montserrat'] font-medium rounded-md hover:bg-red-100 hover:border-red-300 transition-colors"
+                  className="inline-flex items-center gap-2 min-h-[44px] px-4 py-2 font-['Montserrat'] text-xs uppercase tracking-[0.12em] text-[#1C1C1C]/50 hover:text-[#1C1C1C] transition-colors"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v3.75M9 10.5l3 3m0 0l3-3m-3 3V15" />
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
+                    />
                   </svg>
                   Вийти з акаунта
                 </button>
@@ -658,99 +733,115 @@ export default function ProfilePage() {
 
           {activeTab === "orders" && (
             <div className="min-w-0">
-              <h2 className="text-xl sm:text-2xl font-bold font-['Montserrat'] mb-4 sm:mb-6">Мої замовлення</h2>
+              <h2 className="mb-5 sm:mb-6 font-['Montserrat'] text-xl sm:text-2xl font-semibold tracking-tight text-[#1C1C1C]">
+                Мої замовлення
+              </h2>
               {!Array.isArray(orders) || orders.length === 0 ? (
-                <p className="text-gray-600 font-['Montserrat'] text-sm sm:text-base">У вас поки немає замовлень</p>
+                <div className={`${panelClass} py-14 text-center`}>
+                  <p className="font-['Montserrat'] text-sm text-black/60 mb-5">
+                    У вас поки немає замовлень
+                  </p>
+                  <Link href="/catalog" className={btnPrimary}>
+                    До каталогу
+                  </Link>
+                </div>
               ) : (
                 <div className="space-y-3 sm:space-y-4">
-                  {orders.map((order) => (
-                    <div
-                      key={order.id}
-                      className="border border-gray-200 p-4 sm:p-6 hover:shadow-md transition-shadow rounded-lg"
-                    >
-                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-3 sm:mb-4">
-                        <div className="min-w-0">
-                          <p className="font-['Montserrat'] font-bold text-sm sm:text-base truncate">
-                            Замовлення #{order.id}
-                          </p>
-                          <p className="text-xs sm:text-sm text-gray-600 font-['Montserrat']">
-                            {new Date(order.createdAt).toLocaleDateString("uk-UA")}
-                          </p>
-                        </div>
-                        <span
-                          className={`flex-shrink-0 text-xs sm:text-sm font-['Montserrat'] font-medium ${getStatusColor(
-                            order.paymentStatus
-                          )}`}
-                        >
-                          {getStatusText(order.paymentStatus, order.paymentType)}
-                        </span>
-                      </div>
-                      <div className="space-y-2 sm:space-y-3">
-                        {order.items.map((item) => (
-                          <div key={item.id} className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm min-w-0">
-                            {item.product?.imageUrl ? (
-                              <div className="relative w-12 h-12 sm:w-14 sm:h-14 flex-shrink-0 bg-gray-100 overflow-hidden rounded">
-                                <Image
-                                  src={`/api/images/${item.product.imageUrl}`}
-                                  alt={item.product?.name || "Товар"}
-                                  width={56}
-                                  height={56}
-                                  className="object-cover w-full h-full"
-                                />
-                              </div>
-                            ) : (
-                              <div className="w-12 h-12 sm:w-14 sm:h-14 flex-shrink-0 bg-gray-200 rounded flex items-center justify-center">
-                                <span className="text-gray-400 text-xs">Фото</span>
-                              </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <span className="font-['Montserrat'] line-clamp-2 sm:line-clamp-1">
-                                {item.product?.name || "Товар"} x {item.quantity}
-                              </span>
-                            </div>
-                            <span className="font-['Montserrat'] whitespace-nowrap flex-shrink-0">
-                              {Number(item.price).toFixed(2)} грн
-                            </span>
+                  {orders.map((order) => {
+                    const orderTotal = order.items.reduce(
+                      (sum, item) => sum + Number(item.price) * item.quantity,
+                      0
+                    );
+                    return (
+                      <article
+                        key={order.id}
+                        className={panelClass}
+                      >
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
+                          <div className="min-w-0">
+                            <p className="font-['Montserrat'] font-semibold text-sm sm:text-base text-[#1C1C1C]">
+                              Замовлення #{order.id}
+                            </p>
+                            <p className="mt-1 text-xs text-[#1C1C1C]/50 font-['Montserrat']">
+                              {new Date(order.createdAt).toLocaleDateString("uk-UA", {
+                                day: "2-digit",
+                                month: "long",
+                                year: "numeric",
+                              })}
+                            </p>
                           </div>
-                        ))}
-                      </div>
-                      <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-200 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 sm:gap-2">
-                        <div className="flex items-center gap-2">
-                          <span className="font-['Montserrat'] font-bold text-sm sm:text-base">Всього:</span>
-                          <span className="font-['Montserrat'] font-bold text-sm sm:text-base">
-                            {order.items
-                              .reduce((sum, item) => sum + Number(item.price) * item.quantity, 0)
-                              .toFixed(2)}{" "}
-                            грн
+                          <span
+                            className={`self-start rounded-full px-3 py-1 text-[11px] font-['Montserrat'] font-semibold ${getStatusColor(
+                              order.paymentStatus
+                            )}`}
+                          >
+                            {getStatusText(order.paymentStatus, order.paymentType)}
                           </span>
                         </div>
-                        {order.novaPoshtaTtn ? (
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                            <div className="text-xs sm:text-sm text-gray-600 font-['Montserrat']">
-                              ТТН:{" "}
-                              <span className="font-mono text-gray-900 break-all">
-                                {order.novaPoshtaTtn}
+
+                        <div className="space-y-3">
+                          {order.items.map((item) => (
+                            <div
+                              key={item.id}
+                              className="flex items-center gap-3 text-sm min-w-0"
+                            >
+                              {item.product?.imageUrl ? (
+                                <div className="relative w-14 h-14 flex-shrink-0 overflow-hidden rounded-xl bg-[#f5f5f4]">
+                                  <Image
+                                    src={`/api/images/${item.product.imageUrl}`}
+                                    alt={item.product?.name || "Товар"}
+                                    width={56}
+                                    height={56}
+                                    className="object-cover w-full h-full"
+                                  />
+                                </div>
+                              ) : (
+                                <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl bg-black/[0.04]">
+                                  <span className="text-[10px] text-black/30">Фото</span>
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <span className="font-['Montserrat'] text-[#1C1C1C] line-clamp-2">
+                                  {item.product?.name || "Товар"}
+                                  <span className="text-black/45"> × {item.quantity}</span>
+                                </span>
+                              </div>
+                              <span className="font-['Montserrat'] tabular-nums whitespace-nowrap flex-shrink-0 text-[#1C1C1C]">
+                                {Number(item.price).toFixed(0)} грн
                               </span>
                             </div>
-                            <a
-                              href={`https://novaposhta.ua/tracking/${order.novaPoshtaTtn}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-xs sm:text-sm font-['Montserrat'] font-medium text-black hover:underline text-center py-2 sm:py-0 min-h-[44px] sm:min-h-0 flex items-center justify-center"
+                          ))}
+                        </div>
+
+                        <div className="mt-5 pt-4 border-t border-black/[0.06] flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                          <p className="font-['Montserrat'] text-sm text-[#1C1C1C]">
+                            <span className="mr-2 text-black/50">Разом</span>
+                            <span className="font-semibold tabular-nums text-base">
+                              {orderTotal.toFixed(0)} грн
+                            </span>
+                          </p>
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                            {order.novaPoshtaTtn ? (
+                              <a
+                                href={`https://novaposhta.ua/tracking/${order.novaPoshtaTtn}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-sm font-['Montserrat'] text-black/60 hover:text-[#1C1C1C] transition-colors"
+                              >
+                                ТТН {order.novaPoshtaTtn}
+                              </a>
+                            ) : null}
+                            <Link
+                              href={`/profile/orders/${order.id}`}
+                              className={`${btnGhost} !min-h-[44px] !px-5 !text-xs`}
                             >
-                              Відстежити
-                            </a>
+                              Деталі
+                            </Link>
                           </div>
-                        ) : null}
-                        <Link
-                          href={`/profile/orders/${order.id}`}
-                          className="text-sm font-['Montserrat'] font-medium text-black hover:underline text-center py-2 sm:py-0 min-h-[44px] sm:min-h-0 flex items-center justify-center"
-                        >
-                          Переглянути деталі
-                        </Link>
-                      </div>
-                    </div>
-                  ))}
+                        </div>
+                      </article>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -758,19 +849,28 @@ export default function ProfilePage() {
 
           {activeTab === "wishlist" && (
             <div className="min-w-0">
-              <h2 className="text-xl sm:text-2xl font-bold font-['Montserrat'] mb-4 sm:mb-6">Вішлист</h2>
+              <h2 className="mb-5 sm:mb-6 font-['Montserrat'] text-xl sm:text-2xl font-semibold tracking-tight text-[#1C1C1C]">
+                Вішлист
+              </h2>
               {wishlistLoading ? (
-                <div className="flex justify-center py-8 sm:py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 sm:h-10 sm:w-10 border-b-2 border-gray-900"></div>
+                <div className="flex justify-center py-16">
+                  <div className="h-8 w-8 border-2 border-[#1C1C1C]/20 border-t-[#1C1C1C] rounded-full animate-spin" />
                 </div>
               ) : wishlistProducts.length === 0 ? (
-                <p className="text-gray-600 font-['Montserrat'] text-sm sm:text-base">У вас поки немає товарів у вішлисті.</p>
+                <div className={`${panelClass} py-14 text-center`}>
+                  <p className="font-['Montserrat'] text-sm text-black/60 mb-5">
+                    У вішлисті поки порожньо
+                  </p>
+                  <Link href="/catalog" className={btnPrimary}>
+                    Переглянути каталог
+                  </Link>
+                </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5">
                   {wishlistProducts.map((item) => (
-                    <div key={item.id} className="flex flex-col gap-2 group relative">
+                    <div key={item.id} className="group relative flex flex-col gap-2.5">
                       <Link href={`/product/${item.id}`} className="block">
-                        <div className="relative w-full aspect-[3/4] bg-white overflow-hidden">
+                        <div className="relative w-full aspect-[3/4] overflow-hidden rounded-2xl bg-white border border-black/[0.06]">
                           <button
                             type="button"
                             onClick={(e) => {
@@ -778,28 +878,21 @@ export default function ProfilePage() {
                               e.stopPropagation();
                               handleRemoveFromWishlist(item.id);
                             }}
-                            className="absolute top-2 right-2 z-10 p-1.5 rounded-md bg-white/80 hover:bg-white shadow-sm transition-colors"
+                            className="absolute top-2 right-2 z-10 rounded-full p-2 bg-white/90 text-[#1C1C1C] shadow-sm hover:bg-white transition-colors"
                             title="Прибрати з вішлиста"
                             aria-label="Прибрати з вішлиста"
                           >
                             <svg
-                              className="w-4 h-4 text-amber-600 fill-amber-600"
-                              fill="currentColor"
-                              stroke="currentColor"
+                              className="w-3.5 h-3.5 fill-current"
                               viewBox="0 0 24 24"
-                              strokeWidth={1}
                             >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-                              />
+                              <path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
                             </svg>
                           </button>
                           {item.first_media?.type === "video" ? (
                             <video
                               src={`/api/images/${item.first_media.url}`}
-                              className="object-cover transition-all duration-300 group-hover:opacity-95 w-full h-full"
+                              className="object-cover w-full h-full transition-opacity duration-300 group-hover:opacity-90"
                               loop
                               muted
                               playsInline
@@ -809,35 +902,38 @@ export default function ProfilePage() {
                           ) : (
                             <Image
                               src={getProductImageSrc(item.first_media)}
-                              alt={`${item.name} від 13VPLUS`}
-                              className="object-cover transition-all duration-300 group-hover:opacity-95"
+                              alt={`${item.name} — 13pm tactic`}
+                              className="object-cover transition-opacity duration-300 group-hover:opacity-90"
                               fill
-                              sizes="(max-width: 420px) 45vw, (max-width: 640px) 45vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 20vw"
+                              sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 22vw"
                             />
                           )}
                         </div>
-                        <div className="flex flex-col gap-1">
-                          <h3 className="text-sm sm:text-base font-normal font-['Montserrat'] text-gray-900 leading-snug uppercase tracking-wider">
+                        <div className="flex flex-col gap-1 pt-1">
+                          <h3 className="text-sm font-['Montserrat'] text-[#1C1C1C] leading-snug uppercase tracking-wider">
                             {item.name}
                           </h3>
                           {item.discount_percentage ? (
-                            <div className="flex items-baseline gap-1 flex-wrap">
-                              <span className="text-gray-900 line-through text-base sm:text-lg font-normal">
-                                {item.price.toLocaleString()} ₴
+                            <div className="flex items-baseline gap-1.5 flex-wrap font-['Montserrat']">
+                              <span className="text-[#1C1C1C]/40 line-through text-sm">
+                                {item.price.toLocaleString("uk-UA")} ₴
                               </span>
-                              <span className="text-gray-900 text-base sm:text-lg font-normal">
-                                -{item.discount_percentage}%
+                              <span className="text-[var(--site-accent,#5A6B47)] text-xs font-medium">
+                                −{item.discount_percentage}%
                               </span>
-                              <span className="font-bold text-red-800 text-base sm:text-lg tracking-tight">
-                                {(item.price * (1 - item.discount_percentage / 100))
-                                  .toFixed(0)
-                                  .replace(/\B(?=(\d{3})+(?!\d))/g, " ")}{" "}
+                              <span className="font-semibold text-[#1C1C1C] text-sm sm:text-base tabular-nums">
+                                {(
+                                  item.price *
+                                  (1 - item.discount_percentage / 100)
+                                ).toLocaleString("uk-UA", {
+                                  maximumFractionDigits: 0,
+                                })}{" "}
                                 ₴
                               </span>
                             </div>
                           ) : (
-                            <span className="font-bold text-gray-900 text-base sm:text-lg tracking-tight">
-                              {item.price}₴
+                            <span className="font-semibold text-[#1C1C1C] text-sm sm:text-base tabular-nums font-['Montserrat']">
+                              {item.price.toLocaleString("uk-UA")} ₴
                             </span>
                           )}
                         </div>
@@ -850,94 +946,147 @@ export default function ProfilePage() {
           )}
 
           {activeTab === "bonuses" && (
-            <div className="space-y-5 sm:space-y-8 min-w-0">
-              <h2 className="text-xl sm:text-2xl font-bold font-['Montserrat'] mb-4 sm:mb-6">Мої бонуси</h2>
-              <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-700 mb-1">Ваш рівень</p>
-                <p className="font-semibold text-gray-900 text-sm sm:text-base">{loyaltyTier.name}</p>
-                <p className="text-xs sm:text-sm text-gray-600 mt-1">Знижка {loyaltyTier.percent}% від кожної покупки</p>
+            <div className="space-y-4 sm:space-y-5 min-w-0 max-w-3xl">
+              <h2 className="font-['Montserrat'] text-xl sm:text-2xl font-semibold tracking-tight text-[#1C1C1C]">
+                Мої бонуси
+              </h2>
+
+              <div className={panelClass}>
+                <p className="text-sm font-['Montserrat'] text-black/45 mb-1">Ваш рівень</p>
+                <p className="font-['Montserrat'] text-2xl font-semibold text-[#1C1C1C]">
+                  {loyaltyTier.name}
+                </p>
+                <p className="mt-1 font-['Montserrat'] text-sm text-[var(--site-accent,#5A6B47)]">
+                  Знижка {loyaltyTier.percent}% від кожної покупки
+                </p>
                 {loyaltyTier.nextTier && (
-                  <div className="mt-3">
-                    <div className="flex justify-between text-xs text-gray-500 mb-1">
-                      <span className="truncate mr-2">До рівня «{loyaltyTier.nextTier.name}»</span>
-                      <span className="flex-shrink-0">{Math.round(loyaltyTier.progress)}%</span>
+                  <div className="mt-5">
+                    <div className="flex justify-between text-xs font-['Montserrat'] text-black/50 mb-2">
+                      <span className="truncate mr-2">
+                        До рівня «{loyaltyTier.nextTier.name}»
+                      </span>
+                      <span className="flex-shrink-0 tabular-nums">
+                        {Math.round(loyaltyTier.progress)}%
+                      </span>
                     </div>
-                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <div className="h-full bg-[#8C7461] rounded-full transition-[width]" style={{ width: `${loyaltyTier.progress}%` }} />
+                    <div className="h-2 rounded-full bg-black/[0.06] overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-[var(--site-accent,#5A6B47)] transition-[width] duration-500"
+                        style={{ width: `${loyaltyTier.progress}%` }}
+                      />
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">Накопичіть {loyaltyTier.nextTier.threshold.toLocaleString("uk-UA")} ₴ для знижки {loyaltyTier.nextTier.percent}%</p>
+                    <p className="text-xs font-['Montserrat'] text-black/45 mt-2">
+                      Накопичіть{" "}
+                      {loyaltyTier.nextTier.threshold.toLocaleString("uk-UA")} ₴ для
+                      знижки {loyaltyTier.nextTier.percent}%
+                    </p>
                   </div>
                 )}
               </div>
 
-              {/* Лінія прогресу по всіх стадіях лояльності */}
-              <div className="border border-gray-200 rounded-lg p-4 sm:p-5 bg-gray-50/50">
-                <p className="text-xs sm:text-sm font-medium text-gray-700 mb-3">Ваш шлях по програмі лояльності</p>
-                <p className="text-xs text-gray-500 mb-4">
-                  Накопичено: <span className="font-semibold text-gray-900">{stats.totalSpent.toLocaleString("uk-UA")} ₴</span>
+              <div className={panelClass}>
+                <p className="text-sm font-['Montserrat'] text-black/45 mb-1">Шлях лояльності</p>
+                <p className="text-sm font-['Montserrat'] text-black/60 mb-5">
+                  Накопичено:{" "}
+                  <span className="font-semibold text-[#1C1C1C] tabular-nums">
+                    {stats.totalSpent.toLocaleString("uk-UA")} ₴
+                  </span>
                 </p>
-                <div className="relative pt-1">
-                  {/* Заповнена лінія 0 → 110k */}
-                  <div className="h-2.5 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-[var(--site-accent,#4A5840)] rounded-full transition-all duration-500"
-                      style={{ width: `${Math.min(100, (stats.totalSpent / maxThreshold) * 100)}%` }}
-                    />
-                  </div>
-                  {/* Підписи стадій під лінією */}
-                  <div className="grid grid-cols-6 gap-0.5 sm:gap-1 mt-3">
-                    {loyaltySteps.map((step) => (
-                      <div
-                        key={step.threshold}
-                        className={`text-[10px] sm:text-xs text-center min-w-0 px-0.5 ${step.isCurrent ? "font-semibold text-[var(--site-accent,#4A5840)]" : step.reached ? "text-gray-600" : "text-gray-400"}`}
-                        title={`${step.name} — ${step.percent}%`}
-                      >
-                        <span className="block truncate">{step.name}</span>
-                        <span className="block font-medium">{step.threshold === 0 ? "0" : (step.threshold / 1000).toFixed(0) + "k"} ₴</span>
-                      </div>
-                    ))}
-                  </div>
+                <div className="h-2 rounded-full bg-black/[0.06] overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-[var(--site-accent,#5A6B47)] transition-all duration-500"
+                    style={{
+                      width: `${Math.min(100, (stats.totalSpent / maxThreshold) * 100)}%`,
+                    }}
+                  />
                 </div>
-                {stats.totalSpent < maxThreshold && loyaltyTier.nextTier && (
-                  <p className="text-xs text-gray-500 mt-3 pt-3 border-t border-gray-200">
-                    До рівня «{loyaltyTier.nextTier.name}» залишилось {Math.max(0, loyaltyTier.nextTier.threshold - stats.totalSpent).toLocaleString("uk-UA")} ₴
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mt-4">
+                  {loyaltySteps.map((step) => (
+                    <div
+                      key={step.threshold}
+                      className={`text-[10px] sm:text-[11px] text-center font-['Montserrat'] min-w-0 px-0.5 ${
+                        step.isCurrent
+                          ? "font-semibold text-[var(--site-accent,#5A6B47)]"
+                          : step.reached
+                            ? "text-black/70"
+                            : "text-black/35"
+                      }`}
+                      title={`${step.name} — ${step.percent}%`}
+                    >
+                      <span className="block truncate">{step.name}</span>
+                      <span className="block mt-0.5 tabular-nums">
+                        {step.threshold === 0
+                          ? "0"
+                          : `${(step.threshold / 1000).toFixed(0)}k`}{" "}
+                        ₴
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                {stats.totalSpent < maxThreshold && loyaltyTier.nextTier ? (
+                  <p className="text-xs font-['Montserrat'] text-black/45 mt-4 pt-4 border-t border-black/[0.06]">
+                    До «{loyaltyTier.nextTier.name}» залишилось{" "}
+                    {Math.max(
+                      0,
+                      loyaltyTier.nextTier.threshold - stats.totalSpent
+                    ).toLocaleString("uk-UA")}{" "}
+                    ₴
                   </p>
-                )}
+                ) : null}
               </div>
-              <p className="text-gray-600 font-['Montserrat'] text-xs sm:text-sm">
-                Знижка нараховується з кожної покупки та застосовується на наступні (до 50% вартості товару).
+
+              <p className="font-['Montserrat'] text-sm text-black/55 leading-relaxed px-1">
+                Знижка нараховується з кожної покупки та застосовується на наступні
+                (до 50% вартості товару).
               </p>
 
-              <section className="border-t pt-4 sm:pt-6">
-                <h3 className="text-base sm:text-lg font-bold font-['Montserrat'] mb-2 sm:mb-3">Чому варто зареєструватися в програмі лояльності 13pm?</h3>
-                <p className="text-gray-600 text-xs sm:text-sm mb-3 sm:mb-4">
-                  Бонусний рахунок дає змогу збирати бонуси і розраховуватись ними під час покупок на сайті 13pm tactic.
+              <section className={`${panelClass} space-y-3`}>
+                <h3 className="font-['Montserrat'] text-base sm:text-lg font-semibold text-[#1C1C1C]">
+                  Програма лояльності 13pm
+                </h3>
+                <p className="font-['Montserrat'] text-sm text-black/60 leading-relaxed">
+                  Бонусний рахунок дає змогу збирати бонуси і розраховуватись ними
+                  під час покупок на сайті 13pm tactic.
                 </p>
-                <ul className="list-disc list-inside text-gray-700 text-xs sm:text-sm space-y-1.5 sm:space-y-2">
+                <ul className="list-disc list-inside space-y-2 font-['Montserrat'] text-sm text-black/80">
                   <li>3% бонусу за першу покупку (незалежно від суми)</li>
-                  <li>5% від 25 000 грн, 7% від 45 000 грн, 10% від 65 000 грн, 12% від 90 000 грн, 15% від 110 000 грн</li>
-                  <li>500 грн бонусів в честь дня народження</li>
+                  <li>
+                    5% від 25 000 грн, 7% від 45 000 грн, 10% від 65 000 грн, 12% від
+                    90 000 грн, 15% від 110 000 грн
+                  </li>
+                  <li>500 грн бонусів у день народження</li>
                   <li>Індивідуальні спеціальні пропозиції та знижки</li>
                 </ul>
-                <p className="text-gray-500 text-xs sm:text-sm mt-2 sm:mt-3">
-                  Ми відмовились від пластикових карт. Відтепер ваш бонусний рахунок віртуальний.
+                <p className="font-['Montserrat'] text-xs text-black/45 pt-1">
+                  Ми відмовились від пластикових карт — бонусний рахунок віртуальний.
                 </p>
               </section>
 
-              <section className="border-t pt-4 sm:pt-6">
-                <h3 className="text-base sm:text-lg font-bold font-['Montserrat'] mb-2 sm:mb-3">Що ще потрібно знати</h3>
-                <ul className="text-gray-600 text-xs sm:text-sm space-y-1.5 sm:space-y-2">
-                  <li>• Бонуси стають доступними наступного дня після покупки.</li>
-                  <li>• Бонусна карта не має терміну дії.</li>
-                  <li>• Бонусами може бути оплачено до 50% вартості товару.</li>
-                  <li>• Бонусна система не поширюється на акційні товари, товари зі знижками або промокодами та подарункові сертифікати.</li>
-                  <li>• Бонуси не нараховуються на частину суми чека, яка була оплачена бонусами, купонами чи подарунковим сертифікатом.</li>
-                  <li>• У разі повернення товару, сплаченого бонусами, бонуси згорають. У разі обміну аналогічного товару на інший розмір бонуси зберігаються.</li>
-                  <li>• У день народження ви отримуєте додаткові бонуси на карту: 500 грн. Ними можна скористатися за 2 дні до, в день і 2 дні після дня народження.</li>
+              <section className={`${panelClass} space-y-3`}>
+                <h3 className="font-['Montserrat'] text-base sm:text-lg font-semibold text-[#1C1C1C]">
+                  Важливо знати
+                </h3>
+                <ul className="list-disc list-inside space-y-2 font-['Montserrat'] text-sm text-black/65 leading-relaxed">
+                  <li>Бонуси стають доступними наступного дня після покупки.</li>
+                  <li>Бонусна карта не має терміну дії.</li>
+                  <li>Бонусами може бути оплачено до 50% вартості товару.</li>
+                  <li>
+                    Бонусна система не поширюється на акційні товари, товари зі
+                    знижками або промокодами та подарункові сертифікати.
+                  </li>
+                  <li>
+                    Бонуси не нараховуються на частину суми чека, яка була оплачена
+                    бонусами, купонами чи подарунковим сертифікатом.
+                  </li>
+                  <li>
+                    У разі повернення товару, сплаченого бонусами, бонуси згорають.
+                    При обміні на інший розмір — зберігаються.
+                  </li>
+                  <li>
+                    У день народження — +500 грн бонусів (діють за 2 дні до, в день і
+                    2 дні після).
+                  </li>
                 </ul>
-                <p className="text-gray-500 text-xs sm:text-sm mt-2 sm:mt-3">
-                  Баланс бонусів на рахунку відображається у цьому розділі та при оформленні замовлення.
-                </p>
               </section>
             </div>
           )}
