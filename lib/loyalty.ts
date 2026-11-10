@@ -1,6 +1,6 @@
 /**
  * Програма лояльності 13pm tactic — накопичувальна бонусна система.
- * 3% лише на першу покупку; далі знижки немає до 25k; від 25k — 5%, від 45k — 7%, 65k — 10%, 90k — 12%, 110k — 15%.
+ * До 25k знижки немає; від 25k — 5%, від 45k — 7%, 65k — 10%, 90k — 12%, 110k — 15%.
  * День народження: +500 грн бонусів.
  */
 
@@ -10,7 +10,7 @@ export const BIRTHDAY_BONUS_UAH = 500;
 
 /** Пороги (грн) та відсоток бонусу від покупки */
 export const LOYALTY_TIERS: { threshold: number; percent: number; name: string }[] = [
-  { threshold: 0, percent: 3, name: "Новий клієнт" },
+  { threshold: 0, percent: 0, name: "Новий клієнт" },
   { threshold: 25_000, percent: 5, name: "Лояльний клієнт" },
   { threshold: 45_000, percent: 7, name: "Особливий клієнт" },
   { threshold: 65_000, percent: 10, name: "Друг" },
@@ -32,18 +32,17 @@ export function getBonusPercent(totalSpent: number): number {
   return percent;
 }
 
-/** Поріг (грн), з якого для повторних покупок дається 5% (після першої покупки 3% більше не застосовується). */
+/** Поріг (грн), з якого дається 5% і вище. */
 const TIER_5_PERCENT_THRESHOLD = 25_000;
 
 /**
- * Відсоток знижки для покупки: 3% лише на першу покупку; далі 5% тільки від 25k, інакше знижки немає.
+ * Відсоток знижки для покупки: до 25k — 0%, від 25k — 5%, далі 7–15% за порогами.
  * @param totalSpent — сума попередніх оплачених замовлень (грн)
- * @param paidOrdersCount — кількість попередніх оплачених замовлень (0 = перша покупка)
+ * @param _paidOrdersCount — залишено для сумісності викликів
  */
-export function getBonusPercentForPurchase(totalSpent: number, paidOrdersCount: number): number {
-  if (paidOrdersCount === 0) return 3; // лише перша покупка — 3%
-  if (totalSpent < TIER_5_PERCENT_THRESHOLD) return 0; // не перша покупка і менше 25k — знижки немає
-  return getBonusPercent(totalSpent); // 25k+ — 5%, далі 7–15% за порогами
+export function getBonusPercentForPurchase(totalSpent: number, _paidOrdersCount: number): number {
+  if (totalSpent < TIER_5_PERCENT_THRESHOLD) return 0;
+  return getBonusPercent(totalSpent);
 }
 
 export interface LoyaltyTierInfo {
@@ -81,14 +80,13 @@ export function getLoyaltyTier(totalSpent: number): LoyaltyTierInfo {
 }
 
 /**
- * Рівень лояльності для відображення: 3% лише перша покупка; далі до 25k — 0%, потім 5% і вище.
+ * Рівень лояльності для відображення: до 25k — 0%, потім 5% і вище.
  */
-export function getLoyaltyTierForDisplay(totalSpent: number, paidOrdersCount: number): LoyaltyTierInfo {
-  if (paidOrdersCount === 0) return getLoyaltyTier(0); // Новий клієнт 3%
+export function getLoyaltyTierForDisplay(totalSpent: number, _paidOrdersCount: number): LoyaltyTierInfo {
   if (totalSpent < TIER_5_PERCENT_THRESHOLD) {
     const next = LOYALTY_TIERS[1]; // Лояльний клієнт 5% від 25k
     return {
-      name: "До лояльного клієнта",
+      name: totalSpent <= 0 ? "Новий клієнт" : "До лояльного клієнта",
       percent: 0,
       nextTier: next ? { threshold: next.threshold, percent: next.percent, name: next.name } : null,
       progress: next ? Math.min(100, (totalSpent / next.threshold) * 100) : 0,

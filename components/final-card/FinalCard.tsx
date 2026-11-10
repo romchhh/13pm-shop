@@ -1033,15 +1033,12 @@ export default function FinalCard() {
                       onClick={() => setIsAccountPromoModalOpen(true)}
                       className="mb-5 flex w-full items-start gap-3 rounded-2xl border-2 border-[var(--site-accent,#5A6B47)]/35 bg-[var(--site-accent,#5A6B47)]/[0.08] px-4 py-4 text-left transition-colors hover:bg-[var(--site-accent,#5A6B47)]/15"
                     >
-                      <span className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[var(--site-accent,#5A6B47)] text-sm font-bold text-white">
-                        −3%
-                      </span>
                       <span className="min-w-0 font-['Montserrat']">
                         <span className="block text-sm font-bold text-[#1C1C1C]">
                           Маєте акаунт? Увійдіть
                         </span>
                         <span className="mt-1 block text-sm leading-snug text-black/65">
-                          Дані заповняться самі · знижка −3% на першу покупку
+                          Дані заповняться самі з кабінету
                         </span>
                       </span>
                     </button>
@@ -1550,12 +1547,8 @@ export default function FinalCard() {
               <h3 className="mb-3 font-['Montserrat'] text-lg font-bold text-[#1C1C1C]">
                 Маєте акаунт?
               </h3>
-              <p className="mb-3 font-['Montserrat'] text-sm text-black/60">
-                Увійдіть, щоб автоматично заповнити ім&apos;я, телефон, email і відділення НП.
-              </p>
               <p className="mb-5 font-['Montserrat'] text-sm text-black/60">
-                За першу покупку з акаунтом — знижка{" "}
-                <strong className="text-[var(--site-accent,#4A5840)]">3%</strong>.
+                Увійдіть, щоб автоматично заповнити ім&apos;я, телефон, email і відділення НП.
               </p>
               <div className="flex flex-col gap-2 sm:flex-row">
                 <button

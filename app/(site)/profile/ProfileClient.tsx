@@ -396,7 +396,9 @@ export default function ProfilePage() {
                     {displayName}
                   </p>
                   <p className="text-xs sm:text-sm text-black/55 font-['Montserrat'] truncate">
-                    {loyaltyTier.name} · −{loyaltyTier.percent}% на покупки
+                    {loyaltyTier.percent > 0
+                      ? `${loyaltyTier.name} · −${loyaltyTier.percent}% на покупки`
+                      : loyaltyTier.name}
                   </p>
                 </div>
               </div>
@@ -956,7 +958,9 @@ export default function ProfilePage() {
                   {loyaltyTier.name}
                 </p>
                 <p className="mt-1 font-['Montserrat'] text-sm text-[var(--site-accent,#5A6B47)]">
-                  Знижка {loyaltyTier.percent}% від кожної покупки
+                  {loyaltyTier.percent > 0
+                    ? `Знижка ${loyaltyTier.percent}% від кожної покупки`
+                    : "Знижка з’явиться від 25 000 грн покупок"}
                 </p>
                 {loyaltyTier.nextTier && (
                   <div className="mt-5">
@@ -1048,7 +1052,6 @@ export default function ProfilePage() {
                   під час покупок на сайті 13pm tactic.
                 </p>
                 <ul className="list-disc list-inside space-y-2 font-['Montserrat'] text-sm text-black/80">
-                  <li>3% бонусу за першу покупку (незалежно від суми)</li>
                   <li>
                     5% від 25 000 грн, 7% від 45 000 грн, 10% від 65 000 грн, 12% від
                     90 000 грн, 15% від 110 000 грн

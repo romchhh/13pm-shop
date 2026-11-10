@@ -822,15 +822,12 @@ export default function ProductClient({ product }: ProductClientProps) {
                 onClick={() => setLoginOpen(true)}
                 className="mt-3 flex w-full items-start gap-3 rounded-2xl border-2 border-[var(--site-accent,#5A6B47)]/35 bg-[var(--site-accent,#5A6B47)]/[0.08] px-4 py-3.5 text-left font-['Montserrat'] transition-colors hover:bg-[var(--site-accent,#5A6B47)]/15"
               >
-                <span className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[var(--site-accent,#5A6B47)] text-sm font-bold text-white">
-                  −3%
-                </span>
                 <span className="min-w-0">
                   <span className="block text-sm font-bold text-[#1C1C1C]">
                     Зареєструйтесь або увійдіть
                   </span>
                   <span className="mt-0.5 block text-sm leading-snug text-black/65">
-                    Дані підтягнуться автоматично · −3% на першу покупку
+                    Дані підтягнуться автоматично при оформленні
                   </span>
                 </span>
               </button>
